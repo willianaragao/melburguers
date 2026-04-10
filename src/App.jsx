@@ -59,7 +59,15 @@ const App = () => {
         </div>
 
         <div className="header-actions">
-          <button className="action-btn btn-primary">Seguir</button>
+          <a 
+            href="https://www.instagram.com/melburgerrs?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="action-btn btn-primary"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            Seguir
+          </a>
           <button className="action-btn btn-secondary btn-icon" style={{ position: 'relative' }}>
             <ShoppingBag size={20} />
             {cart.length > 0 && (
