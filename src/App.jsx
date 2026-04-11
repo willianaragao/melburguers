@@ -88,17 +88,17 @@ const App = () => {
       </header>
 
       {/* Category Nav */}
-      <nav className="category-nav">
-        {categories.map((cat) => (
+      <div className="category-nav">
+        {categories.map((category) => (
           <button
-            key={cat}
-            className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
-            onClick={() => setActiveCategory(cat)}
+            key={category.id}
+            className={`category-btn-img ${activeCategory === category.id ? 'active' : ''}`}
+            onClick={() => setActiveCategory(category.id)}
           >
-            {cat}
+            <img src={category.image} alt={category.name} />
           </button>
         ))}
-      </nav>
+      </div>
 
       {/* Menu List */}
       <main className="menu-section">

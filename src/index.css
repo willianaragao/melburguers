@@ -218,57 +218,35 @@ body {
   display: none;
 }
 
-.category-btn {
-  padding: 12px 20px;
-  padding-top: 16px;
-  border-radius: 14px;
-  background: white;
-  border: 1px solid rgba(0,0,0,0.06);
-  color: #4a2c0f;
-  font-weight: 600;
-  font-size: 14px;
-  white-space: nowrap;
+.category-btn-img {
+  background: transparent;
+  border: none;
+  padding: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  height: 60px;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
 }
 
-.category-btn.active {
-  background: #fdf2e9;
-  color: var(--primary);
-  border-color: var(--primary);
-  box-shadow: 0 6px 15px rgba(236, 148, 36, 0.15);
+.category-btn-img img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
 }
 
-/* New Crisp Honey Drip Header */
-.category-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 14px;
-  background-color: var(--primary);
-  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,8 Q95,15 90,8 Q85,2 80,8 Q75,18 70,8 Q65,2 60,8 Q55,15 50,8 Q45,2 40,8 Q35,18 30,8 Q25,2 20,8 Q15,15 10,8 Q5,2 0,8 Z" fill="black"/></svg>');
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,8 Q95,15 90,8 Q85,2 80,8 Q75,18 70,8 Q65,2 60,8 Q55,15 50,8 Q45,2 40,8 Q35,18 30,8 Q25,2 20,8 Q15,15 10,8 Q5,2 0,8 Z" fill="black"/></svg>');
-  mask-size: 100% 100%;
-  -webkit-mask-size: 100% 100%;
-  z-index: 2;
+.category-btn-img.active {
+  transform: translateY(-5px) scale(1.1);
 }
 
-/* Shine effect on honey */
-.category-btn::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 5px;
-  right: 5px;
-  height: 4px;
-  background: rgba(255,255,255,0.4);
-  border-radius: 10px;
-  z-index: 3;
+.category-btn-img.active img {
+  filter: drop-shadow(0 8px 15px rgba(236, 148, 36, 0.25));
+}
+
+.category-btn-img:active {
+  transform: scale(0.9);
 }
 
 .category-btn:active {
