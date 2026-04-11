@@ -229,6 +229,7 @@ body {
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .category-btn.active {
@@ -236,6 +237,33 @@ body {
   color: white;
   border-color: var(--primary);
   box-shadow: 0 4px 15px rgba(236, 148, 36, 0.3);
+}
+
+/* Honey Drip Effect on Categories */
+.category-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 15%;
+  width: 70%;
+  height: 10px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M10,0 Q15,15 20,0 Q25,10 30,0 Q35,18 40,0 Q45,12 50,0 Q55,15 60,0 Q65,10 70,0 Q75,18 80,0 Q85,12 90,0" fill="%23EC9424"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.category-btn.active::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.category-btn:hover::after {
+  opacity: 0.5;
+  transform: translateY(0);
 }
 
 /* Menu Items */
