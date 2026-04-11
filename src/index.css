@@ -61,7 +61,7 @@ body {
 /* Banner */
 .banner-top {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 12;
   background: white;
   overflow: hidden;
 }
