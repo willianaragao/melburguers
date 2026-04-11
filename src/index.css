@@ -250,20 +250,19 @@ body {
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M10,0 Q15,15 20,0 Q25,10 30,0 Q35,18 40,0 Q45,12 50,0 Q55,15 60,0 Q65,10 70,0 Q75,18 80,0 Q85,12 90,0" fill="%23EC9424"/></svg>');
   background-size: contain;
   background-repeat: no-repeat;
-  opacity: 0;
-  transform: translateY(-3px);
+  opacity: 0.8;
+  transform: translateY(0);
   transition: all 0.3s ease;
   pointer-events: none;
 }
 
 .category-btn.active::after {
   opacity: 1;
-  transform: translateY(0);
+  filter: brightness(0.9);
 }
 
 .category-btn:hover::after {
-  opacity: 0.5;
-  transform: translateY(0);
+  opacity: 1;
 }
 
 /* Menu Items */
