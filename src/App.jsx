@@ -13,7 +13,12 @@ const App = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const categories = Object.keys(menuData.menu);
+  const categories = [
+    { id: 'Lanches', name: 'Lanches', image: '/images/category-lanches.png' },
+    { id: 'Barcas', name: 'Barcas', image: '/images/category-barcas.png' },
+    { id: 'Sobremesas', name: 'Sobremesas', image: '/images/category-sobremesas.png' },
+    { id: 'Bebidas', name: 'Bebidas', image: '/images/category-bebidas.png' },
+  ];
 
   const addToCart = (item) => {
     setCart([...cart, item]);
