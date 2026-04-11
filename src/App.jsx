@@ -45,14 +45,12 @@ const App = () => {
           
           <div className="profile-title-area">
             <div className="username-row">
-              <h2>melburgerrs</h2>
+              <h2>MELBURGERRS</h2>
               <div className="verified-badge">
                 <BadgeCheck size={20} fill="currentColor" stroke="white" />
               </div>
               <MoreHorizontal size={20} style={{ marginLeft: 'auto', color: '#8e8e8e' }} />
             </div>
-            <div className="display-name">Mel Burger's 🍔</div>
-            <div className="category-text">Restaurante</div>
           </div>
         </div>
 
