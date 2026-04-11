@@ -56,7 +56,7 @@ const App = () => {
 
         <div className="bio-area">
           <div className="bio-text">
-            Mel Burgers 🍔 <br />
+            MELBURGERRS 🍔 <br />
             Sabor que conquista na primeira mordida ✨ <br />
             <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
             Somente Delivery <br />
