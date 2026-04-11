@@ -45,7 +45,7 @@ const App = () => {
           
           <div className="profile-title-area">
             <div className="username-row">
-              <h2>MELBURGERRS</h2>
+              <h2>MELBURGERS</h2>
               <div className="verified-badge">
                 <BadgeCheck size={20} fill="currentColor" stroke="white" />
               </div>
@@ -56,7 +56,7 @@ const App = () => {
 
         <div className="bio-area">
           <div className="bio-text">
-            MELBURGERRS 🍔 <br />
+            MELBURGERS 🍔 <br />
             Sabor que conquista na primeira mordida ✨ <br />
             <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
             Somente Delivery <br />
