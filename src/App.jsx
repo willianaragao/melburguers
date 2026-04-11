@@ -52,7 +52,7 @@ const App = () => {
 
         <div className="bio-area">
           <div className="bio-text">
-            <strong>MELBURGERS</strong> 🍔 <br />
+            <strong>MELBURGERS</strong> <BadgeCheck size={18} fill="#0095f6" stroke="white" style={{ verticalAlign: 'middle', marginLeft: '4px' }} /> <br />
             Sabor que conquista na primeira mordida ✨ <br />
             <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
             Somente Delivery <br />
