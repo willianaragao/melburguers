@@ -157,9 +157,9 @@ const App = () => {
       {cart.length > 0 && (
         <motion.div
           className="cart-floating"
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          whileTap={{ scale: 0.95 }}
+          initial={{ y: 100, x: "-50%", opacity: 0 }}
+          animate={{ y: 0, x: "-50%", opacity: 1 }}
+          whileTap={{ scale: 0.95, x: "-50%" }}
           onClick={() => setIsCartOpen(true)}
         >
           <div className="cart-info">
