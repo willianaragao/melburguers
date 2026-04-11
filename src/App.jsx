@@ -44,12 +44,8 @@ const App = () => {
           </div>
           
           <div className="profile-title-area">
-            <div className="username-row">
-              <h2>MELBURGERS</h2>
-              <div className="verified-badge">
-                <BadgeCheck size={20} fill="currentColor" stroke="white" />
-              </div>
-              <MoreHorizontal size={20} style={{ marginLeft: 'auto', color: '#8e8e8e' }} />
+            <div className="username-row" style={{ justifyContent: 'flex-end' }}>
+              <MoreHorizontal size={20} style={{ color: '#8e8e8e' }} />
             </div>
           </div>
         </div>
