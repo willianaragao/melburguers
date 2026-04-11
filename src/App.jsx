@@ -31,7 +31,7 @@ const App = () => {
     <div className="app-container">
       {/* Banner Top */}
       <div className="banner-top">
-        <img src="/images/melburguer.jpeg" alt="Mel Burgers Banner" />
+        <img src="/images/MEL Burgers iluminado e convidativo.png" alt="Mel Burgers Banner" />
       </div>
 
       {/* Compact Instagram Header */}
