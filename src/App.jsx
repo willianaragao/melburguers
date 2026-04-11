@@ -39,7 +39,7 @@ const App = () => {
         <div className="profile-top">
           <div className="avatar-wrapper">
             <div className="avatar-inner">
-              <img src="/perfil-logo.png" alt="Mel Burgers Logo" />
+              <img src="/images/logo.png" alt="Mel Burgers Logo" />
             </div>
           </div>
           
