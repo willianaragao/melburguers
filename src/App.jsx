@@ -13,12 +13,7 @@ const App = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const categories = [
-    { id: 'Lanches', name: 'Lanches', image: '/images/category-lanches.png' },
-    { id: 'Barcas', name: 'Barcas', image: '/images/category-barcas.png' },
-    { id: 'Sobremesas', name: 'Sobremesas', image: '/images/category-sobremesas.png' },
-    { id: 'Bebidas', name: 'Bebidas', image: '/images/category-bebidas.png' },
-  ];
+  const categories = Object.keys(menuData.menu);
 
   const addToCart = (item) => {
     setCart([...cart, item]);
@@ -93,17 +88,17 @@ const App = () => {
       </header>
 
       {/* Category Nav */}
-      <div className="category-nav">
-        {categories.map((category) => (
+      <nav className="category-nav">
+        {categories.map((cat) => (
           <button
-            key={category.id}
-            className={`category-btn-img ${activeCategory === category.id ? 'active' : ''}`}
-            onClick={() => setActiveCategory(category.id)}
+            key={cat}
+            className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
+            onClick={() => setActiveCategory(cat)}
           >
-            <img src={category.image} alt={category.name} />
+            {cat}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* Menu List */}
       <main className="menu-section">
