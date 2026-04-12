@@ -108,7 +108,7 @@ export const menuData = {
         "name": "Coquinha 200 ml",
         "description": "Garrafa mini 200ml",
         "price": 3.50,
-        "image": "/images/coquinha.png"
+        "image": "/images/coca-2l.png"
       },
       {
         "id": "bev3",
@@ -150,7 +150,7 @@ export const menuData = {
         "name": "Coca-Cola 2L",
         "description": "Garrafa 2 Litros",
         "price": 15.00,
-        "image": "/images/coca-2l.png"
+        "image": "https://images.unsplash.com/photo-1622708759828-89c0ef794d4e?w=400&h=300&fit=crop"
       },
       {
         "id": "bev9",
