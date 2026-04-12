@@ -101,14 +101,14 @@ export const menuData = {
         "name": "Guaracamp",
         "description": "Copo 290ml",
         "price": 3.00,
-        "image": "https://images.unsplash.com/photo-1598463065020-23a58c9c1488?w=400&h=300&fit=crop"
+        "image": "/images/guaracamp.png"
       },
       {
         "id": "bev2",
         "name": "Coquinha 200 ml",
         "description": "Garrafa mini 200ml",
         "price": 3.50,
-        "image": "https://images.unsplash.com/photo-1622708759828-89c0ef794d4e?w=400&h=300&fit=crop"
+        "image": "/images/coquinha.png"
       },
       {
         "id": "bev3",
