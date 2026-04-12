@@ -229,6 +229,7 @@ body {
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .category-btn.active {
@@ -236,6 +237,24 @@ body {
   color: white;
   border-color: var(--primary);
   box-shadow: 0 4px 15px rgba(236, 148, 36, 0.3);
+}
+
+.has-honey-frame {
+  padding-top: 14px !important;
+  min-width: 110px;
+}
+
+.honey-frame-overlay {
+  position: absolute;
+  top: -8px;
+  left: -2px;
+  right: -2px;
+  height: 35px;
+  background-image: url('/images/honey-frame.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* Menu Items */
