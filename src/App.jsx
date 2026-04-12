@@ -92,10 +92,10 @@ const App = () => {
         {categories.map((cat) => (
           <button
             key={cat}
-            className={`category-btn ${activeCategory === cat ? 'active' : ''} ${cat === 'Lanches' ? 'has-honey-frame' : ''}`}
+            className={`category-btn ${activeCategory === cat ? 'active' : ''} has-honey-frame`}
             onClick={() => setActiveCategory(cat)}
           >
-            {cat === 'Lanches' && <div className="honey-frame-overlay"></div>}
+            <div className="honey-frame-overlay"></div>
             {cat}
           </button>
         ))}
