@@ -219,7 +219,7 @@ body {
 }
 
 .category-btn {
-  padding: 10px 20px;
+  padding: 10px 24px;
   border-radius: 100px;
   background: white;
   border: 1px solid rgba(0,0,0,0.05);
@@ -230,6 +230,10 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
 }
 
 .category-btn.active {
@@ -240,16 +244,16 @@ body {
 }
 
 .has-honey-frame {
-  padding-top: 14px !important;
-  min-width: 110px;
+  padding-top: 16px !important;
+  min-width: 120px;
 }
 
 .honey-frame-overlay {
   position: absolute;
   top: -8px;
-  left: -2px;
-  right: -2px;
-  height: 35px;
+  left: 0;
+  right: 0;
+  height: 38px;
   background-image: url('/images/honey-frame.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
