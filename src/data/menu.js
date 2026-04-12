@@ -101,7 +101,7 @@ export const menuData = {
         "name": "Guaracamp",
         "description": "Copo 290ml",
         "price": 3.00,
-        "image": "/images/guaracamp.png"
+        "image": "/images/guaracamp-hd.png"
       },
       {
         "id": "bev2",
@@ -115,28 +115,28 @@ export const menuData = {
         "name": "Coca-Cola Lata",
         "description": "Lata 350ml",
         "price": 6.00,
-        "image": "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&h=300&fit=crop"
+        "image": "/images/coca-lata.png"
       },
       {
         "id": "bev4",
         "name": "Fanta Lata",
         "description": "Lata 350ml",
         "price": 6.00,
-        "image": "https://images.unsplash.com/photo-1624517452488-048692510255?w=400&h=300&fit=crop"
+        "image": "/images/fanta-lata.png"
       },
       {
         "id": "bev5",
         "name": "Bebida de Morango ao Leite",
         "description": "Copo 440ml cremoso",
         "price": 11.99,
-        "image": "https://images.unsplash.com/photo-1546702672-8869c9945df8?w=400&h=300&fit=crop"
+        "image": "/images/smoothie-morango.png"
       },
       {
         "id": "bev6",
         "name": "Bebida de Maracujá ao Leite",
         "description": "Copo 440ml cremoso",
         "price": 11.99,
-        "image": "https://images.unsplash.com/photo-1577805947697-89e18249d767?w=400&h=300&fit=crop"
+        "image": "/images/smoothie-maracuja.png"
       },
       {
         "id": "bev7",
@@ -150,7 +150,7 @@ export const menuData = {
         "name": "Coca-Cola 2L",
         "description": "Garrafa 2 Litros",
         "price": 15.00,
-        "image": "https://images.unsplash.com/photo-1622708759828-89c0ef794d4e?w=400&h=300&fit=crop"
+        "image": "/images/coca-2l.png"
       },
       {
         "id": "bev9",
