@@ -143,28 +143,28 @@ export const menuData = {
         "name": "Sukita Laranja 2L",
         "description": "Garrafa 2 Litros",
         "price": 10.00,
-        "image": "https://images.unsplash.com/photo-1556767667-0742e7a16df3?w=400&h=300&fit=crop"
+        "image": "/images/sukita-laranja-2l.png"
       },
       {
         "id": "bev8",
         "name": "Coca-Cola 2L",
         "description": "Garrafa 2 Litros",
         "price": 15.00,
-        "image": "https://images.unsplash.com/photo-1622708759828-89c0ef794d4e?w=400&h=300&fit=crop"
+        "image": "/images/coca-2l-final.png"
       },
       {
         "id": "bev9",
         "name": "Sukita Uva 2L",
         "description": "Garrafa 2 Litros",
         "price": 10.00,
-        "image": "https://images.unsplash.com/photo-1437419764061-2473afe69fc2?w=400&h=300&fit=crop"
+        "image": "/images/sukita-uva-2l.png"
       },
       {
         "id": "bev10",
         "name": "Guaraná Antarctica 2L",
         "description": "Garrafa 2 Litros",
         "price": 15.00,
-        "image": "https://images.unsplash.com/photo-1598463065020-23a58c9c1488?w=400&h=300&fit=crop"
+        "image": "/images/guarana-2l.png"
       }
     ]
   }
