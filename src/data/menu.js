@@ -53,7 +53,9 @@ export const menuData = {
         "description": "Pão, 2 Carnes, 2 Queijos, 2 Ovos, o Dobro de Bacon e de Calabresa, Ketchup, Maionese e Molho Especial.",
         "price": 22.00,
         "image": "https://images.unsplash.com/photo-1521305916504-4a1121188589?w=400&h=300&fit=crop"
-      },
+      }
+    ],
+    "Barcas": [
       {
         "id": "l7",
         "name": "Trio Calabresa",
@@ -67,9 +69,7 @@ export const menuData = {
         "description": "Porção Generosa de Batata Frita com Bastante Cheddar e Bacon.",
         "price": 27.99,
         "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&h=300&fit=crop"
-      }
-    ],
-    "Barcas": [
+      },
       {
         "id": "b1",
         "name": "Barca Solteiro",
