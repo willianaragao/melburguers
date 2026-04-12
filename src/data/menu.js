@@ -92,7 +92,7 @@ export const menuData = {
         "name": "Doce Burguer",
         "description": "Pão Mini Brioche Com Morango Nutella E Cookies",
         "price": 9.99,
-        "image": "/doce-burguer.jpg"
+        "image": "/images/doce-burguer.png"
       }
     ],
     "Bebidas": [
