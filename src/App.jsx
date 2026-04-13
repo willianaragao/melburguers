@@ -58,21 +58,34 @@ const App = () => {
 
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
-      if (address.street.length > 3 && !isSearchingAddress) {
+      if (address.street.length > 2 && !isSearchingAddress) {
         try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.street + ', Cabo Frio, RJ')}&limit=5&addressdetails=1`);
+          // viewbox para limitar buscas à região de Cabo Frio/Tamoios/Unamar
+          const viewbox = "-42.25,-22.50,-41.90,-22.75"; 
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.street)}&viewbox=${viewbox}&bounded=1&countrycodes=br&limit=6&addressdetails=1`);
           const data = await response.json();
-          setAddressSuggestions(data);
+          
+          // Filtrar resultados que tenham ao menos uma rua ou bairro
+          const filteredData = data.filter(item => item.address && (item.address.road || item.address.street || item.address.suburb || item.address.neighbourhood));
+          setAddressSuggestions(filteredData);
         } catch (err) {
           console.error("Erro na busca de endereço:", err);
         }
       } else {
         setAddressSuggestions([]);
       }
-    }, 600);
+    }, 500);
 
     return () => clearTimeout(searchTimeout);
   }, [address.street]);
+
+  const formatSuggestion = (item) => {
+    const road = item.address.road || item.address.street || "";
+    const neighborhood = item.address.suburb || item.address.neighbourhood || item.address.city_district || "";
+    
+    if (road && neighborhood) return `${road}, ${neighborhood}`;
+    return road || neighborhood || item.display_name.split(',')[0];
+  };
 
   const handleSelectSuggestion = (suggestion) => {
     const { lat, lon, address: addrDetails } = suggestion;
@@ -492,12 +505,13 @@ const App = () => {
                                 style={{
                                   padding: '12px 15px',
                                   borderBottom: idx === addressSuggestions.length - 1 ? 'none' : '1px solid #f5f5f5',
-                                  fontSize: '13px',
+                                  fontSize: '14px',
                                   cursor: 'pointer',
-                                  color: '#333'
+                                  color: '#333',
+                                  fontWeight: '500'
                                 }}
                               >
-                                {suggestion.display_name}
+                                {formatSuggestion(suggestion)}
                               </div>
                             ))}
                           </div>
