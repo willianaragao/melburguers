@@ -51,14 +51,30 @@ const App = () => {
         
         setAddress(prev => ({
           ...prev,
-          street: addr.road || addr.street || '',
-          neighborhood: addr.suburb || addr.neighbourhood || addr.city_district || '',
+          street: addr.road || addr.street || addr.suburb || '',
+          neighborhood: addr.neighbourhood || addr.suburb || addr.city_district || '',
         }));
       } catch (err) {
-        alert("Não conseguimos obter o endereço exato, mas você pode preencher manualmente!");
+        alert("Não conseguimos converter sua localização em texto. Por favor, preencha manualmente!");
       }
-    }, () => {
-      alert("Permissão de localização negada.");
+    }, (error) => {
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          alert("Permissão negada! Verifique se a localização está ativa no Android/iOS e permitida no cadeado do navegador.");
+          break;
+        case error.POSITION_UNAVAILABLE:
+          alert("Sinal de GPS indisponível no momento.");
+          break;
+        case error.TIMEOUT:
+          alert("A busca demorou muito. Tente novamente em um local mais aberto.");
+          break;
+        default:
+          alert("Ocorreu um erro desconhecido na localização.");
+      }
+    }, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
     });
   };
 
