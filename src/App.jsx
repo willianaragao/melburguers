@@ -452,10 +452,18 @@ const App = () => {
                 position: 'relative',
               }}
             >
-              <div className="modal-header" style={{ padding: '20px', position: 'relative', textAlign: 'center' }}>
-                <div className="modal-handle" style={{ width: '40px', height: '4px', background: '#ddd', borderRadius: '2px', margin: '0 auto 15px' }}></div>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>{checkoutStep === 'cart' ? 'Seu Carrinho' : 'Endereço de Entrega'}</h3>
-                <button className="close-modal" onClick={() => setIsCartOpen(false)} style={{ position: 'absolute', right: '20px', top: '15px', background: '#f5f5f5', border: 'none', width: '30px', height: '30px', borderRadius: '50%', fontSize: '20px', lineHeight: 1, cursor: 'pointer' }}>×</button>
+              <div className="modal-header" style={{ padding: '16px 20px', position: 'relative', textAlign: 'center', borderBottom: '1px solid #f5f5f5' }}>
+                <div className="modal-handle" style={{ width: '40px', height: '4px', background: '#ddd', borderRadius: '2px', margin: '0 auto 12px' }}></div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#2D1B14' }}>
+                  {checkoutStep === 'cart' ? 'Seu Carrinho' : 'Endereço de Entrega'}
+                </h3>
+                <button 
+                  className="close-modal" 
+                  onClick={() => setIsCartOpen(false)} 
+                  style={{ position: 'absolute', right: '15px', top: '15px', background: '#f5f5f5', border: 'none', width: '30px', height: '30px', borderRadius: '50%', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  ×
+                </button>
               </div>
 
               <div className="cart-items-list" style={{ 
@@ -641,16 +649,16 @@ const App = () => {
                     <button 
                       className="checkout-btn" 
                       onClick={() => setCheckoutStep('address')}
-                      style={{ width: '100%', padding: '16px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '700', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                      style={{ width: '100%', padding: '16px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '700', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                     >
-                      <Truck size={20} /> Preencher endereço de entrega
+                      <Truck size={20} /> Ir para entrega
                     </button>
                   ) : (
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                       <button 
                         className="action-btn btn-secondary" 
                         onClick={() => setCheckoutStep('cart')}
-                        style={{ flex: '0 0 100px', height: '54px', borderRadius: '15px', border: '1px solid #eee', background: 'white' }}
+                        style={{ flex: '0 0 80px', height: '54px', borderRadius: '15px', border: '1px solid #eee', background: 'white', fontSize: '0.9rem' }}
                       >
                         Voltar
                       </button>
@@ -658,7 +666,7 @@ const App = () => {
                         className="checkout-btn" 
                         onClick={handleCheckout}
                         disabled={isPrinting}
-                        style={{ flex: 1, height: '54px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '700', fontSize: '16px' }}
+                        style={{ flex: 1, height: '54px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '800', fontSize: '0.95rem', padding: '0 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
                       >
                         {isPrinting ? 'Enviando...' : 'Finalizar via WhatsApp'}
                       </button>
