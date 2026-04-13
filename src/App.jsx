@@ -62,18 +62,20 @@ const App = () => {
       const query = address.street.trim();
       if (query.length > 1 && !isSearchingAddress) {
         try {
-          // Limpeza básica mantendo o essencial para o Photon
           let cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
           cleanQuery = cleanQuery.replace(/\d+.*$/, '').trim();
           
-          // REMOVIDO: lang=pt (Causal de erro 400 no Photon)
-          // Photon usa lat/lon para dar peso aos resultados locais
-          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&limit=10&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
+          // Adicionamos "Cabo Frio" na busca interna para forçar resultados na região e evitar cidades em MG
+          const searchQuery = cleanQuery + " Cabo Frio";
+          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=10&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
           const data = await response.json();
           
           if (data && data.features) {
-            // Filtrar apenas resultados no Brasil para evitar confusão
-            const brFeatures = data.features.filter(f => f.properties.countrycode === 'BR');
+            // Filtrar para garantir que estamos pegando ruas ou locais com endereço, e no Brasil
+            const brFeatures = data.features.filter(f => 
+              f.properties.countrycode === 'BR' && 
+              (f.properties.street || f.properties.district || f.properties.suburb || f.properties.locality)
+            );
             setAddressSuggestions(brFeatures);
           }
         } catch (err) {
@@ -90,12 +92,17 @@ const App = () => {
   const formatSuggestion = (feature) => {
     const p = feature.properties;
     const road = p.street || p.name || "";
+    // No Brasil, bairro pode vir em district, suburb ou locality
     const neighborhood = p.district || p.suburb || p.locality || "";
     const city = p.city || "";
     
     let label = road;
-    if (neighborhood && neighborhood !== road) label += `, ${neighborhood}`;
-    if (city) label += ` - ${city}`;
+    if (neighborhood && neighborhood.toLowerCase() !== road.toLowerCase()) {
+      label += `, ${neighborhood}`;
+    }
+    if (city && city.toLowerCase() !== "cabo frio") {
+      label += ` - ${city}`;
+    }
     
     return label || "Endereço encontrado";
   };
