@@ -62,16 +62,15 @@ const App = () => {
       const query = address.street.trim();
       if (query.length > 2 && !isSearchingAddress) {
         try {
-          // Limpando prefixos comuns para busca mais genérica
-          const cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
+          // Limpando prefixos e números para busca de sugestão mais precisa
+          let cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
+          cleanQuery = cleanQuery.replace(/\d+.*$/, '').trim(); // Remove números e o que vem depois
           
-          // Busca sem viewbox/bounded para maior abrangência, mas focada no Brasil
           const fetchUrl = (q) => `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=br&limit=8&addressdetails=1`;
           
           let response = await fetch(fetchUrl(cleanQuery));
           let data = await response.json();
           
-          // Se não achar nada, tenta com o bairro Unamar anexado (para ruas locais)
           if (data.length === 0) {
             response = await fetch(fetchUrl(cleanQuery + " Unamar Cabo Frio"));
             data = await response.json();
@@ -114,9 +113,14 @@ const App = () => {
     setDeliveryFee(fee);
     setIsSearchingAddress(true); // Bloqueia trigger do useEffect temporariamente
     
+    // Tenta extrair o número se o usuário já tiver digitado no campo de rua
+    const numberMatch = address.street.match(/\d+/);
+    const extractedNumber = numberMatch ? numberMatch[0] : '';
+
     setAddress({
       ...address,
       street: addrDetails.road || addrDetails.street || suggestion.display_name.split(',')[0],
+      number: extractedNumber || address.number,
       neighborhood: addrDetails.suburb || addrDetails.neighbourhood || addrDetails.city_district || '',
       zipCode: addrDetails.postcode || '',
     });
