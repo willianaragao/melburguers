@@ -22,6 +22,7 @@ const App = () => {
     number: '',
     neighborhood: '',
     complement: '',
+    zipCode: '',
   });
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -64,21 +65,15 @@ const App = () => {
           // Limpando prefixos comuns para busca mais genérica
           const cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
           
-          const viewbox = "-42.25,-22.50,-41.90,-22.75"; 
-          const fetchUrl = (q) => `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&viewbox=${viewbox}&bounded=1&countrycodes=br&limit=6&addressdetails=1`;
+          // Busca sem viewbox/bounded para maior abrangência, mas focada no Brasil
+          const fetchUrl = (q) => `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=br&limit=8&addressdetails=1`;
           
           let response = await fetch(fetchUrl(cleanQuery));
           let data = await response.json();
           
-          // Se não achar nada, tenta com o bairro Unamar anexado
+          // Se não achar nada, tenta com o bairro Unamar anexado (para ruas locais)
           if (data.length === 0) {
-            response = await fetch(fetchUrl(cleanQuery + " Unamar"));
-            data = await response.json();
-          }
-          
-          // Fallback final para Tamoios
-          if (data.length === 0) {
-            response = await fetch(fetchUrl(cleanQuery + " Tamoios"));
+            response = await fetch(fetchUrl(cleanQuery + " Unamar Cabo Frio"));
             data = await response.json();
           }
           
@@ -98,9 +93,13 @@ const App = () => {
   const formatSuggestion = (item) => {
     const road = item.address.road || item.address.street || "";
     const neighborhood = item.address.suburb || item.address.neighbourhood || item.address.city_district || "";
+    const city = item.address.city || item.address.town || "";
     
-    if (road && neighborhood) return `${road}, ${neighborhood}`;
-    return road || neighborhood || item.display_name.split(',')[0];
+    let label = road;
+    if (neighborhood) label += `, ${neighborhood}`;
+    if (city) label += ` - ${city}`;
+    
+    return label || item.display_name.split(',')[0];
   };
 
   const handleSelectSuggestion = (suggestion) => {
@@ -119,6 +118,7 @@ const App = () => {
       ...address,
       street: addrDetails.road || addrDetails.street || suggestion.display_name.split(',')[0],
       neighborhood: addrDetails.suburb || addrDetails.neighbourhood || addrDetails.city_district || '',
+      zipCode: addrDetails.postcode || '',
     });
     
     setAddressSuggestions([]);
@@ -201,6 +201,7 @@ const App = () => {
     message += "📍 *DADOS DE ENTREGA*\n";
     message += `${address.street}, ${address.number}\n`;
     message += `Bairro: ${address.neighborhood}\n`;
+    if (address.zipCode) message += `CEP: ${address.zipCode}\n`;
     if (address.complement) message += `Referência: ${address.complement}\n`;
     
     message += "\n━━━━━━━━━━━━━━━━━━━\n";
@@ -551,6 +552,13 @@ const App = () => {
                           className="address-input"
                         />
                       </div>
+                      <input 
+                        type="text" 
+                        placeholder="CEP (Preenchido automático)" 
+                        value={address.zipCode}
+                        onChange={(e) => setAddress({...address, zipCode: e.target.value})}
+                        className="address-input"
+                      />
                       <input 
                         type="text" 
                         placeholder="Ponto de Referência / Complemento" 
