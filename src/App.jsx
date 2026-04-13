@@ -60,25 +60,29 @@ const App = () => {
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
       const query = address.street.trim();
-      if (query.length > 2 && !isSearchingAddress) {
+      if (query.length > 1 && !isSearchingAddress) {
         try {
-          // Limpando prefixos e números para busca de sugestão
+          // Limpeza básica mantendo o essencial para o Photon
           let cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
           cleanQuery = cleanQuery.replace(/\d+.*$/, '').trim();
           
-          // Usando Photon API (mais rápida e sem limites rígidos de rate limit)
-          // Focamos a busca nas coordenadas da loja para priorizar resultados locais
-          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&limit=8&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}&lang=pt`);
+          // REMOVIDO: lang=pt (Causal de erro 400 no Photon)
+          // Photon usa lat/lon para dar peso aos resultados locais
+          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&limit=10&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
           const data = await response.json();
           
-          setAddressSuggestions(data.features || []);
+          if (data && data.features) {
+            // Filtrar apenas resultados no Brasil para evitar confusão
+            const brFeatures = data.features.filter(f => f.properties.countrycode === 'BR');
+            setAddressSuggestions(brFeatures);
+          }
         } catch (err) {
           console.error("Erro na busca de endereço:", err);
         }
       } else {
         setAddressSuggestions([]);
       }
-    }, 400);
+    }, 300);
 
     return () => clearTimeout(searchTimeout);
   }, [address.street]);
@@ -86,14 +90,14 @@ const App = () => {
   const formatSuggestion = (feature) => {
     const p = feature.properties;
     const road = p.street || p.name || "";
-    const neighborhood = p.district || p.suburb || "";
+    const neighborhood = p.district || p.suburb || p.locality || "";
     const city = p.city || "";
     
     let label = road;
     if (neighborhood && neighborhood !== road) label += `, ${neighborhood}`;
     if (city) label += ` - ${city}`;
     
-    return label || "Endereço não identificado";
+    return label || "Endereço encontrado";
   };
 
   const handleSelectSuggestion = (feature) => {
@@ -117,7 +121,7 @@ const App = () => {
       ...address,
       street: p.street || p.name || address.street,
       number: extractedNumber || address.number,
-      neighborhood: p.district || p.suburb || '',
+      neighborhood: p.district || p.suburb || p.locality || '',
       zipCode: p.postcode || '',
     });
     
