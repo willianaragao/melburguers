@@ -195,10 +195,10 @@ const App = () => {
       return;
     }
 
-    // 1. WhatsApp Message Template Customizado
+    // 1. WhatsApp Message Template Customizado — Mel Burgers 🍯
     const phoneNumber = "5522996153138"; 
     
-    let message = "✅ *PEDIDO CONFIRMADO — MEL BURGERS* 🍔\n\n";
+    let message = "✅ *PEDIDO CONFIRMADO — MEL BURGERS* 🍔🍯\n\n";
     
     message += "━━━━━━━━━━━━━━━━━━━\n";
     message += "🧾 *RESUMO DO PEDIDO*\n";
