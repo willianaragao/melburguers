@@ -421,19 +421,18 @@ const App = () => {
               onClick={(e) => e.stopPropagation()}
               style={{
                 background: 'white',
-                width: '100%',
-                maxWidth: '500px',
-                maxHeight: '90vh',
-                borderTopLeftRadius: '30px',
-                borderTopRightRadius: '30px',
+                width: '94%',
+                maxWidth: '450px',
+                maxHeight: '85vh',
+                borderRadius: '30px',
                 display: 'flex',
                 flexDirection: 'column',
                 position: 'fixed',
-                bottom: 0,
+                top: '50%',
                 left: '50%',
-                transform: 'translateX(-50%)',
+                transform: 'translate(-50%, -50%)',
                 zIndex: 1001,
-                boxShadow: '0 -10px 40px rgba(0,0,0,0.1)'
+                boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
               }}
             >
               <div className="modal-header" style={{ padding: '20px', position: 'relative', textAlign: 'center' }}>
