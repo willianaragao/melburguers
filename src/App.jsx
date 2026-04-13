@@ -58,15 +58,31 @@ const App = () => {
 
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
-      if (address.street.length > 2 && !isSearchingAddress) {
+      const query = address.street.trim();
+      if (query.length > 2 && !isSearchingAddress) {
         try {
-          // viewbox para limitar buscas à região de Cabo Frio/Tamoios/Unamar
-          const viewbox = "-42.25,-22.50,-41.90,-22.75"; 
-          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.street)}&viewbox=${viewbox}&bounded=1&countrycodes=br&limit=6&addressdetails=1`);
-          const data = await response.json();
+          // Limpando prefixos comuns para busca mais genérica
+          const cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
           
-          // Filtrar resultados que tenham ao menos uma rua ou bairro
-          const filteredData = data.filter(item => item.address && (item.address.road || item.address.street || item.address.suburb || item.address.neighbourhood));
+          const viewbox = "-42.25,-22.50,-41.90,-22.75"; 
+          const fetchUrl = (q) => `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&viewbox=${viewbox}&bounded=1&countrycodes=br&limit=6&addressdetails=1`;
+          
+          let response = await fetch(fetchUrl(cleanQuery));
+          let data = await response.json();
+          
+          // Se não achar nada, tenta com o bairro Unamar anexado
+          if (data.length === 0) {
+            response = await fetch(fetchUrl(cleanQuery + " Unamar"));
+            data = await response.json();
+          }
+          
+          // Fallback final para Tamoios
+          if (data.length === 0) {
+            response = await fetch(fetchUrl(cleanQuery + " Tamoios"));
+            data = await response.json();
+          }
+          
+          const filteredData = data.filter(item => item.address);
           setAddressSuggestions(filteredData);
         } catch (err) {
           console.error("Erro na busca de endereço:", err);
