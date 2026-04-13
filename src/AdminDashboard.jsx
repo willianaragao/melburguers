@@ -27,7 +27,9 @@ const AdminDashboard = () => {
         const mockOrder = {
           id: '1234',
           timestamp: new Date().toISOString(),
-          total: 45.90,
+          subtotal: 39.99,
+          deliveryFee: 10.00,
+          total: 49.99,
           items: [
             { name: 'Big Boss', price: 22.00 },
             { name: 'Batata Malucona', price: 27.99 }
@@ -137,6 +139,17 @@ const AdminDashboard = () => {
                     <span style={{ opacity: 0.6 }}>R${item.price.toFixed(2).replace('.', ',')}</span>
                   </div>
                 ))}
+              </div>
+
+              <div style={{ marginBottom: '15px', borderTop: '1px dashed #eee', paddingTop: '10px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span>Subtotal:</span>
+                  <span>R$ {(order.subtotal || 0).toFixed(2).replace('.', ',')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#EC9424' }}>
+                  <span>Frete:</span>
+                  <span>+ R$ {(order.deliveryFee || 0).toFixed(2).replace('.', ',')}</span>
+                </div>
               </div>
 
               <div style={{ marginBottom: '20px', padding: '12px', background: '#f9f9f9', borderRadius: '12px' }}>

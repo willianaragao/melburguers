@@ -15,6 +15,7 @@ const App = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart' ou 'address'
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [address, setAddress] = useState({
     street: '',
     number: '',
@@ -22,13 +23,29 @@ const App = () => {
     complement: '',
   });
 
+  // Coordenadas aproximadas da Rua das Oliveiras, Unamar, Cabo Frio
+  const SHOP_COORDS = { lat: -22.6225, lng: -42.0163 };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Raio da Terra em km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distância em km
+  };
+
   const categories = Object.keys(menuData.menu);
 
   const addToCart = (item) => {
     setCart([...cart, item]);
   };
 
-  const cartTotal = cart.reduce((acc, item) => acc + item.price, 0);
+  const cartSubtotal = cart.reduce((acc, item) => acc + item.price, 0);
+  const cartTotal = cartSubtotal + deliveryFee;
 
   const removeFromCart = (index) => {
     const newCart = [...cart];
@@ -44,6 +61,16 @@ const App = () => {
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
+      
+      // Cálculo da distância e frete
+      const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
+      let fee = 0;
+      if (distance <= 5) fee = 5;
+      else if (distance <= 10) fee = 10;
+      else fee = 15;
+      
+      setDeliveryFee(fee);
+
       try {
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
         const data = await response.json();
@@ -52,7 +79,7 @@ const App = () => {
         setAddress(prev => ({
           ...prev,
           street: addr.road || addr.street || addr.suburb || '',
-          neighborhood: addr.neighbourhood || addr.suburb || addr.city_district || '',
+          neighborhood: addr.suburb || addr.neighbourhood || addr.city_district || '',
         }));
       } catch (err) {
         alert("Não conseguimos converter sua localização em texto. Por favor, preencha manualmente!");
@@ -99,6 +126,8 @@ const App = () => {
     message += `Bairro: ${address.neighborhood}\n`;
     if (address.complement) message += `Ref: ${address.complement}\n`;
     
+    message += `\nSubtotal: R$ ${cartSubtotal.toFixed(2).replace('.', ',')}`;
+    message += `\nFrete: R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
     message += `\n*TOTAL: R$ ${cartTotal.toFixed(2).replace('.', ',')}*\n`;
     message += `\nDesenvolvido por Mel Burgers ✨`;
 
@@ -112,6 +141,8 @@ const App = () => {
       const orderData = {
         id: Math.random().toString(36).substr(2, 5).toUpperCase(),
         items: cart,
+        subtotal: cartSubtotal,
+        deliveryFee: deliveryFee,
         total: cartTotal,
         address: address,
         timestamp: new Date().toISOString(),
@@ -385,6 +416,14 @@ const App = () => {
 
               {cart.length > 0 && (
                 <div className="modal-footer">
+                  <div className="total-row" style={{ marginBottom: '8px' }}>
+                    <span style={{ fontSize: '14px', opacity: 0.6 }}>Subtotal</span>
+                    <span style={{ fontSize: '14px', opacity: 0.6 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                  <div className="total-row" style={{ marginBottom: '16px' }}>
+                    <span style={{ fontSize: '14px', color: '#EC9424' }}>Frete</span>
+                    <span style={{ fontSize: '14px', color: '#EC9424' }}>+ R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
+                  </div>
                   <div className="total-row">
                     <span>Total</span>
                     <span className="total-price">R$ {cartTotal.toFixed(2).replace('.', ',')}</span>
@@ -428,4 +467,3 @@ const App = () => {
 };
 
 export default App;
-
