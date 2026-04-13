@@ -63,12 +63,12 @@ const App = () => {
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
       
-      // Cálculo da distância e frete
+      // Cálculo da distância e frete (Nova regra: 5,00 base até 2km + 1,20/km adicional)
       const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
-      let fee = 0;
-      if (distance <= 5) fee = 5;
-      else if (distance <= 10) fee = 10;
-      else fee = 15;
+      let fee = 5;
+      if (distance > 2) {
+        fee += (distance - 2) * 1.20;
+      }
       
       setDeliveryFee(fee);
 
