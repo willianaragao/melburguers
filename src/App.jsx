@@ -2,16 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, Plus, Clock, Star, ArrowRight, Home, 
   BadgeCheck, MoreHorizontal, UserPlus, MapPin, 
-  Truck, Link as LinkIcon, ChevronDown 
+  Truck, Link as LinkIcon, ChevronDown, Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { menuData } from './data/menu';
+import { printOrder, formatOrderForPrinter } from './utils/printer';
 
 const App = () => {
   const [activeCategory, setActiveCategory] = useState('Lanches');
   const [cart, setCart] = useState([]);
   const [isOpen, setIsOpen] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart' ou 'address'
+  const [address, setAddress] = useState({
+    street: '',
+    number: '',
+    neighborhood: '',
+    complement: '',
+  });
 
   const categories = Object.keys(menuData.menu);
 
@@ -25,6 +34,85 @@ const App = () => {
     const newCart = [...cart];
     newCart.splice(index, 1);
     setCart(newCart);
+  };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocalização não suportada pelo seu navegador.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const data = await response.json();
+        const addr = data.address;
+        
+        setAddress(prev => ({
+          ...prev,
+          street: addr.road || addr.street || '',
+          neighborhood: addr.suburb || addr.neighbourhood || addr.city_district || '',
+        }));
+      } catch (err) {
+        alert("Não conseguimos obter o endereço exato, mas você pode preencher manualmente!");
+      }
+    }, () => {
+      alert("Permissão de localização negada.");
+    });
+  };
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    if (!address.street || !address.number || !address.neighborhood) {
+      alert("Por favor, preencha o endereço completo!");
+      return;
+    }
+
+    // 1. WhatsApp Message Logic
+    const phoneNumber = "5522996153138"; 
+    let message = `*NOVO PEDIDO - MEL BURGERS*\n\n`;
+    
+    message += `*ITENS:*\n`;
+    cart.forEach(item => {
+      message += `• ${item.name} - R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
+    });
+    
+    message += `\n*ENTREGA EM:*\n`;
+    message += `${address.street}, ${address.number}\n`;
+    message += `Bairro: ${address.neighborhood}\n`;
+    if (address.complement) message += `Ref: ${address.complement}\n`;
+    
+    message += `\n*TOTAL: R$ ${cartTotal.toFixed(2).replace('.', ',')}*\n`;
+    message += `\nDesenvolvido por Mel Burgers ✨`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+    // 2. Send to Dashboard (via n8n Webhook)
+    setIsPrinting(true);
+    
+    try {
+      const orderData = {
+        id: Math.random().toString(36).substr(2, 5).toUpperCase(),
+        items: cart,
+        total: cartTotal,
+        address: address,
+        timestamp: new Date().toISOString(),
+      };
+
+      await fetch('https://SUA-URL-N8N.com/webhook/pedidos-mel-burgers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+      
+    } catch (err) {
+      console.error("Falha ao enviar ao Dashboard:", err);
+    } finally {
+      setIsPrinting(false);
+      window.open(whatsappUrl, '_blank');
+    }
   };
 
   return (
@@ -77,7 +165,10 @@ const App = () => {
           <button 
             className="action-btn btn-secondary btn-icon" 
             style={{ position: 'relative' }}
-            onClick={() => setIsCartOpen(true)}
+            onClick={() => {
+              setIsCartOpen(true);
+              setCheckoutStep('cart');
+            }}
           >
             <ShoppingBag size={20} />
             {cart.length > 0 && (
@@ -155,7 +246,10 @@ const App = () => {
           initial={{ y: 100, x: "-50%", opacity: 0 }}
           animate={{ y: 0, x: "-50%", opacity: 1 }}
           whileTap={{ scale: 0.95, x: "-50%" }}
-          onClick={() => setIsCartOpen(true)}
+          onClick={() => {
+            setIsCartOpen(true);
+            setCheckoutStep('cart');
+          }}
         >
           <div className="cart-info">
             <span className="cart-count">{cart.length}</span>
@@ -187,29 +281,89 @@ const App = () => {
             >
               <div className="modal-header">
                 <div className="modal-handle"></div>
-                <h3>Seu Carrinho</h3>
+                <h3>{checkoutStep === 'cart' ? 'Seu Carrinho' : 'Endereço de Entrega'}</h3>
                 <button className="close-modal" onClick={() => setIsCartOpen(false)}>×</button>
               </div>
 
               <div className="cart-items-list">
-                {cart.length === 0 ? (
-                  <div className="empty-cart">
-                    <ShoppingBag size={48} opacity={0.2} />
-                    <p>Seu carrinho está vazio</p>
-                  </div>
-                ) : (
-                  cart.map((item, index) => (
-                    <div key={index} className="cart-item">
-                      <div className="cart-item-img">
-                        <img src={item.image} alt={item.name} />
-                      </div>
-                      <div className="cart-item-info">
-                        <h4>{item.name}</h4>
-                        <span className="cart-item-price">R$ {item.price.toFixed(2).replace('.', ',')}</span>
-                      </div>
-                      <button className="remove-item" onClick={() => removeFromCart(index)}>Remover</button>
+                {checkoutStep === 'cart' ? (
+                  cart.length === 0 ? (
+                    <div className="empty-cart">
+                      <ShoppingBag size={48} opacity={0.2} />
+                      <p>Seu carrinho está vazio</p>
                     </div>
-                  ))
+                  ) : (
+                    cart.map((item, index) => (
+                      <div key={index} className="cart-item">
+                        <div className="cart-item-img">
+                          <img src={item.image} alt={item.name} />
+                        </div>
+                        <div className="cart-item-info">
+                          <h4>{item.name}</h4>
+                          <span className="cart-item-price">R$ {item.price.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <button className="remove-item" onClick={() => removeFromCart(index)}>Remover</button>
+                      </div>
+                    ))
+                  )
+                ) : (
+                  <div className="address-form" style={{ padding: '10px 0' }}>
+                    <button 
+                      onClick={handleGetLocation}
+                      style={{ 
+                        width: '100%', 
+                        padding: '12px', 
+                        marginBottom: '20px', 
+                        borderRadius: '12px', 
+                        border: '1px solid #EC9424',
+                        background: '#FFF9F0',
+                        color: '#EC9424',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <MapPin size={18} /> Usar minha localização atual
+                    </button>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Rua / Logradouro" 
+                        value={address.street}
+                        onChange={(e) => setAddress({...address, street: e.target.value})}
+                        className="address-input"
+                      />
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <input 
+                          type="text" 
+                          placeholder="Nº" 
+                          value={address.number}
+                          onChange={(e) => setAddress({...address, number: e.target.value})}
+                          style={{ width: '80px' }}
+                          className="address-input"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Bairro" 
+                          value={address.neighborhood}
+                          onChange={(e) => setAddress({...address, neighborhood: e.target.value})}
+                          style={{ flex: 1 }}
+                          className="address-input"
+                        />
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="Ponto de Referência / Complemento" 
+                        value={address.complement}
+                        onChange={(e) => setAddress({...address, complement: e.target.value})}
+                        className="address-input"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -219,7 +373,34 @@ const App = () => {
                     <span>Total</span>
                     <span className="total-price">R$ {cartTotal.toFixed(2).replace('.', ',')}</span>
                   </div>
-                  <button className="checkout-btn">Finalizar Pedido via WhatsApp</button>
+                  
+                  {checkoutStep === 'cart' ? (
+                    <button 
+                      className="checkout-btn" 
+                      onClick={() => setCheckoutStep('address')}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                    >
+                      <Truck size={20} /> Preencher endereço de entrega
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button 
+                        className="action-btn btn-secondary" 
+                        onClick={() => setCheckoutStep('cart')}
+                        style={{ flex: '0 0 100px' }}
+                      >
+                        Voltar
+                      </button>
+                      <button 
+                        className="checkout-btn" 
+                        onClick={handleCheckout}
+                        disabled={isPrinting}
+                        style={{ flex: 1 }}
+                      >
+                        {isPrinting ? 'Enviando...' : 'Finalizar via WhatsApp'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -231,3 +412,4 @@ const App = () => {
 };
 
 export default App;
+

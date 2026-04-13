@@ -48,6 +48,15 @@ body {
   100% { transform: scaleY(1); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* Layout */
 .app-container {
   max-width: 500px;
@@ -607,4 +616,23 @@ body {
 
 .checkout-btn:active {
   transform: scale(0.98);
+}
+
+.address-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  background: #fdfdfd;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(236, 148, 36, 0.1);
 }
