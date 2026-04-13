@@ -23,6 +23,8 @@ const App = () => {
     neighborhood: '',
     complement: '',
   });
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
 
   // Coordenadas aproximadas da Rua das Oliveiras, Unamar, Cabo Frio
   const SHOP_COORDS = { lat: -22.6225, lng: -42.0163 };
@@ -52,6 +54,48 @@ const App = () => {
     const newCart = [...cart];
     newCart.splice(index, 1);
     setCart(newCart);
+  };
+
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (address.street.length > 3 && !isSearchingAddress) {
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.street + ', Cabo Frio, RJ')}&limit=5&addressdetails=1`);
+          const data = await response.json();
+          setAddressSuggestions(data);
+        } catch (err) {
+          console.error("Erro na busca de endereço:", err);
+        }
+      } else {
+        setAddressSuggestions([]);
+      }
+    }, 600);
+
+    return () => clearTimeout(searchTimeout);
+  }, [address.street]);
+
+  const handleSelectSuggestion = (suggestion) => {
+    const { lat, lon, address: addrDetails } = suggestion;
+    const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, parseFloat(lat), parseFloat(lon));
+    
+    let fee = 5;
+    if (distance > 2) {
+      fee += (distance - 2) * 1.20;
+    }
+    
+    setDeliveryFee(fee);
+    setIsSearchingAddress(true); // Bloqueia trigger do useEffect temporariamente
+    
+    setAddress({
+      ...address,
+      street: addrDetails.road || addrDetails.street || suggestion.display_name.split(',')[0],
+      neighborhood: addrDetails.suburb || addrDetails.neighbourhood || addrDetails.city_district || '',
+    });
+    
+    setAddressSuggestions([]);
+    
+    // Libera busca após um pequeno delay
+    setTimeout(() => setIsSearchingAddress(false), 1000);
   };
 
   const handleGetLocation = () => {
@@ -416,14 +460,49 @@ const App = () => {
                       <MapPin size={18} /> Usar minha localização atual
                     </button>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      <input 
-                        type="text" 
-                        placeholder="Rua / Logradouro" 
-                        value={address.street}
-                        onChange={(e) => setAddress({...address, street: e.target.value})}
-                        className="address-input"
-                      />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', position: 'relative' }}>
+                      <div style={{ position: 'relative' }}>
+                        <input 
+                          type="text" 
+                          placeholder="Rua / Logradouro" 
+                          value={address.street}
+                          onChange={(e) => setAddress({...address, street: e.target.value})}
+                          className="address-input"
+                          style={{ width: '100%' }}
+                        />
+                        {addressSuggestions.length > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            background: 'white',
+                            border: '1px solid #eee',
+                            borderRadius: '12px',
+                            marginTop: '5px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            zIndex: 1002,
+                            maxHeight: '200px',
+                            overflowY: 'auto'
+                          }}>
+                            {addressSuggestions.map((suggestion, idx) => (
+                              <div 
+                                key={idx}
+                                onClick={() => handleSelectSuggestion(suggestion)}
+                                style={{
+                                  padding: '12px 15px',
+                                  borderBottom: idx === addressSuggestions.length - 1 ? 'none' : '1px solid #f5f5f5',
+                                  fontSize: '13px',
+                                  cursor: 'pointer',
+                                  color: '#333'
+                                }}
+                              >
+                                {suggestion.display_name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <input 
                           type="text" 
