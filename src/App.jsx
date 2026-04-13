@@ -62,48 +62,45 @@ const App = () => {
       const query = address.street.trim();
       if (query.length > 2 && !isSearchingAddress) {
         try {
-          // Limpando prefixos e números para busca de sugestão mais precisa
+          // Limpando prefixos e números para busca de sugestão
           let cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
-          cleanQuery = cleanQuery.replace(/\d+.*$/, '').trim(); // Remove números e o que vem depois
+          cleanQuery = cleanQuery.replace(/\d+.*$/, '').trim();
           
-          const fetchUrl = (q) => `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=br&limit=8&addressdetails=1`;
+          // Usando Photon API (mais rápida e sem limites rígidos de rate limit)
+          // Focamos a busca nas coordenadas da loja para priorizar resultados locais
+          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&limit=8&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}&lang=pt`);
+          const data = await response.json();
           
-          let response = await fetch(fetchUrl(cleanQuery));
-          let data = await response.json();
-          
-          if (data.length === 0) {
-            response = await fetch(fetchUrl(cleanQuery + " Unamar Cabo Frio"));
-            data = await response.json();
-          }
-          
-          const filteredData = data.filter(item => item.address);
-          setAddressSuggestions(filteredData);
+          setAddressSuggestions(data.features || []);
         } catch (err) {
           console.error("Erro na busca de endereço:", err);
         }
       } else {
         setAddressSuggestions([]);
       }
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(searchTimeout);
   }, [address.street]);
 
-  const formatSuggestion = (item) => {
-    const road = item.address.road || item.address.street || "";
-    const neighborhood = item.address.suburb || item.address.neighbourhood || item.address.city_district || "";
-    const city = item.address.city || item.address.town || "";
+  const formatSuggestion = (feature) => {
+    const p = feature.properties;
+    const road = p.street || p.name || "";
+    const neighborhood = p.district || p.suburb || "";
+    const city = p.city || "";
     
     let label = road;
-    if (neighborhood) label += `, ${neighborhood}`;
+    if (neighborhood && neighborhood !== road) label += `, ${neighborhood}`;
     if (city) label += ` - ${city}`;
     
-    return label || item.display_name.split(',')[0];
+    return label || "Endereço não identificado";
   };
 
-  const handleSelectSuggestion = (suggestion) => {
-    const { lat, lon, address: addrDetails } = suggestion;
-    const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, parseFloat(lat), parseFloat(lon));
+  const handleSelectSuggestion = (feature) => {
+    const [lon, lat] = feature.geometry.coordinates;
+    const p = feature.properties;
+    
+    const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
     
     let fee = 5;
     if (distance > 2) {
@@ -111,23 +108,20 @@ const App = () => {
     }
     
     setDeliveryFee(fee);
-    setIsSearchingAddress(true); // Bloqueia trigger do useEffect temporariamente
+    setIsSearchingAddress(true);
     
-    // Tenta extrair o número se o usuário já tiver digitado no campo de rua
     const numberMatch = address.street.match(/\d+/);
     const extractedNumber = numberMatch ? numberMatch[0] : '';
 
     setAddress({
       ...address,
-      street: addrDetails.road || addrDetails.street || suggestion.display_name.split(',')[0],
+      street: p.street || p.name || address.street,
       number: extractedNumber || address.number,
-      neighborhood: addrDetails.suburb || addrDetails.neighbourhood || addrDetails.city_district || '',
-      zipCode: addrDetails.postcode || '',
+      neighborhood: p.district || p.suburb || '',
+      zipCode: p.postcode || '',
     });
     
     setAddressSuggestions([]);
-    
-    // Libera busca após um pequeno delay
     setTimeout(() => setIsSearchingAddress(false), 1000);
   };
 
