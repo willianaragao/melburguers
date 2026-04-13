@@ -188,7 +188,7 @@ const App = () => {
     });
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cart.length === 0) return;
     if (!address.street || !address.number || !address.neighborhood) {
       alert("Por favor, preencha o endereço completo!");
@@ -234,33 +234,27 @@ const App = () => {
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
-    // 2. Send to Dashboard (via n8n Webhook)
-    setIsPrinting(true);
-    
-    try {
-      const orderData = {
-        id: Math.random().toString(36).substr(2, 5).toUpperCase(),
-        items: cart,
-        subtotal: cartSubtotal,
-        deliveryFee: deliveryFee,
-        total: cartTotal,
-        address: address,
-        paymentMethod: paymentMethod,
-        timestamp: new Date().toISOString(),
-      };
+    // 2. Envio em segundo plano (Keepalive garante o envio mesmo trocando de página)
+    const orderData = {
+      id: Math.random().toString(36).substr(2, 5).toUpperCase(),
+      items: cart,
+      subtotal: cartSubtotal,
+      deliveryFee: deliveryFee,
+      total: cartTotal,
+      address: address,
+      paymentMethod: paymentMethod,
+      timestamp: new Date().toISOString(),
+    };
 
-      await fetch('https://SUA-URL-N8N.com/webhook/pedidos-mel-burgers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      });
-      
-    } catch (err) {
-      console.error("Falha ao enviar ao Dashboard:", err);
-    } finally {
-      setIsPrinting(false);
-      window.open(whatsappUrl, '_blank');
-    }
+    fetch('https://SUA-URL-N8N.com/webhook/pedidos-mel-burgers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData),
+      keepalive: true
+    }).catch(err => console.error("Erro background fetch:", err));
+
+    // Redirecionamento imediato para evitar bloqueio de popup no mobile
+    window.location.href = whatsappUrl;
   };
 
   return (
