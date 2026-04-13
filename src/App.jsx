@@ -438,7 +438,12 @@ const App = () => {
                 <button className="close-modal" onClick={() => setIsCartOpen(false)} style={{ position: 'absolute', right: '20px', top: '15px', background: '#f5f5f5', border: 'none', width: '30px', height: '30px', borderRadius: '50%', fontSize: '20px', lineHeight: 1, cursor: 'pointer' }}>×</button>
               </div>
 
-              <div className="cart-items-list" style={{ flex: 1, overflowY: 'auto', padding: '0 20px' }}>
+              <div className="cart-items-list" style={{ 
+                flex: 1, 
+                overflowY: checkoutStep === 'cart' ? 'auto' : 'visible', 
+                padding: '0 20px',
+                minHeight: checkoutStep === 'cart' ? 'auto' : '400px' 
+              }}>
                 {checkoutStep === 'cart' ? (
                   cart.length === 0 ? (
                     <div className="empty-cart" style={{ textAlign: 'center', padding: '50px 0', opacity: 0.3 }}>
