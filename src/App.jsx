@@ -200,37 +200,37 @@ const App = () => {
     
     let message = "\u2705 *PEDIDO CONFIRMADO \u2014 MEL BURGERS* \uD83C\uDF54\uD83C\uDF6F\n\n";
     
-    message += "━━━━━━━━━━━━━━━━━━━\n";
+    message += "━━━━━━━━━━━━━━━━━\n\n";
     message += "\uD83E\uDDFE *RESUMO DO PEDIDO*\n";
     cart.forEach(item => {
       message += `\u2022 ${item.name} \u2014 R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
     });
     
-    message += "\n━━━━━━━━━━━━━━━━━━━\n";
+    message += "\n━━━━━━━━━━━━━━━━━\n\n";
     message += "\uD83D\uDCCD *DADOS DE ENTREGA*\n";
     message += `${address.street}, ${address.number}\n`;
     message += `Bairro: ${address.neighborhood}\n`;
     if (address.zipCode) message += `CEP: ${address.zipCode}\n`;
     if (address.complement) message += `Refer\u00EAncia: ${address.complement}\n`;
     
-    message += "\n━━━━━━━━━━━━━━━━━━━\n";
+    message += "\n━━━━━━━━━━━━━━━━━\n\n";
     message += "\uD83D\uDCB3 *FORMA DE PAGAMENTO*\n";
     message += `${paymentMethod} confirmado \u2714\uFE0F\n`;
     
-    message += "\n━━━━━━━━━━━━━━━━━━━\n";
+    message += "\n━━━━━━━━━━━━━━━━━\n\n";
     message += `\uD83D\uDCB0 *TOTAL: R$ ${cartTotal.toFixed(2).replace('.', ',')}*\n`;
     
-    message += "\n━━━━━━━━━━━━━━━━━━━\n";
+    message += "\n━━━━━━━━━━━━━━━━━\n";
     message += "\uD83D\uDC68\u200D\uD83C\uDF73 *STATUS DO PEDIDO*\n";
     message += "Seu pedido j\u00E1 est\u00E1 em preparo \uD83D\uDD25\n\n";
     message += "\uD83D\uDEB4\u200D\u2642\uFE0F Em breve sair\u00E1 para entrega!\n";
     
-    message += "\n━━━━━━━━━━━━━━━━━━━\n";
+    message += "\n━━━━━━━━━━━━━━━━━\n";
     message += "\uD83D\uDCF2 *ACOMPANHE PELO WHATSAPP*\n";
     message += "Nossa equipe pode entrar em contato para atualiza\u00E7\u00F5es\n\n";
     message += "\u2728 Obrigado por escolher a Mel Burgers!\n";
     message += "\uD83C\uDF54 Sabor que conquista na primeira mordida";
-
+    
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
