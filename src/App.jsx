@@ -5,10 +5,11 @@ import {
   Truck, Link as LinkIcon, ChevronDown, Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { menuData } from './data/menu';
+import { getMenuData } from './utils/menuStore';
 import { printOrder, formatOrderForPrinter } from './utils/printer';
 
 const App = () => {
+  const [appMenuData, setAppMenuData] = useState(getMenuData());
   const [activeCategory, setActiveCategory] = useState('Lanches');
   const [cart, setCart] = useState([]);
   const [isOpen, setIsOpen] = useState(true);
@@ -42,7 +43,7 @@ const App = () => {
     return R * c; // Distância em km
   };
 
-  const categories = Object.keys(menuData.menu);
+  const categories = Object.keys(appMenuData.menu);
 
   const addToCart = (item) => {
     setCart([...cart, item]);
@@ -340,7 +341,7 @@ const App = () => {
         
         <div className="items-grid">
           <AnimatePresence mode="wait">
-            {menuData.menu[activeCategory].map((item, index) => (
+            {appMenuData.menu[activeCategory].map((item, index) => (
               <motion.div
                 key={item.id}
                 className="menu-card"
@@ -619,6 +620,43 @@ const App = () => {
                           </button>
                         ))}
                       </div>
+
+                      <AnimatePresence>
+                        {paymentMethod === 'PIX' && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            style={{ marginTop: '15px', padding: '15px', background: '#FFF9F0', borderRadius: '12px', border: '1px dashed #EC9424', textAlign: 'center', overflow: 'hidden' }}
+                          >
+                            <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#555' }}>
+                              <strong>Nossa Chave PIX:</strong><br />
+                              <span style={{ fontSize: '15px', color: '#2D1B14', fontWeight: 'bold' }}>22996153138</span>
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                              <input 
+                                type="text" 
+                                readOnly 
+                                value="22996153138"
+                                style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ccc', background: '#fff', color: '#333' }}
+                              />
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText("22996153138");
+                                  alert("Chave PIX Copiada!");
+                                }}
+                                style={{ padding: '8px 12px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                              >
+                                Copiar
+                              </button>
+                            </div>
+                            <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#888' }}>
+                              Faça a transferência no valor de <strong>R$ {cartTotal.toFixed(2).replace('.', ',')}</strong>.<br/>
+                              Você enviará o comprovante via WhatsApp no próximo passo.
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 )}
