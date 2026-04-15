@@ -5,7 +5,7 @@ import App from './App.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
 
 const Root = () => {
-  const isAdmin = new URLSearchParams(window.location.search).get('admin') === 'true';
+  const isAdmin = window.location.pathname === '/admin' || new URLSearchParams(window.location.search).has('admin');
   return isAdmin ? <AdminDashboard /> : <App />;
 };
 

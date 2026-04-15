@@ -1,0 +1,32 @@
+Used MCP tool: n8n-mcp/n8n_health_check
+Used MCP tool: n8n-mcp/n8n_create_workflow
+
+Pronto! O fluxo de integração com o Mercado Pago já foi construído automaticamente no seu n8n. O nome dele é **"Mel Burgers - Mercado Pago Pix Integracao"**.
+
+Ele foi criado com duas "trilhas" (linhas) principais:
+1.  **A de Cima (Gerar PIX):** Recebe o valor do seu site, manda pro Mercado Pago e devolve o código "Copia e Cola".
+2.  **A de Baixo (Receber Pagamento):** Ouve o Mercado Pago e, quando for _"Approved"_ (Pago), continua o fluxo para você poder adicionar envio de mensagem via WhatsApp ou atualização de painel.
+
+### 🔑 O que você precisa fazer agora:
+
+**1. Pegar o Token no Mercado Pago:**
+*   Acesse o [Mercado Pago Developers](https://www.mercadopago.com.br/developers/painel).
+*   Vá em **"Suas Integrações"** e crie uma nova aplicação (se não tiver).
+*   No menu esquerdo, vá em **"Credenciais de Produção"**.
+*   Copie o **Access Token** (`APP_USR-.......`).
+
+**2. Colar no seu n8n:**
+*   Abra o seu n8n e abra o workflow **"Mel Burgers - Mercado Pago Pix Integracao"**.
+*   Abra o nó chamado **"Criar PIX Mercado Pago"**.
+*   Lá embaixo vai ter um campo de Cabeçalho *(Headers)* chamado `Authorization`. Você verá o texto `Bearer COLOQUE_SEU_ACCESS_TOKEN_AQUI`. Troque apenas a parte do "COLOQUE SEU ACCESS..." pelo seu Token de verdade (mantenha o `Bearer ` no início com um espaço).
+*   Faça **exatamente a mesma coisa** no nó chamado **"Consultar Pagamento"** que fica na parte de baixo do fluxo.
+
+**3. Configurar Avisos (Webhooks) no Mercado Pago:**
+*   Abra o nó **"Webhook - Receber Pagamento MP"** no n8n.
+*   Copie a **URL de Produção** desse webhook.
+*   Lá no painel do Mercado Pago (na mesma tela onde pegou o token), clique em **Webhooks / Notificações (Webhooks)**.
+*   Cole lá a URL do n8n. Nos eventos, marque apenas **"Pagamentos (Payments)"**.
+
+---
+
+Vá pegar o Token e avise quando tiver colado lá no n8n. Depois que isso estiver pronto, vamos ali no arquivo `App.jsx` que acabei de mexer para conectarmos o seu site no n8n para pedir esse PIX dinâmico! Qualquer dúvida onde achar, só falar.
