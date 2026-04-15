@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, Plus, Clock, Star, ArrowRight, Home, 
   BadgeCheck, MoreHorizontal, UserPlus, MapPin, 
-  Truck, Link as LinkIcon, ChevronDown, Printer
+  Truck, Link as LinkIcon, ChevronDown, Printer, CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
+import { supabase } from './utils/supabase';
 import { getMenuData } from './utils/menuStore';
 import { printOrder, formatOrderForPrinter } from './utils/printer';
 
@@ -15,9 +17,11 @@ const App = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart' ou 'address'
+  const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart', 'address' ou 'payment'
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('PIX');
+  const [changeNeeded, setChangeNeeded] = useState('');
+  const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [address, setAddress] = useState({
     street: '',
     number: '',
@@ -27,6 +31,29 @@ const App = () => {
   });
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [isMenuLoading, setIsMenuLoading] = useState(true);
+
+  // Carregar Menu do Supabase
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('menu_config')
+          .select('data')
+          .eq('id', 1)
+          .single();
+        
+        if (data) {
+          setAppMenuData(data.data);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar menu do Supabase:", err);
+      } finally {
+        setIsMenuLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
 
   // Coordenadas aproximadas da Rua das Oliveiras, Unamar, Cabo Frio
   const SHOP_COORDS = { lat: -22.6225, lng: -42.0163 };
@@ -216,7 +243,10 @@ const App = () => {
     
     message += "\n━━━━━━━━━━━━━━━━━\n\n";
     message += "\uD83D\uDCB3 *FORMA DE PAGAMENTO*\n";
-    message += `${paymentMethod} confirmado \u2714\uFE0F\n`;
+    message += `${paymentMethod} confirmado ✔️\n`;
+    if (paymentMethod === 'Dinheiro' && changeNeeded) {
+      message += `Troco para: R$ ${parseFloat(changeNeeded).toFixed(2).replace('.', ',')}\n`;
+    }
     
     message += "\n━━━━━━━━━━━━━━━━━\n\n";
     message += `\uD83D\uDCB0 *TOTAL: R$ ${cartTotal.toFixed(2).replace('.', ',')}*\n`;
@@ -245,7 +275,32 @@ const App = () => {
       address: address,
       paymentMethod: paymentMethod,
       timestamp: new Date().toISOString(),
+      status: 'pendente'
     };
+
+    // Salva no Supabase para o painel admin ver em tempo real
+    const saveToSupabase = async () => {
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .insert([{
+            order_id: orderData.id,
+            items: orderData.items,
+            subtotal: orderData.subtotal,
+            delivery_fee: orderData.deliveryFee,
+            total: orderData.total,
+            address: orderData.address,
+            payment_method: orderData.paymentMethod,
+            status: 'pendente'
+          }]);
+        
+        if (error) throw error;
+      } catch (e) {
+        console.error("Erro ao salvar no Supabase:", e);
+      }
+    };
+
+    saveToSupabase();
 
     fetch('https://SUA-URL-N8N.com/webhook/pedidos-mel-burgers', {
       method: 'POST',
@@ -254,8 +309,44 @@ const App = () => {
       keepalive: true
     }).catch(err => console.error("Erro background fetch:", err));
 
-    // Redirecionamento imediato para evitar bloqueio de popup no mobile
-    window.location.href = whatsappUrl;
+    // 3. Efeito de Confete (Burst Principal)
+    confetti({
+      particleCount: 200,
+      spread: 90,
+      origin: { y: 0.6 },
+      zIndex: 4000,
+      colors: ['#EC9424', '#2D1B14', '#22c55e']
+    });
+
+    // Burst secundário para efeito mais intenso
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        zIndex: 4000,
+        colors: ['#EC9424', '#22c55e']
+      });
+      confetti({
+        particleCount: 100,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        zIndex: 4000,
+        colors: ['#EC9424', '#22c55e']
+      });
+    }, 250);
+
+    // 4. Mostrar tela de sucesso
+    setIsOrderSuccess(true);
+    setIsCartOpen(false);
+
+    // 5. Redirecionamento 
+    // Abrimos o WhatsApp em uma nova aba após 4 segundos para o cliente ver o confete
+    setTimeout(() => {
+      window.open(whatsappUrl, '_blank');
+    }, 4000);
   };
 
   return (
@@ -450,7 +541,7 @@ const App = () => {
               <div className="modal-header" style={{ padding: '16px 20px', position: 'relative', textAlign: 'center', borderBottom: '1px solid #f5f5f5' }}>
                 <div className="modal-handle" style={{ width: '40px', height: '4px', background: '#ddd', borderRadius: '2px', margin: '0 auto 12px' }}></div>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#2D1B14' }}>
-                  {checkoutStep === 'cart' ? 'Seu Carrinho' : 'Endereço de Entrega'}
+                  {checkoutStep === 'cart' ? 'Seu Carrinho' : checkoutStep === 'address' ? 'Endereço de Entrega' : 'Forma de Pagamento'}
                 </h3>
                 <button 
                   className="close-modal" 
@@ -463,9 +554,9 @@ const App = () => {
 
               <div className="cart-items-list" style={{ 
                 flex: 1, 
-                overflowY: checkoutStep === 'cart' ? 'auto' : 'visible', 
+                overflowY: 'auto', 
                 padding: '0 20px',
-                minHeight: checkoutStep === 'cart' ? 'auto' : '400px' 
+                minHeight: '300px'
               }}>
                 {checkoutStep === 'cart' ? (
                   cart.length === 0 ? (
@@ -493,7 +584,7 @@ const App = () => {
                       </div>
                     ))
                   )
-                ) : (
+                ) : checkoutStep === 'address' ? (
                   <div className="address-form" style={{ padding: '10px 0' }}>
                     <button 
                       onClick={handleGetLocation}
@@ -593,71 +684,111 @@ const App = () => {
                         className="address-input"
                       />
                     </div>
-
-                    <div style={{ marginTop: '20px' }}>
-                      <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '10px' }}>
-                        Forma de Pagamento
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                        {['PIX', 'Cartão', 'Dinheiro'].map((method) => (
-                          <button
-                            key={method}
-                            onClick={() => setPaymentMethod(method)}
-                            style={{
-                              padding: '10px 5px',
-                              borderRadius: '10px',
-                              border: '1px solid',
-                              borderColor: paymentMethod === method ? '#EC9424' : '#eee',
-                              background: paymentMethod === method ? '#FFF9F0' : 'white',
-                              color: paymentMethod === method ? '#EC9424' : '#888',
-                              fontSize: '13px',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
+                  </div>
+                ) : (
+                  <div className="payment-form" style={{ padding: '10px 0' }}>
+                    <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '10px' }}>
+                      Escolha como deseja pagar:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '20px' }}>
+                      {['PIX', 'Cartão', 'Dinheiro'].map((method) => (
+                        <button
+                          key={method}
+                          onClick={() => setPaymentMethod(method)}
+                          style={{
+                            padding: '12px 5px',
+                            borderRadius: '10px',
+                            border: '1px solid',
+                            borderColor: paymentMethod === method ? '#EC9424' : '#eee',
+                            background: paymentMethod === method ? '#FFF9F0' : 'white',
+                            color: paymentMethod === method ? '#EC9424' : '#888',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {method}
+                        </button>
+                      ))}
+                    </div>
+                    <AnimatePresence mode="wait">
+                      {paymentMethod === 'PIX' && (
+                        <motion.div 
+                          key="pix"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          style={{ 
+                            padding: '20px', 
+                            background: '#f0fdf4', 
+                            borderRadius: '16px', 
+                            border: '2px dashed #22c55e', 
+                            textAlign: 'center' 
+                          }}
+                        >
+                          <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#166534' }}>
+                            <strong>Nossa Chave PIX:</strong><br />
+                            <span style={{ fontSize: '16px', color: '#14532d', fontWeight: '800' }}>CNPJ 64.745.137/0001-58</span>
+                          </p>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText("64745137000158");
+                              alert("Chave PIX Copiada!");
+                            }}
+                            style={{ 
+                              width: '100%',
+                              padding: '12px', 
+                              background: '#22c55e', 
+                              color: 'white', 
+                              border: 'none', 
+                              borderRadius: '12px', 
+                              cursor: 'pointer', 
+                              fontSize: '14px', 
+                              fontWeight: 'bold',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px'
                             }}
                           >
-                            {method}
+                            Copiar Chave PIX
                           </button>
-                        ))}
-                      </div>
-
-                      <AnimatePresence>
-                        {paymentMethod === 'PIX' && (
-                          <motion.div 
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            style={{ marginTop: '15px', padding: '15px', background: '#FFF9F0', borderRadius: '12px', border: '1px dashed #EC9424', textAlign: 'center', overflow: 'hidden' }}
-                          >
-                            <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#555' }}>
-                              <strong>Nossa Chave PIX:</strong><br />
-                              <span style={{ fontSize: '15px', color: '#2D1B14', fontWeight: 'bold' }}>22996153138</span>
-                            </p>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                              <input 
-                                type="text" 
-                                readOnly 
-                                value="22996153138"
-                                style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ccc', background: '#fff', color: '#333' }}
-                              />
-                              <button 
-                                onClick={() => {
-                                  navigator.clipboard.writeText("22996153138");
-                                  alert("Chave PIX Copiada!");
-                                }}
-                                style={{ padding: '8px 12px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-                              >
-                                Copiar
-                              </button>
-                            </div>
-                            <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#888' }}>
-                              Faça a transferência no valor de <strong>R$ {cartTotal.toFixed(2).replace('.', ',')}</strong>.<br/>
-                              Você enviará o comprovante via WhatsApp no próximo passo.
-                            </p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                          <p style={{ marginTop: '10px', fontSize: '11px', color: '#166534', opacity: 0.8 }}>
+                            O comprovante deverá ser enviado no próximo passo.
+                          </p>
+                        </motion.div>
+                      )}
+                      {paymentMethod === 'Dinheiro' && (
+                        <motion.div 
+                          key="cash"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                        >
+                          <label style={{ fontSize: '14px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Troco para quanto?</label>
+                          <input 
+                            type="number" 
+                            placeholder="Ex: 50,00" 
+                            value={changeNeeded}
+                            onChange={(e) => setChangeNeeded(e.target.value)}
+                            className="address-input"
+                          />
+                          <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>Deixe em branco se não precisar de troco.</p>
+                        </motion.div>
+                      )}
+                      {paymentMethod === 'Cartão' && (
+                        <motion.div 
+                          key="card"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          style={{ textAlign: 'center', padding: '10px', color: '#888', fontSize: '14px' }}
+                        >
+                          Levaremos a maquininha até você! 💳
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
               </div>
@@ -685,11 +816,34 @@ const App = () => {
                     >
                       <Truck size={20} /> Ir para entrega
                     </button>
-                  ) : (
+                  ) : checkoutStep === 'address' ? (
                     <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                       <button 
                         className="action-btn btn-secondary" 
                         onClick={() => setCheckoutStep('cart')}
+                        style={{ flex: '0 0 80px', height: '54px', borderRadius: '15px', border: '1px solid #eee', background: 'white', fontSize: '0.9rem' }}
+                      >
+                        Voltar
+                      </button>
+                      <button 
+                        className="checkout-btn" 
+                        onClick={() => {
+                          if (!address.street || !address.number || !address.neighborhood) {
+                            alert("Preencha o endereço completo!");
+                            return;
+                          }
+                          setCheckoutStep('payment');
+                        }}
+                        style={{ flex: 1, height: '54px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '800', fontSize: '0.95rem', padding: '0 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
+                      >
+                        Prosseguir para o pagamento
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                      <button 
+                        className="action-btn btn-secondary" 
+                        onClick={() => setCheckoutStep('address')}
                         style={{ flex: '0 0 80px', height: '54px', borderRadius: '15px', border: '1px solid #eee', background: 'white', fontSize: '0.9rem' }}
                       >
                         Voltar
@@ -706,6 +860,103 @@ const App = () => {
                   )}
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Overay */}
+      <AnimatePresence>
+        {isOrderSuccess && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: '#ffffff',
+              zIndex: 3000,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '30px',
+              textAlign: 'center'
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", damping: 15 }}
+            >
+              <div style={{ 
+                width: '100px', 
+                height: '100px', 
+                background: '#f0fdf4', 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                margin: '0 auto 25px',
+                color: '#22c55e'
+              }}>
+                <CheckCircle2 size={60} />
+              </div>
+              <h1 style={{ color: '#2D1B14', fontSize: '2rem', fontWeight: '800', marginBottom: '15px' }}>
+                Pedido Realizado!
+              </h1>
+              <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '30px', maxWidth: '300px' }}>
+                Parabéns! Seu pedido foi enviado para nossa cozinha. Estamos abrindo o WhatsApp para você confirmar...
+              </p>
+              
+              <button 
+                className="checkout-btn"
+                onClick={() => {
+                  // Fallback btn caso o popup bloqueie
+                  const phoneNumber = "5522996153138";
+                  window.location.href = `https://wa.me/${phoneNumber}`;
+                }}
+                style={{
+                  width: '100%',
+                  padding: '18px',
+                  borderRadius: '16px',
+                  background: '#25D366',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: '700',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  boxShadow: '0 10px 20px rgba(37, 211, 102, 0.2)'
+                }}
+              >
+                Ir para o WhatsApp manualmente
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setIsOrderSuccess(false);
+                  setCart([]);
+                  setCheckoutStep('cart');
+                }}
+                style={{
+                  marginTop: '20px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Voltar ao Cardápio
+              </button>
             </motion.div>
           </motion.div>
         )}
