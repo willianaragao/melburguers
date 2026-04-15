@@ -28,6 +28,8 @@ const App = () => {
     neighborhood: '',
     complement: '',
     zipCode: '',
+    customerName: '',
+    customerPhone: '',
   });
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -88,22 +90,24 @@ const App = () => {
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
       const query = address.street.trim();
-      if (query.length > 1 && !isSearchingAddress) {
+      if (query.length > 3 && !isSearchingAddress) { // Aumentado para 3 caracteres para evitar buscas irrelevantes muito cedo
         try {
+          // Otimizando a limpeza da query
           let cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
           cleanQuery = cleanQuery.replace(/\d+.*$/, '').trim();
           
-          // Adicionamos "Cabo Frio" na busca interna para forçar resultados na região e evitar cidades em MG
-          const searchQuery = cleanQuery + " Cabo Frio";
-          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=10&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
+          if (!cleanQuery) return;
+
+          // Busca ultra-focada em Tamoios/Unamar/Cabo Frio
+          const searchQuery = `${cleanQuery} Tamoios Cabo Frio`;
+          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=6&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}&location_bias_scale=0.9`);
           const data = await response.json();
           
           if (data && data.features) {
-            // Filtrar para garantir que estamos pegando ruas ou locais com endereço, e no Brasil
             const brFeatures = data.features.filter(f => 
               f.properties.countrycode === 'BR' && 
-              (f.properties.street || f.properties.district || f.properties.suburb || f.properties.locality)
-            );
+              (f.properties.street || f.properties.district || f.properties.suburb || f.properties.locality || f.properties.name)
+            ).slice(0, 5); // Limitar a 5 para carregar mais rápido visualmente
             setAddressSuggestions(brFeatures);
           }
         } catch (err) {
@@ -112,7 +116,7 @@ const App = () => {
       } else {
         setAddressSuggestions([]);
       }
-    }, 300);
+    }, 150); // Reduzido para 150ms para resposta quase instantânea
 
     return () => clearTimeout(searchTimeout);
   }, [address.street]);
@@ -161,7 +165,7 @@ const App = () => {
     });
     
     setAddressSuggestions([]);
-    setTimeout(() => setIsSearchingAddress(false), 1000);
+    setTimeout(() => setIsSearchingAddress(false), 400); // Reduzido bloqueio para 400ms
   };
 
   const handleGetLocation = () => {
@@ -223,9 +227,55 @@ const App = () => {
       return;
     }
 
-    // 1. WhatsApp Message Template Customizado — Mel Burgers \uD83C\uDF6F
-    const phoneNumber = "5522996153138"; 
+    // 1. Definição imediata dos dados do pedido
+    const orderData = {
+      id: Math.random().toString(36).substr(2, 5).toUpperCase(),
+      items: cart,
+      subtotal: cartSubtotal,
+      deliveryFee: deliveryFee,
+      total: cartTotal,
+      address: address,
+      paymentMethod: paymentMethod,
+      timestamp: new Date().toISOString(),
+      status: 'pendente'
+    };
+
+    // 2. ENVIO IMEDIATO PARA O SUPABASE (Realtime Admin)
+    console.log("Tentando salvar pedido no Supabase...", orderData);
     
+    supabase.from('pedidos').insert([{
+      order_id: orderData.id,
+      items: orderData.items,
+      subtotal: orderData.subtotal,
+      delivery_fee: orderData.deliveryFee,
+      total: orderData.total,
+      address: orderData.address,
+      payment_method: orderData.paymentMethod,
+      status: 'pendente'
+    }]).then(({ error, data }) => {
+      if (error) {
+        console.error("ERRO CRÍTICO SUPABASE:", error);
+        alert(`Erro ao enviar para o painel: ${error.message}. Verifique se a tabela 'pedidos' tem as colunas corretas.`);
+      } else {
+        console.log("Pedido salvo com sucesso no banco!", data);
+      }
+    });
+
+    // 3. Efeito de Confete (Instantâneo)
+    confetti({
+      particleCount: 200,
+      spread: 90,
+      origin: { y: 0.6 },
+      zIndex: 4000,
+      colors: ['#EC9424', '#2D1B14', '#22c55e']
+    });
+
+    // 4. Mostrar tela de sucesso imediatamente
+    setIsOrderSuccess(true);
+    setIsCartOpen(false);
+
+    // 5. WhatsApp Message Template — Mel Burgers
+    const phoneNumber = "5522996153138"; 
     let message = "\u2705 *PEDIDO CONFIRMADO \u2014 MEL BURGERS* \uD83C\uDF54\uD83C\uDF6F\n\n";
     
     message += "━━━━━━━━━━━━━━━━━\n\n";
@@ -265,85 +315,15 @@ const App = () => {
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
-    // 2. Envio em segundo plano (Keepalive garante o envio mesmo trocando de página)
-    const orderData = {
-      id: Math.random().toString(36).substr(2, 5).toUpperCase(),
-      items: cart,
-      subtotal: cartSubtotal,
-      deliveryFee: deliveryFee,
-      total: cartTotal,
-      address: address,
-      paymentMethod: paymentMethod,
-      timestamp: new Date().toISOString(),
-      status: 'pendente'
-    };
-
-    // Salva no Supabase para o painel admin ver em tempo real
-    const saveToSupabase = async () => {
-      try {
-        const { error } = await supabase
-          .from('orders')
-          .insert([{
-            order_id: orderData.id,
-            items: orderData.items,
-            subtotal: orderData.subtotal,
-            delivery_fee: orderData.deliveryFee,
-            total: orderData.total,
-            address: orderData.address,
-            payment_method: orderData.paymentMethod,
-            status: 'pendente'
-          }]);
-        
-        if (error) throw error;
-      } catch (e) {
-        console.error("Erro ao salvar no Supabase:", e);
-      }
-    };
-
-    saveToSupabase();
-
+    // 6. Envio para n8n em segundo plano
     fetch('https://SUA-URL-N8N.com/webhook/pedidos-mel-burgers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData),
       keepalive: true
-    }).catch(err => console.error("Erro background fetch:", err));
+    }).catch(err => console.error("Erro n8n:", err));
 
-    // 3. Efeito de Confete (Burst Principal)
-    confetti({
-      particleCount: 200,
-      spread: 90,
-      origin: { y: 0.6 },
-      zIndex: 4000,
-      colors: ['#EC9424', '#2D1B14', '#22c55e']
-    });
-
-    // Burst secundário para efeito mais intenso
-    setTimeout(() => {
-      confetti({
-        particleCount: 100,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        zIndex: 4000,
-        colors: ['#EC9424', '#22c55e']
-      });
-      confetti({
-        particleCount: 100,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        zIndex: 4000,
-        colors: ['#EC9424', '#22c55e']
-      });
-    }, 250);
-
-    // 4. Mostrar tela de sucesso
-    setIsOrderSuccess(true);
-    setIsCartOpen(false);
-
-    // 5. Redirecionamento 
-    // Abrimos o WhatsApp em uma nova aba após 4 segundos para o cliente ver o confete
+    // 7. Redirecionamento 
     setTimeout(() => {
       window.open(whatsappUrl, '_blank');
     }, 4000);
@@ -608,16 +588,19 @@ const App = () => {
                     </button>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', position: 'relative' }}>
-                      <div style={{ position: 'relative' }}>
-                        <input 
-                          type="text" 
-                          placeholder="Rua / Logradouro" 
-                          value={address.street}
-                          onChange={(e) => setAddress({...address, street: e.target.value})}
-                          className="address-input"
-                          style={{ width: '100%' }}
-                        />
-                        {addressSuggestions.length > 0 && (
+                        <div style={{ position: 'relative' }}>
+                          <input 
+                            type="text" 
+                            placeholder="Rua / Logradouro" 
+                            value={address.street}
+                            onChange={(e) => setAddress({...address, street: e.target.value})}
+                            className="address-input"
+                            style={{ width: '100%', paddingLeft: '40px' }}
+                          />
+                          <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}>
+                            <MapPin size={18} />
+                          </div>
+                          {addressSuggestions.length > 0 && (
                           <div style={{
                             position: 'absolute',
                             top: '100%',
@@ -639,10 +622,9 @@ const App = () => {
                                 style={{
                                   padding: '12px 15px',
                                   borderBottom: idx === addressSuggestions.length - 1 ? 'none' : '1px solid #f5f5f5',
-                                  fontSize: '14px',
                                   cursor: 'pointer',
-                                  color: '#333',
-                                  fontWeight: '500'
+                                  fontSize: '0.9rem',
+                                  color: '#333'
                                 }}
                               >
                                 {formatSuggestion(suggestion)}
@@ -676,6 +658,24 @@ const App = () => {
                         onChange={(e) => setAddress({...address, zipCode: e.target.value})}
                         className="address-input"
                       />
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <input 
+                          type="text" 
+                          placeholder="Seu Nome" 
+                          value={address.customerName}
+                          onChange={(e) => setAddress({...address, customerName: e.target.value})}
+                          style={{ flex: 1 }}
+                          className="address-input"
+                        />
+                        <input 
+                          type="tel" 
+                          placeholder="WhasApp (DDD)" 
+                          value={address.customerPhone}
+                          onChange={(e) => setAddress({...address, customerPhone: e.target.value})}
+                          style={{ flex: 1 }}
+                          className="address-input"
+                        />
+                      </div>
                       <input 
                         type="text" 
                         placeholder="Ponto de Referência / Complemento" 
@@ -828,10 +828,23 @@ const App = () => {
                       <button 
                         className="checkout-btn" 
                         onClick={() => {
+                          const cleanPhone = address.customerPhone?.replace(/\D/g, '') || '';
+                          
                           if (!address.street || !address.number || !address.neighborhood) {
-                            alert("Preencha o endereço completo!");
+                            alert("Por favor, preencha o seu endereço completo!");
                             return;
                           }
+                          
+                          if (!address.customerName || address.customerName.length < 3) {
+                            alert("Por favor, insira seu nome completo!");
+                            return;
+                          }
+
+                          if (cleanPhone.length < 10) {
+                            alert("Por favor, insira um número de WhatsApp válido (com DDD)!");
+                            return;
+                          }
+
                           setCheckoutStep('payment');
                         }}
                         style={{ flex: 1, height: '54px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '800', fontSize: '0.95rem', padding: '0 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
