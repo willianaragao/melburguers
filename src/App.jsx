@@ -72,6 +72,19 @@ const App = () => {
     return R * c; // Distância em km
   };
 
+  const getCalculatedFee = (distance, streetName = "") => {
+    // Regra de Exceção: Rua das Lebres sempre R$ 7,00
+    if (streetName.toLowerCase().includes("lebres")) {
+      return 7;
+    }
+    
+    let fee = 5;
+    if (distance > 2) {
+      fee += (distance - 2) * 1.20;
+    }
+    return fee;
+  };
+
   const categories = Object.keys(appMenuData.menu);
 
   const addToCart = (item) => {
@@ -145,10 +158,8 @@ const App = () => {
     
     const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
     
-    let fee = 5;
-    if (distance > 2) {
-      fee += (distance - 2) * 1.20;
-    }
+    const streetName = p.street || p.name || "";
+    const fee = getCalculatedFee(distance, streetName);
     
     setDeliveryFee(fee);
     setIsSearchingAddress(true);
@@ -179,21 +190,13 @@ const App = () => {
       
       // Cálculo da distância e frete (Nova regra: 5,00 base até 2km + 1,20/km adicional)
       const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
-      let fee = 5;
-      if (distance > 2) {
-        fee += (distance - 2) * 1.20;
-      }
-      
-      setDeliveryFee(fee);
+        const finalStreet = addr.road || addr.street || addr.suburb || '';
+        const finalFee = getCalculatedFee(distance, finalStreet);
+        setDeliveryFee(finalFee);
 
-      try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-        const data = await response.json();
-        const addr = data.address;
-        
         setAddress(prev => ({
           ...prev,
-          street: addr.road || addr.street || addr.suburb || '',
+          street: finalStreet,
           neighborhood: addr.suburb || addr.neighbourhood || addr.city_district || '',
         }));
       } catch (err) {
