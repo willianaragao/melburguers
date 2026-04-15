@@ -36,16 +36,18 @@ export const formatOrderForPrinter = (cart, total, address) => {
   return new TextEncoder().encode(text);
 };
 
-export const printOrder = async (orderData) => {
+
+export const connectToPrinter = async () => {
   try {
     console.log("Requesting Bluetooth Device...");
     const device = await navigator.bluetooth.requestDevice({
       filters: [
         { services: ['000018f0-0000-1000-8000-00805f9b34fb'] },
-        { namePrefix: 'TP' }, // Common for Thermal Printers
+        { namePrefix: 'TP' },
         { namePrefix: 'MTP' },
         { namePrefix: 'Inner' },
-        { namePrefix: 'Blue' }
+        { namePrefix: 'Blue' },
+        { namePrefix: 'RP' }
       ],
       optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
     });
@@ -58,19 +60,34 @@ export const printOrder = async (orderData) => {
 
     console.log("Getting Characteristic...");
     const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+    
+    return characteristic;
+  } catch (error) {
+    console.error("Bluetooth Connection Error:", error);
+    return null;
+  }
+};
 
+export const sendToPrinter = async (characteristic, orderData) => {
+  try {
     console.log("Writing Data...");
-    // Split data into chunks if it's too large for MTU
     const chunkSize = 20;
     for (let i = 0; i < orderData.length; i += chunkSize) {
       await characteristic.writeValue(orderData.slice(i, i + chunkSize));
     }
-
     console.log("Print Complete!");
     return true;
   } catch (error) {
-    console.error("Bluetooth Error:", error);
-    // If user canceled or service not found, we still want to continue to WhatsApp
+    console.error("Print Error:", error);
     return false;
   }
+};
+
+// Manteve para retrocompatibilidade se necessário
+export const printOrder = async (orderData) => {
+  const characteristic = await connectToPrinter();
+  if (characteristic) {
+    return await sendToPrinter(characteristic, orderData);
+  }
+  return false;
 };

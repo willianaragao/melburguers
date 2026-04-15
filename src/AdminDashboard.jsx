@@ -5,7 +5,7 @@ import {
   DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { printOrder, formatOrderForPrinter } from './utils/printer';
+import { printOrder, formatOrderForPrinter, connectToPrinter, sendToPrinter } from './utils/printer';
 import { getMenuData, saveMenuData } from './utils/menuStore';
 import { supabase } from './utils/supabase';
 
@@ -20,7 +20,9 @@ const AdminDashboard = () => {
   
   const [orders, setOrders] = useState([]);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isPrinterReady, setIsPrinterReady] = useState(false);
   const [isAutoPrint, setIsAutoPrint] = useState(false);
+  const printerRef = useRef(null);
   const lastOrderId = useRef(null);
   
   // Finance State
@@ -205,13 +207,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const handlePrinterConnect = async () => {
+    const characteristic = await connectToPrinter();
+    if (characteristic) {
+      printerRef.current = characteristic;
+      setIsPrinterReady(true);
+      alert("Impressora conectada com sucesso!");
+    } else {
+      setIsPrinterReady(false);
+      alert("Não foi possível conectar à impressora.");
+    }
+  };
+
   const handlePrint = async (order) => {
     setIsPrinting(true);
     const printerData = formatOrderForPrinter(order.items, order.total, order.address);
+    
     try {
-      await printOrder(printerData);
+      if (printerRef.current) {
+        await sendToPrinter(printerRef.current, printerData);
+      } else {
+        // Se não houver conexão prévia, tenta conectar e imprimir na hora
+        const success = await printOrder(printerData);
+        if (!success) throw new Error("Falha na impressão");
+      }
     } catch (err) {
-      alert("Erro ao imprimir. Verifique se a impressora está ligada e pareada.");
+      alert("Erro ao imprimir. Verifique a conexão com a impressora.");
     } finally {
       setIsPrinting(false);
     }
@@ -604,14 +625,14 @@ const AdminDashboard = () => {
               </div>
               
               <button 
-                onClick={() => setIsAutoPrint(!isAutoPrint)}
+                onClick={handlePrinterConnect}
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: '10px',
                   padding: '12px 20px',
                   borderRadius: '14px',
-                  background: isAutoPrint ? '#22c55e' : '#161618',
+                  background: isPrinterReady ? '#22c55e' : '#161618',
                   color: 'white',
                   border: '1px solid rgba(255,255,255,0.05)',
                   fontWeight: 700,
@@ -622,7 +643,7 @@ const AdminDashboard = () => {
                 }}
               >
                 <Printer size={18} />
-                {isAutoPrint ? 'Auto-Print Ativo' : 'Ativar Auto-Print'}
+                {isPrinterReady ? 'IMPRESSORA OK' : 'CONECTAR IMPRESSORA'}
               </button>
             </div>
 
