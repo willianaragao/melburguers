@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { printOrder, formatOrderForPrinter, connectToPrinter, sendToPrinter } from './utils/printer';
 import { getMenuData, saveMenuData } from './utils/menuStore';
 import { supabase } from './utils/supabase';
+import { FinanceDashboard } from './FinanceDashboard';
+import { OrdersKanban } from './OrdersKanban';
 
 const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,8 +29,12 @@ const AdminDashboard = () => {
   
   // Finance State
   const [financeTransactions, setFinanceTransactions] = useState([]);
-  const [isAddingExpense, setIsAddingExpense] = useState(false);
-  const [newExpense, setNewExpense] = useState({ description: '', amount: '', type: 'exit' });
+  const [financeCategories, setFinanceCategories] = useState([
+    { id: '1', name: 'Suprimentos', color: '#3b82f6' },
+    { id: '2', name: 'Contas', color: '#ef4444' },
+    { id: '3', name: 'Funcionários', color: '#10b981' },
+    { id: '4', name: 'Manutenção', color: '#f59e0b' },
+  ]);
   
   // Menu State
   const [appMenuData, setAppMenuData] = useState(null);
@@ -146,30 +152,31 @@ const AdminDashboard = () => {
         .select('*')
         .order('created_at', { ascending: false });
       if (data) setFinanceTransactions(data);
+      const { data: cats } = await supabase.from('finance_categories').select('*');
+      if (cats && cats.length > 0) setFinanceCategories(cats);
     } catch (err) {
       console.error("Erro financeiro:", err);
     }
   };
 
-  const handleAddExpense = async () => {
-    if (!newExpense.description || !newExpense.amount) return;
+  const handleAddTransaction = async (newTrans) => {
     try {
-      const { data, error } = await supabase
-        .from('finance')
-        .insert([{ 
-          description: newExpense.description, 
-          amount: parseFloat(newExpense.amount), 
-          type: 'exit' 
-        }])
-        .select();
-      
-      if (data) {
-        setFinanceTransactions([data[0], ...financeTransactions]);
-        setIsAddingExpense(false);
-        setNewExpense({ description: '', amount: '', type: 'exit' });
-      }
-    } catch (err) {
-      alert("Erro ao salvar despesa");
+      const { data } = await supabase.from('finance').insert([{ 
+        description: newTrans.description, 
+        amount: parseFloat(newTrans.amount), 
+        type: newTrans.type,
+        category_id: newTrans.categoryId || null
+      }]).select();
+      if (data) setFinanceTransactions([data[0], ...financeTransactions]);
+    } catch (err) { alert("Erro ao salvar transação"); }
+  };
+
+  const handleAddCategory = async (newCat) => {
+    try {
+      const { data } = await supabase.from('finance_categories').insert([newCat]).select();
+      if (data) setFinanceCategories([...financeCategories, data[0]]);
+    } catch (err) { 
+      setFinanceCategories([...financeCategories, { ...newCat, id: Date.now().toString() }]);
     }
   };
 
@@ -561,31 +568,33 @@ const AdminDashboard = () => {
         paddingBottom: isMobile ? '100px' : '40px',
         overflowY: 'auto' 
       }}>
-        <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', gap: '20px' }}>
-          <div>
-            <h1 style={{ fontSize: isMobile ? '24px' : '32px', fontWeight: 900, color: '#ffffff', letterSpacing: '-1px', marginBottom: '8px' }}>
-              {activeTab === 'orders' ? 'Painel de Operações' : activeTab === 'menu' ? 'Editor de Cardápio' : 'Inteligência Financeira'}
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>
-              <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 10px #22c55e' }}></div>
-              Online • {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
+        {activeTab !== 'finance' && (
+          <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', gap: '20px' }}>
+            <div>
+              <h1 style={{ fontSize: isMobile ? '24px' : '32px', fontWeight: 900, color: '#ffffff', letterSpacing: '-1px', marginBottom: '8px' }}>
+                {activeTab === 'orders' ? 'Painel de Operações' : 'Editor de Cardápio'}
+              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>
+                <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 10px #22c55e' }}></div>
+                Online • {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </div>
             </div>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '12px', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
-            <button 
-              onClick={playNotificationSound}
-              style={{ padding: '10px 16px', borderRadius: '12px', background: 'rgba(236,148,36,0.1)', border: '1px solid rgba(236,148,36,0.2)', color: '#EC9424', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
-            >
-              <Bell size={16} />
-              TESTE DE SOM
-            </button>
-            <div style={{ padding: '10px 16px', borderRadius: '12px', background: '#161618', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
-               <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 10px #22c55e' }}></div>
-               <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>Realtime</span>
+            
+            <div style={{ display: 'flex', gap: '12px', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
+              <button 
+                onClick={playNotificationSound}
+                style={{ padding: '10px 16px', borderRadius: '12px', background: 'rgba(236,148,36,0.1)', border: '1px solid rgba(236,148,36,0.2)', color: '#EC9424', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
+              >
+                <Bell size={16} />
+                TESTE DE SOM
+              </button>
+              <div style={{ padding: '10px 16px', borderRadius: '12px', background: '#161618', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
+                 <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 10px #22c55e' }}></div>
+                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>Realtime</span>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {activeTab === 'orders' && (
           <>
@@ -647,169 +656,7 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <div className="orders-grid" style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(8, 1fr)', 
-              gap: '12px',
-              maxHeight: 'calc(100vh - 280px)',
-              overflowY: 'auto',
-              paddingRight: '8px',
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(255,255,255,0.1) transparent'
-            }}>
-              <AnimatePresence initial={false}>
-                {filteredOrders.map(order => {
-                  const isPending = order.status === 'pendente';
-                  const isPaid = order.status === 'pago';
-                  const isConcluded = order.status === 'concluido';
-
-                  let borderColor = '#EC9424'; // Laranja Padrão
-                  let statusText = 'Aguardando pagamento';
-                  
-                  if (isPaid) {
-                    borderColor = '#3b82f6'; // Azul Pago
-                    statusText = 'Pagamento Confirmado';
-                  } else if (isConcluded) {
-                    borderColor = '#00ff88'; // Verde Neon Concluído
-                    statusText = 'Pedido Finalizado';
-                  }
-
-                  const clientPhone = order.address?.customerPhone?.replace(/\D/g, '');
-                  const waLink = clientPhone ? `https://wa.me/55${clientPhone}` : null;
-
-                  return (
-                    <motion.div 
-                      key={order.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                      animate={{ 
-                        opacity: isConcluded ? 0.7 : 1, 
-                        scale: isConcluded ? 0.98 : 1,
-                        boxShadow: `0 0 20px ${borderColor}15`,
-                        border: `1.5px solid ${borderColor}`,
-                        y: 0
-                      }}
-                      exit={{ 
-                        opacity: 0, 
-                        scale: 0.5, 
-                        y: -100,
-                        transition: { duration: 0.4, ease: "backIn" }
-                      }}
-                      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                      style={{
-                        background: '#161618',
-                        borderRadius: '20px',
-                        padding: '12px',
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        minHeight: '320px'
-                      }}
-                    >
-                      {/* Top Header Compact */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <div>
-                          <div style={{ fontWeight: 900, fontSize: '14px', color: '#ffffff' }}>#{order.id}</div>
-                          <div style={{ 
-                            fontSize: '8px', 
-                            fontWeight: 900, 
-                            color: borderColor, 
-                            textTransform: 'uppercase', 
-                            letterSpacing: '0.5px',
-                            marginTop: '2px'
-                          }}>
-                            {statusText}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '12px', fontWeight: 900, color: borderColor }}>
-                            R$ {order.total.toFixed(2)}
-                          </div>
-                          <div style={{ fontSize: '8px', color: '#64748b' }}>
-                             {new Date(order.created_at || order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700, marginBottom: '8px' }}>
-                        Cliente: <span style={{ color: '#fff' }}>{order.address?.customerName || 'N/A'}</span>
-                      </div>
-
-                      {/* Items List - Alta Densidade com Scroll se Necessário */}
-                      <div style={{ 
-                        flex: 1, 
-                        maxHeight: '120px', 
-                        overflowY: 'auto', 
-                        marginBottom: '10px', 
-                        background: 'rgba(255,255,255,0.02)', 
-                        borderRadius: '12px', 
-                        padding: '8px',
-                        scrollbarWidth: 'none'
-                      }}>
-                        {order.items.map((item, i) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', marginBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: '4px' }}>
-                            <span style={{ fontWeight: 600, color: '#e2e8f0' }}>{item.quantity}x {item.name}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Address Mini */}
-                      <div style={{ marginBottom: '10px' }}>
-                         <div style={{ fontSize: '7px', fontWeight: 800, color: '#64748b', marginBottom: '2px' }}>ENDEREÇO</div>
-                        <div style={{ fontSize: '10px', color: '#e2e8f0', fontWeight: 600, lineHeight: '1.2' }}>
-                          {order.address?.street}, {order.address?.number}
-                        </div>
-                      </div>
-
-                      {/* Actions Hyper Compact */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          {waLink && (
-                             <a 
-                              href={waLink} target="_blank" rel="noreferrer" 
-                              style={{ flex: 1, background: '#22c55e', color: 'white', padding: '6px', borderRadius: '8px', fontSize: '9px', textDecoration: 'none', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                            >
-                              <MessageSquare size={12} /> WhatsApp
-                            </a>
-                          )}
-                           <button 
-                            style={{ width: '30px', height: '28px', background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={() => handlePrint(order)}
-                          >
-                            <Printer size={14} color="#94a3b8" />
-                          </button>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          {isPending && (
-                            <button 
-                              style={{ flex: 1, padding: '8px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '900', fontSize: '10px', cursor: 'pointer' }}
-                              onClick={() => updateStatus(order.id, 'pago')}
-                            >
-                              PAGAR
-                            </button>
-                          )}
-                          {isPaid && (
-                              <button 
-                                style={{ flex: 1, padding: '8px', background: '#00ff88', color: '#004422', border: 'none', borderRadius: '10px', fontWeight: '900', fontSize: '10px', cursor: 'pointer' }}
-                                onClick={() => updateStatus(order.id, 'concluido')}
-                              >
-                                CONCLUIR
-                              </button>
-                          )}
-                           <button 
-                            style={{ width: '28px', height: '28px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={() => { if(window.confirm('Excluir?')) updateStatus(order.id, 'excluido') }}
-                          >
-                            <Trash2 size={12} color="#ef4444" />
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
+            <OrdersKanban orders={orders} updateStatus={updateStatus} handlePrint={handlePrint} />
           </>
         )}
 
@@ -955,126 +802,16 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === 'finance' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', maxWidth: '1000px' }}>
-             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '15px' }}>
-                <div style={{ background: 'linear-gradient(135deg, #0a0a0b 0%, #161618 100%)', color: 'white', padding: '20px', borderRadius: '24px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
-                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-                    <div style={{ padding: '8px', background: 'rgba(0, 255, 136, 0.1)', borderRadius: '10px' }}>
-                      <TrendingUp size={18} color="#00ff88" />
-                    </div>
-                   </div>
-                   <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>LUCRO LÍQUIDO</span>
-                   <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff', margin: '6px 0' }}>R$ {netProfit.toFixed(2).replace('.', ',')}</h2>
-                </div>
-                <div style={{ background: '#161618', padding: '20px', borderRadius: '24px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-                      <div style={{ padding: '8px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '10px' }}>
-                        <ArrowUpCircle size={18} color="#22c55e" />
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>BRUTO RECEBIDO</span>
-                    <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#22c55e', margin: '6px 0' }}>R$ {totalRevenue.toFixed(2).replace('.', ',')}</h2>
-                </div>
-                <div style={{ background: '#161618', padding: '20px', borderRadius: '24px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-                      <div style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '10px' }}>
-                        <ArrowDownCircle size={18} color="#ef4444" />
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>TOTAL DE GASTOS</span>
-                    <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#ef4444', margin: '6px 0' }}>R$ {totalExpenses.toFixed(2).replace('.', ',')}</h2>
-                </div>
-             </div>
-
-             <div style={{ background: '#161618', borderRadius: '28px', padding: '25px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 900, marginBottom: '20px', color: '#ffffff', letterSpacing: '0.5px' }}>Registrar Gasto (Saída)</h3>
-                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '12px' }}>
-                   <input 
-                    placeholder="Descrição..." 
-                    value={newExpense.description} 
-                    onChange={e => setNewExpense({...newExpense, description: e.target.value})} 
-                    style={{ flex: 2, padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', fontSize: '13px' }} 
-                   />
-                   <input 
-                    placeholder="R$ 0,00" 
-                    type="number" 
-                    value={newExpense.amount} 
-                    onChange={e => setNewExpense({...newExpense, amount: e.target.value})} 
-                    style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', fontSize: '13px' }} 
-                   />
-                   <button 
-                    onClick={handleAddExpense} 
-                    style={{ background: '#ffffff', color: '#000000', padding: '0 25px', borderRadius: '12px', fontWeight: '900', border: 'none', cursor: 'pointer', height: '44px', fontSize: '13px' }}
-                   >
-                    REGISTRAR GASTO
-                   </button>
-                </div>
-             </div>
-
-             {/* Fluxo de Caixa Detalhado */}
-             <div style={{ background: '#161618', borderRadius: '28px', padding: '25px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                   <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#ffffff', letterSpacing: '0.5px' }}>Fluxo de Caixa Detalhado</h3>
-                   <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 800, background: 'rgba(255,255,255,0.02)', padding: '5px 12px', borderRadius: '8px' }}>
-                      {dateFilter === 'today' ? 'FILTRADO: HOJE' : 'HISTÓRICO COMPLETO'}
-                   </span>
-                </div>
-                
-                <div style={{ overflowX: 'auto' }}>
-                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                      <thead>
-                         <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                            <th style={{ padding: '12px 10px', fontSize: '11px', color: '#64748b', fontWeight: 800 }}>TIPO</th>
-                            <th style={{ padding: '12px 10px', fontSize: '11px', color: '#64748b', fontWeight: 800 }}>DESCRIÇÃO</th>
-                            <th style={{ padding: '12px 10px', fontSize: '11px', color: '#64748b', fontWeight: 800 }}>VALOR</th>
-                            <th style={{ padding: '12px 10px', fontSize: '11px', color: '#64748b', fontWeight: 800 }}>DATA/HORA</th>
-                         </tr>
-                      </thead>
-                      <tbody>
-                         {[
-                           ...filteredFinanceOrders.map(o => ({
-                              type: 'entry',
-                              desc: `Pedido #${o.id} - ${o.address?.customerName || 'Cliente'}`,
-                              val: o.total,
-                              date: new Date(o.created_at || o.timestamp)
-                           })),
-                           ...filteredExpenses.map(e => ({
-                              type: 'exit',
-                              desc: e.description,
-                              val: e.amount,
-                              date: new Date(e.created_at)
-                           }))
-                         ]
-                         .sort((a, b) => b.date - a.date)
-                         .map((item, idx) => (
-                           <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', transition: 'background 0.2s' }}>
-                              <td style={{ padding: '15px 10px' }}>
-                                 <div style={{ 
-                                    display: 'inline-flex', 
-                                    padding: '4px 8px', 
-                                    borderRadius: '6px', 
-                                    fontSize: '9px', 
-                                    fontWeight: 900,
-                                    background: item.type === 'entry' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                    color: item.type === 'entry' ? '#00ff88' : '#ef4444'
-                                 }}>
-                                    {item.type === 'entry' ? 'ENTRADA' : 'SAÍDA'}
-                                 </div>
-                              </td>
-                              <td style={{ padding: '15px 10px', fontSize: '13px', color: '#e2e8f0', fontWeight: 600 }}>{item.desc}</td>
-                              <td style={{ padding: '15px 10px', fontSize: '14px', fontWeight: 800, color: item.type === 'entry' ? '#00ff88' : '#ef4444' }}>
-                                 {item.type === 'entry' ? '+' : '-'} R$ {item.val.toFixed(2).replace('.', ',')}
-                              </td>
-                              <td style={{ padding: '15px 10px', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
-                                 {item.date.toLocaleDateString()} {item.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </td>
-                           </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                </div>
-             </div>
-          </div>
+           <FinanceDashboard 
+             orders={orders.filter(o => o.status === 'concluido' || o.status === 'pago')}
+             transactions={financeTransactions}
+             categories={financeCategories}
+             onAddTransaction={handleAddTransaction}
+             onAddCategory={handleAddCategory}
+             playNotificationSound={playNotificationSound}
+             handlePrinterConnect={handlePrinterConnect}
+             isPrinterReady={isPrinterReady}
+           />
         )}
       </main>
 

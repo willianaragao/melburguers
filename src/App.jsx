@@ -188,8 +188,12 @@ const App = () => {
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
       
-      // Cálculo da distância e frete (Nova regra: 5,00 base até 2km + 1,20/km adicional)
-      const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const data = await response.json();
+        const addr = data.address || {};
+        
+        const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
         const finalStreet = addr.road || addr.street || addr.suburb || '';
         const finalFee = getCalculatedFee(distance, finalStreet);
         setDeliveryFee(finalFee);
