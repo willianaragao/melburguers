@@ -403,8 +403,8 @@ const AdminDashboard = () => {
     // Se estiver na aba de Excluídos, só mostra excluídos
     if (statusFilter === 'deleted') return order.status === 'excluido';
 
-    // Se NÃO estiver na aba de Concluídos/Excluídos, esconde ambos
-    if (order.status === 'concluido' || order.status === 'excluido') return false;
+    // Se NÃO estiver na aba de Excluídos, esconde apenas excluídos (concluídos aparecem na Fila Geral agora)
+    if (order.status === 'excluido') return false;
 
     // Filtros adicionais de Data e Status
     if (dateFilter === 'today' && !isToday) return false;
@@ -578,7 +578,7 @@ const AdminDashboard = () => {
                 Teste de som
               </button>
               <div style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 <div style={{ width: '6px', height: '6px', background: '#52525b', borderRadius: '50%' }}></div>
+                 <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }}></div>
                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Realtime</span>
               </div>
             </div>
@@ -646,7 +646,7 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <OrdersKanban orders={orders} updateStatus={updateStatus} handlePrint={handlePrint} />
+            <OrdersKanban orders={filteredOrders} updateStatus={updateStatus} handlePrint={handlePrint} statusFilter={statusFilter} />
           </>
         )}
 
