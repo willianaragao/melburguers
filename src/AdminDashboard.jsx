@@ -439,13 +439,13 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="admin-layout" style={{ 
+      <div className="admin-layout" style={{ 
       display: 'flex', 
       flexDirection: isMobile ? 'column' : 'row',
       minHeight: '100vh', 
-      background: '#0a0a0b',
-      color: '#f8fafc',
-      fontFamily: "'Inter', system-ui, sans-serif"
+      background: '#050506',
+      color: '#e2e8f0',
+      fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif"
     }}>
       {/* Sidebar UIMAX Premium (Desktop) */}
       {!isMobile && (
@@ -453,17 +453,17 @@ const AdminDashboard = () => {
           initial={false}
           animate={{ width: isSidebarOpen ? '280px' : '90px' }}
           style={{
-            background: '#000000',
+            background: '#050506',
             color: 'white',
-            padding: '25px 20px',
+            padding: '30px 20px',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '10px 0 40px rgba(0,0,0,0.5)',
+            boxShadow: 'none',
             position: 'sticky',
             top: 0,
             height: '100vh',
             zIndex: 100,
-            borderRight: '1px solid rgba(255,255,255,0.05)'
+            borderRight: '1px solid rgba(255,255,255,0.04)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', marginBottom: '50px' }}>
@@ -474,12 +474,11 @@ const AdminDashboard = () => {
                 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
               >
                 <div style={{ position: 'relative' }}>
-                  <img src="/images/logo.png" alt="Logo" style={{ width: '45px', height: '45px', borderRadius: '14px', border: '2px solid #EC9424', boxShadow: '0 0 15px rgba(236,148,36,0.3)' }} />
-                  <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', background: '#22c55e', borderRadius: '50%', border: '2px solid #2D1B14' }}></div>
+                  <img src="/images/logo.png" alt="Logo" style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontWeight: 900, fontSize: '18px', letterSpacing: '-0.5px' }}>MELBURGERS</span>
-                  <span style={{ fontSize: '10px', opacity: 0.5, letterSpacing: '1px' }}>ADMIN PRO</span>
+                  <span style={{ fontWeight: 600, fontSize: '15px', letterSpacing: '-0.3px', color: '#ffffff' }}>MELBURGERS</span>
+                  <span style={{ fontSize: '10px', color: '#71717a', letterSpacing: '0.5px' }}>Workspace</span>
                 </div>
               </motion.div>
             )}
@@ -511,28 +510,19 @@ const AdminDashboard = () => {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '18px',
-                  padding: '14px 18px',
-                  borderRadius: '16px',
+                  gap: '14px',
+                  padding: '12px 14px',
+                  borderRadius: '10px',
                   border: 'none',
-                  background: activeTab === item.id ? 'linear-gradient(135deg, #EC9424 0%, #d97706 100%)' : 'transparent',
-                  color: 'white',
+                  background: activeTab === item.id ? 'rgba(255,255,255,0.06)' : 'transparent',
+                  color: activeTab === item.id ? '#ffffff' : '#71717a',
                   cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                  boxShadow: activeTab === item.id ? '0 10px 20px rgba(236,148,36,0.2)' : 'none',
-                  position: 'relative',
-                  overflow: 'hidden'
+                  transition: 'all 0.2s ease',
+                  justifyContent: isSidebarOpen ? 'flex-start' : 'center'
                 }}
               >
-                <item.icon size={22} style={{ opacity: activeTab === item.id ? 1 : 0.6 }} />
-                {isSidebarOpen && <span style={{ fontWeight: 700, fontSize: '15px' }}>{item.label}</span>}
-                {activeTab === item.id && (
-                  <motion.div 
-                    layoutId="activeGlow"
-                    style={{ position: 'absolute', left: 0, width: '4px', height: '20px', background: 'white', borderRadius: '0 4px 4px 0' }}
-                  />
-                )}
+                <item.icon size={18} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+                {isSidebarOpen && <span style={{ fontWeight: activeTab === item.id ? 600 : 500, fontSize: '13px' }}>{item.label}</span>}
               </button>
             ))}
           </nav>
@@ -571,26 +561,25 @@ const AdminDashboard = () => {
         {activeTab !== 'finance' && (
           <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', gap: '20px' }}>
             <div>
-              <h1 style={{ fontSize: isMobile ? '24px' : '32px', fontWeight: 900, color: '#ffffff', letterSpacing: '-1px', marginBottom: '8px' }}>
+              <h1 style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                 {activeTab === 'orders' ? 'Painel de Operações' : 'Editor de Cardápio'}
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>
-                <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 10px #22c55e' }}></div>
-                Online • {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#71717a', fontSize: '13px', fontWeight: 400 }}>
+                {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })} • Workspace ativo
               </div>
             </div>
             
             <div style={{ display: 'flex', gap: '12px', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
               <button 
                 onClick={playNotificationSound}
-                style={{ padding: '10px 16px', borderRadius: '12px', background: 'rgba(236,148,36,0.1)', border: '1px solid rgba(236,148,36,0.2)', color: '#EC9424', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s' }}
               >
-                <Bell size={16} />
-                TESTE DE SOM
+                <Bell size={14} />
+                Teste de som
               </button>
-              <div style={{ padding: '10px 16px', borderRadius: '12px', background: '#161618', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
-                 <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 10px #22c55e' }}></div>
-                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>Realtime</span>
+              <div style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <div style={{ width: '6px', height: '6px', background: '#52525b', borderRadius: '50%' }}></div>
+                 <span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Realtime</span>
               </div>
             </div>
           </header>
@@ -602,32 +591,32 @@ const AdminDashboard = () => {
               <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', width: isMobile ? '100%' : 'auto', paddingBottom: isMobile ? '10px' : '0', scrollbarWidth: 'none' }}>
                 <button 
                   onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
-                  style={{ padding: '8px 20px', borderRadius: '20px', background: dateFilter === 'today' ? '#EC9424' : '#161618', color: 'white', fontSize: '12px', fontWeight: 800, border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  style={{ padding: '6px 14px', borderRadius: '8px', background: dateFilter === 'today' ? 'rgba(255,255,255,0.08)' : 'transparent', color: dateFilter === 'today' ? '#ffffff' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
                 >
-                  {dateFilter === 'today' ? '📍 HOJE' : '🕒 TODOS OS DIAS'}
+                  Hoje
                 </button>
-                <div style={{ width: '2px', height: '30px', background: 'rgba(255,255,255,0.1)' }}></div>
+                <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.06)', margin: 'auto 0' }}></div>
                 <button 
                   onClick={() => setStatusFilter('all')}
-                  style={{ padding: '8px 20px', borderRadius: '20px', background: statusFilter === 'all' ? 'white' : '#161618', color: statusFilter === 'all' ? 'black' : '#94a3b8', fontSize: '12px', fontWeight: 800, border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent', color: statusFilter === 'all' ? '#ffffff' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
                 >
                   Fila Geral
                 </button>
                 <button 
                   onClick={() => setStatusFilter('pending')}
-                  style={{ padding: '8px 20px', borderRadius: '20px', background: statusFilter === 'pending' ? 'white' : '#161618', color: statusFilter === 'pending' ? 'black' : '#94a3b8', fontSize: '12px', fontWeight: 800, border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'pending' ? 'rgba(255,255,255,0.08)' : 'transparent', color: statusFilter === 'pending' ? '#ffffff' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
                 >
                   Em Aberto
                 </button>
                 <button 
                   onClick={() => setStatusFilter('concluded')}
-                  style={{ padding: '8px 20px', borderRadius: '20px', background: statusFilter === 'concluded' ? 'white' : '#161618', color: statusFilter === 'concluded' ? 'black' : '#94a3b8', fontSize: '12px', fontWeight: 800, border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'concluded' ? 'rgba(45,212,191,0.1)' : 'transparent', color: statusFilter === 'concluded' ? '#2dd4bf' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
                 >
                   Concluídos
                 </button>
                 <button 
                   onClick={() => setStatusFilter('deleted')}
-                  style={{ padding: '8px 20px', borderRadius: '20px', background: statusFilter === 'deleted' ? '#ef4444' : '#161618', color: 'white', fontSize: '12px', fontWeight: 800, border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'deleted' ? 'rgba(244,63,94,0.1)' : 'transparent', color: statusFilter === 'deleted' ? '#f43f5e' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
                 >
                   Excluídos
                 </button>
@@ -639,20 +628,21 @@ const AdminDashboard = () => {
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: '10px',
-                  padding: '12px 20px',
-                  borderRadius: '14px',
-                  background: isPrinterReady ? '#22c55e' : '#161618',
-                  color: 'white',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  fontWeight: 700,
-                  fontSize: '14px',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  background: isPrinterReady ? 'rgba(45,212,191,0.1)' : 'transparent',
+                  color: isPrinterReady ? '#2dd4bf' : '#a1a1aa',
+                  border: '1px solid ' + (isPrinterReady ? 'rgba(45,212,191,0.2)' : 'rgba(255,255,255,0.06)'),
+                  fontWeight: 500,
+                  fontSize: '12px',
                   cursor: 'pointer',
                   width: isMobile ? '100%' : 'auto',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
                 }}
               >
-                <Printer size={18} />
-                {isPrinterReady ? 'IMPRESSORA OK' : 'CONECTAR IMPRESSORA'}
+                <Printer size={14} />
+                {isPrinterReady ? 'Impressora Conectada' : 'Conectar Impressora'}
               </button>
             </div>
 

@@ -21,11 +21,11 @@ import { MessageSquare, Printer, Clock, CheckCircle } from 'lucide-react';
 
 // === DEFINIÇÃO DAS COLUNAS ===
 const COLUMNS = [
-  { id: 'pendente', title: 'Fila Geral', color: '#64748b' },
-  { id: 'preparo', title: 'Em Preparo', color: '#EC9424' },
-  { id: 'pronto', title: 'Pronto', color: '#3b82f6' },
-  { id: 'entrega', title: 'Saiu p/ Entrega', color: '#a855f7' },
-  { id: 'concluido', title: 'Concluído', color: '#22c55e' }
+  { id: 'pendente', title: 'Fila Geral', color: '#71717a' },
+  { id: 'preparo', title: 'Em Preparo', color: '#b45309' },
+  { id: 'pronto', title: 'Pronto', color: '#0369a1' },
+  { id: 'entrega', title: 'Saiu p/ Entrega', color: '#6b21a8' },
+  { id: 'concluido', title: 'Concluído', color: '#0f766e' }
 ];
 
 // === COMPONENTE SORTABLE CARD ===
@@ -56,63 +56,65 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
 
   return (
     <div style={{
-      background: '#0B0B0F',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: '16px',
-      padding: '14px',
+      background: '#111113', // Superfície premium escura
+      border: '1px solid rgba(255,255,255,0.06)', // Borda muito elegante
+      borderRadius: '12px',
+      padding: '16px',
       marginBottom: '12px',
-      boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.2)',
+      boxShadow: isDragging ? '0 10px 40px rgba(0,0,0,0.6)' : '0 2px 8px rgba(0,0,0,0.2)',
       cursor: 'grab',
-      transition: 'box-shadow 0.2s',
+      transition: 'box-shadow 0.25s ease',
       position: 'relative'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <div style={{ fontWeight: 900, fontSize: '13px', color: '#ffffff' }}>#{order.id}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>
-          <Clock size={10} /> {timeElapsed} min
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div style={{ fontWeight: 500, fontSize: '11px', color: '#71717a', letterSpacing: '0.5px' }}>#{order.id}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#71717a', fontWeight: 400 }}>
+          <Clock size={12} style={{ opacity: 0.7 }} /> {timeElapsed} min
         </div>
       </div>
 
-      <div style={{ fontSize: '11px', color: '#e2e8f0', fontWeight: 700, marginBottom: '8px' }}>
-        {order.address?.customerName || 'Cliente'}
+      <div style={{ fontSize: '14px', color: '#f8fafc', fontWeight: 500, marginBottom: '12px', letterSpacing: '-0.3px' }}>
+        {order.address?.customerName || 'Cliente sem nome'}
       </div>
 
-      <div style={{ background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '8px', marginBottom: '10px', fontSize: '10px', color: '#94a3b8', maxHeight: '60px', overflowY: 'auto' }}>
+      {/* Resumo sutil dos itens */}
+      <div style={{ borderLeft: '2px solid rgba(255,255,255,0.06)', paddingLeft: '10px', marginBottom: '16px', fontSize: '11.5px', color: '#a1a1aa', maxHeight: '55px', overflowY: 'auto' }}>
         {order.items?.map((item, i) => (
-          <div key={i} style={{ marginBottom: '2px' }}>{item.quantity}x {item.name}</div>
+          <div key={i} style={{ marginBottom: '3px', fontWeight: 400 }}>{item.quantity}x {item.name}</div>
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <div style={{ fontSize: '12px', fontWeight: 900, color: '#00ff88' }}>
-          R$ {order.total?.toFixed(2)}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '10px', color: '#71717a', marginBottom: '2px' }}>Total</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>R$ {order.total?.toFixed(2)}</span>
         </div>
         <button 
           onPointerDown={(e) => e.stopPropagation()} 
           onClick={(e) => { e.stopPropagation(); handlePrint(order); }}
-          style={{ background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#94a3b8' }}
+          style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#71717a', transition: 'all 0.2s' }}
         >
           <Printer size={12} />
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '6px' }}>
+      <div style={{ display: 'flex', gap: '8px' }}>
         {waLink && (
           <a 
             onPointerDown={(e) => e.stopPropagation()} 
             href={waLink} target="_blank" rel="noreferrer" 
-            style={{ flex: 1, background: '#22c55e', color: 'black', padding: '6px', borderRadius: '8px', fontSize: '9px', textDecoration: 'none', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+            style={{ flex: 1, background: 'transparent', color: '#a1a1aa', border: '1px solid rgba(255,255,255,0.06)', padding: '6px', borderRadius: '6px', fontSize: '10px', textDecoration: 'none', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}
           >
-            <MessageSquare size={10} /> Whats
+            <MessageSquare size={12} /> WhatsApp
           </a>
         )}
         {order.status === 'pendente' && (
           <button 
             onPointerDown={(e) => e.stopPropagation()} 
             onClick={() => updateStatus(order.id, 'pago')}
-            style={{ flex: 1, background: '#2563eb', color: 'white', padding: '6px', borderRadius: '8px', fontSize: '9px', border: 'none', fontWeight: 800, cursor: 'pointer' }}
+            style={{ flex: 1, background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', padding: '6px', borderRadius: '6px', fontSize: '10px', border: '1px solid rgba(255,255,255,0.04)', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
           >
-            PAGAR
+            Confirmar Pago
           </button>
         )}
       </div>
@@ -141,10 +143,10 @@ const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
       minWidth: '280px',
       height: '100%'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', padding: '0 10px' }}>
-        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: column.color, boxShadow: `0 0 10px ${column.color}` }} />
-        <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#e2e8f0', letterSpacing: '0.5px' }}>{column.title}</h3>
-        <span style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', fontSize: '10px', padding: '2px 8px', borderRadius: '12px', fontWeight: 800 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', padding: '0 8px' }}>
+        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: column.color }} />
+        <h3 style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>{column.title}</h3>
+        <span style={{ marginLeft: 'auto', color: '#52525b', fontSize: '11px', fontWeight: 500 }}>
           {orders.length}
         </span>
       </div>
@@ -153,12 +155,11 @@ const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
         <SortableContext items={orders.map(o => o.id)} strategy={verticalListSortingStrategy}>
           <div style={{ 
             height: '100%', 
-            background: 'rgba(255, 255, 255, 0.01)', 
-            border: '1px solid rgba(255,255,255,0.03)',
-            borderRadius: '20px', 
-            padding: '12px',
+            background: 'transparent',
+            borderRadius: '12px', 
+            padding: '4px',
             overflowY: 'auto',
-            minHeight: '200px'
+            minHeight: '400px'
           }}>
             {orders.map(order => (
               <SortableOrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={updateStatus} />
@@ -240,10 +241,10 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint }) => {
       width: '100%',
       height: 'calc(100vh - 150px)',
       background: '#050506',
-      backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+      backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px)',
       backgroundSize: '24px 24px',
-      borderRadius: '24px',
-      border: '1px solid rgba(255,255,255,0.05)',
+      borderRadius: '8px',
+      border: 'none',
       overflowX: 'auto',
       overflowY: 'hidden',
       padding: '30px'
