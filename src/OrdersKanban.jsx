@@ -287,7 +287,8 @@ const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
       background: 'transparent',
       width: '360px',
       minWidth: '360px',
-      height: '100%'
+      height: '100%',
+      maxHeight: '100%'
     }}>
       <div style={{ 
         display: 'flex', 
@@ -297,7 +298,8 @@ const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
         padding: '10px 12px',
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid rgba(255,255,255,0.04)',
-        borderRadius: '10px'
+        borderRadius: '10px',
+        flexShrink: 0
       }}>
         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: column.color }} />
         <h3 style={{ fontSize: '12px', fontWeight: 500, color: '#e2e8f0', letterSpacing: '0.3px' }}>{column.title}</h3>
@@ -306,16 +308,36 @@ const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
         </span>
       </div>
 
-      <div ref={setNodeRef} style={{ flex: 1 }}>
+      <div ref={setNodeRef} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <SortableContext items={orders.map(o => o.id)} strategy={verticalListSortingStrategy}>
-          <div style={{ 
-            height: '100%', 
-            background: 'transparent',
-            borderRadius: '12px', 
-            padding: '4px',
-            overflowY: 'auto',
-            minHeight: '400px'
-          }}>
+          <div 
+            className="kanban-scroll"
+            style={{ 
+              flex: 1,
+              background: 'transparent',
+              borderRadius: '12px', 
+              padding: '4px',
+              overflowY: 'auto',
+              overflowX: 'hidden'
+            }}
+          >
+            <style>
+              {`
+                .kanban-scroll::-webkit-scrollbar {
+                  width: 5px;
+                }
+                .kanban-scroll::-webkit-scrollbar-track {
+                  background: transparent;
+                }
+                .kanban-scroll::-webkit-scrollbar-thumb {
+                  background: rgba(255, 255, 255, 0.05);
+                  border-radius: 10px;
+                }
+                .kanban-scroll:hover::-webkit-scrollbar-thumb {
+                  background: rgba(255, 255, 255, 0.15);
+                }
+              `}
+            </style>
             {orders.map(order => (
               <SortableOrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={updateStatus} />
             ))}
@@ -416,18 +438,38 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }
   }
 
   return (
-    <div style={{
-      width: '100%',
-      height: 'calc(100vh - 150px)',
-      background: '#050506',
-      backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px)',
-      backgroundSize: '24px 24px',
-      borderRadius: '8px',
-      border: 'none',
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      padding: '30px'
-    }}>
+    <div 
+      className="kanban-board-scroll"
+      style={{
+        width: '100%',
+        height: 'calc(100vh - 180px)',
+        background: '#050506',
+        backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px)',
+        backgroundSize: '24px 24px',
+        borderRadius: '8px',
+        border: 'none',
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        padding: '30px'
+      }}
+    >
+      <style>
+        {`
+          .kanban-board-scroll::-webkit-scrollbar {
+            height: 6px;
+          }
+          .kanban-board-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .kanban-board-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+          }
+          .kanban-board-scroll:hover::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+          }
+        `}
+      </style>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}

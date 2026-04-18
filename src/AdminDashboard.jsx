@@ -121,12 +121,15 @@ const AdminDashboard = () => {
       syncMenuFromCloud();
       fetchFinanceData();
 
-      // Realtime do Supabase - Assina ambas as tabelas
+      // Realtime do Supabase - Assina todas as tabelas com proteção de duplicidade
       const channelPedidos = supabase
         .channel('pedidos_realtime')
         .on('postgres_changes', { event: 'INSERT', table: 'pedidos' }, (payload) => {
           const newOrder = { ...payload.new, id: payload.new.order_id || payload.new.id };
-          setOrders(current => [newOrder, ...current]);
+          setOrders(current => {
+            if (current.some(o => o.id === newOrder.id)) return current;
+            return [newOrder, ...current];
+          });
         })
         .subscribe();
 
@@ -134,49 +137,166 @@ const AdminDashboard = () => {
         .channel('excluidos_realtime')
         .on('postgres_changes', { event: 'INSERT', table: 'pedidos_excluidos' }, (payload) => {
           const newOrder = { ...payload.new, id: payload.new.order_id || payload.new.id };
-          setOrders(current => [newOrder, ...current]);
+          setOrders(current => {
+            if (current.some(o => o.id === newOrder.id)) return current;
+            return [newOrder, ...current];
+          });
+        })
+        .subscribe();
+
+      const channelFinance = supabase
+        .channel('finance_realtime')
+        .on('postgres_changes', { event: '*', table: 'finance' }, (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setFinanceTransactions(current => {
+              if (current.some(t => t.id === payload.new.id)) return current;
+              return [payload.new, ...current];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setFinanceTransactions(current => current.map(t => t.id === payload.new.id ? payload.new : t));
+          } else if (payload.eventType === 'DELETE') {
+            setFinanceTransactions(current => current.filter(t => t.id !== payload.old.id));
+          }
         })
         .subscribe();
 
       return () => {
         supabase.removeChannel(channelPedidos);
         supabase.removeChannel(channelExcluidos);
+        supabase.removeChannel(channelFinance);
       };
     }
   }, [isAuthenticated]);
 
   const fetchFinanceData = async () => {
     try {
-      const { data, error } = await supabase
+      // Buscar Transações
+      const { data: transData } = await supabase
         .from('finance')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setFinanceTransactions(data);
-      const { data: cats } = await supabase.from('finance_categories').select('*');
-      if (cats && cats.length > 0) setFinanceCategories(cats);
+      if (transData) setFinanceTransactions(transData);
+
+      // Buscar Categorias
+      const { data: cats, error: catError } = await supabase
+        .from('categorias')
+        .select('*');
+      
+      if (cats && cats.length > 0) {
+        setFinanceCategories(cats);
+      } else if (!catError) {
+        // Se a tabela existe mas está vazia, podemos subir os padrões
+        const defaultCats = [
+          { name: 'Suprimentos', color: '#3b82f6' },
+          { name: 'Contas', color: '#ef4444' },
+          { name: 'Funcionários', color: '#10b981' },
+          { name: 'Manutenção', color: '#f59e0b' },
+          { name: 'iFood', color: '#ea1d2c' }
+        ];
+        // Opcional: Auto-popular o banco na primeira vez
+        const { data: newCats } = await supabase.from('categorias').insert(defaultCats).select();
+        if (newCats) setFinanceCategories(newCats);
+      }
     } catch (err) {
-      console.error("Erro financeiro:", err);
+      console.error("Erro financeiro profundo:", err);
     }
   };
 
   const handleAddTransaction = async (newTrans) => {
+    if (!newTrans.description || isNaN(parseFloat(newTrans.amount))) {
+      alert("Preencha a descrição e um valor válido.");
+      return;
+    }
+
     try {
-      const { data } = await supabase.from('finance').insert([{ 
+      const payload = { 
         description: newTrans.description, 
         amount: parseFloat(newTrans.amount), 
         type: newTrans.type,
-        category_id: newTrans.categoryId || null
-      }]).select();
-      if (data) setFinanceTransactions([data[0], ...financeTransactions]);
-    } catch (err) { alert("Erro ao salvar transação"); }
+        category_id: newTrans.categoryId || null, // Tentando com o nome mais comum
+        created_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('finance')
+        .insert([payload])
+        .select();
+
+      if (error) {
+        // Se o erro for de coluna inexistente, damos o comando SQL exato
+        if (error.message.includes("category_id")) {
+          console.error("ERRO DE SCHEMA: A coluna 'category_id' não existe na tabela 'finance'.");
+          alert("ERRO NO BANCO: Você precisa adicionar a coluna 'category_id' na sua tabela 'finance' no Supabase.\n\nExecute este comando no SQL Editor:\nALTER TABLE finance ADD COLUMN category_id uuid;");
+          return;
+        }
+        throw error;
+      }
+      
+      if (data) {
+        setFinanceTransactions(current => {
+          // Evitar duplicidade via Realtime (se data[0].id já existe, não adiciona)
+          if (current.some(t => t.id === data[0].id)) return current;
+          return [data[0], ...current];
+        });
+      }
+    } catch (err) {
+      console.error("Erro completo:", err);
+      alert("Erro ao salvar: " + err.message);
+    }
+  };
+
+  const handleDeleteTransaction = async (id) => {
+    try {
+      await supabase.from('finance').delete().eq('id', id);
+      setFinanceTransactions(current => current.filter(t => t.id !== id));
+    } catch (err) { alert("Erro ao excluir transação"); }
+  };
+
+  const handleUpdateTransaction = async (id, updatedData) => {
+    try {
+      const { data } = await supabase.from('finance')
+        .update({
+          description: updatedData.description,
+          amount: parseFloat(updatedData.amount),
+          category_id: updatedData.categoryId
+        })
+        .eq('id', id)
+        .select();
+      if (data) {
+        setFinanceTransactions(current => current.map(t => t.id === id ? data[0] : t));
+      }
+    } catch (err) { alert("Erro ao atualizar transação"); }
   };
 
   const handleAddCategory = async (newCat) => {
+    // 1. Verificar duplicidade localmente antes de enviar para o banco
+    const exists = financeCategories.some(c => c.name.toLowerCase() === newCat.name.toLowerCase());
+    if (exists) {
+      alert("Esta categoria já existe!");
+      return;
+    }
+
     try {
-      const { data } = await supabase.from('finance_categories').insert([newCat]).select();
-      if (data) setFinanceCategories([...financeCategories, data[0]]);
+      const { data, error } = await supabase
+        .from('categorias')
+        .insert([{ 
+          name: newCat.name, 
+          color: newCat.color 
+        }])
+        .select();
+      
+      if (data) {
+        setFinanceCategories(current => [...current, data[0]]);
+      } else if (error) {
+        if (error.code === '23505') { // Erro de código único do Postgres
+          alert("Esta categoria já existe no banco de dados!");
+        } else {
+          throw error;
+        }
+      }
     } catch (err) { 
-      setFinanceCategories([...financeCategories, { ...newCat, id: Date.now().toString() }]);
+      console.error("Erro ao salvar categoria:", err);
+      alert("Erro ao salvar categoria no banco. Verifique sua conexão.");
     }
   };
 
@@ -451,103 +571,165 @@ const AdminDashboard = () => {
       {!isMobile && (
         <motion.aside 
           initial={false}
-          animate={{ width: isSidebarOpen ? '280px' : '90px' }}
+          animate={{ width: isSidebarOpen ? '280px' : '88px' }}
           style={{
             background: '#050506',
             color: 'white',
-            padding: '30px 20px',
+            padding: '32px 16px',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: 'none',
             position: 'sticky',
             top: 0,
             height: '100vh',
             zIndex: 100,
-            borderRight: '1px solid rgba(255,255,255,0.04)'
+            borderRight: '1px solid rgba(255,255,255,0.04)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', marginBottom: '50px' }}>
+          {/* Logo Section */}
+          <div style={{ padding: '0 8px', marginBottom: '48px', display: 'flex', alignItems: 'center', justifyContent: isSidebarOpen ? 'space-between' : 'center' }}>
+            <AnimatePresence mode="wait">
+              {isSidebarOpen ? (
+                <motion.div 
+                  key="logo-full"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                >
+                  <div style={{ 
+                    width: '32px', height: '32px', borderRadius: '8px', 
+                    background: 'linear-gradient(135deg, #EC9424 0%, #d97706 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(236,148,36,0.2)'
+                  }}>
+                    <span style={{ fontWeight: 900, fontSize: '18px', color: 'white' }}>M</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 600, fontSize: '14px', letterSpacing: '-0.3px', color: '#ffffff' }}>MELBURGERS</span>
+                    <span style={{ fontSize: '10px', color: '#52525b', fontWeight: 600, letterSpacing: '0.5px' }}>ADMIN PANEL</span>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="logo-short"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  style={{ 
+                    width: '32px', height: '32px', borderRadius: '8px', 
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  <span style={{ fontWeight: 800, fontSize: '14px', color: '#EC9424' }}>M</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
             {isSidebarOpen && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer', padding: '4px' }}
               >
-                <div style={{ position: 'relative' }}>
-                  <img src="/images/logo.png" alt="Logo" style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontWeight: 600, fontSize: '15px', letterSpacing: '-0.3px', color: '#ffffff' }}>MELBURGERS</span>
-                  <span style={{ fontSize: '10px', color: '#71717a', letterSpacing: '0.5px' }}>Workspace</span>
-                </div>
-              </motion.div>
+                <ChevronLeft size={16} />
+              </button>
             )}
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              style={{ 
-                background: 'rgba(255,255,255,0.05)', 
-                border: '1px solid rgba(255,255,255,0.1)', 
-                color: 'white', 
-                padding: '10px', 
-                borderRadius: '12px', 
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              {isSidebarOpen ? <ChevronLeft size={18} /> : <Menu size={20} />}
-            </button>
           </div>
 
-          <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {!isSidebarOpen && (
+             <button 
+               onClick={() => setIsSidebarOpen(true)}
+               style={{ margin: '0 auto 32px', background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer' }}
+             >
+               <Menu size={20} />
+             </button>
+          )}
+
+          {/* Navigation Items */}
+          <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {[
-              { id: 'orders', icon: LayoutDashboard, label: 'Controle de Pedidos' },
-              { id: 'menu', icon: ShoppingBag, label: 'Gestão de Cardápio' },
-              { id: 'finance', icon: DollarSign, label: 'Financeiro App' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
-                  padding: '12px 14px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: activeTab === item.id ? 'rgba(255,255,255,0.06)' : 'transparent',
-                  color: activeTab === item.id ? '#ffffff' : '#71717a',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  justifyContent: isSidebarOpen ? 'flex-start' : 'center'
-                }}
-              >
-                <item.icon size={18} strokeWidth={activeTab === item.id ? 2.5 : 2} />
-                {isSidebarOpen && <span style={{ fontWeight: activeTab === item.id ? 600 : 500, fontSize: '13px' }}>{item.label}</span>}
-              </button>
-            ))}
+              { id: 'orders', icon: LayoutDashboard, label: 'Operações' },
+              { id: 'menu', icon: ShoppingBag, label: 'Cardápio' },
+              { id: 'finance', icon: DollarSign, label: 'Inteligência Financeira' },
+            ].map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                  onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: isActive ? 'rgba(255,255,255,0.05)' : 'transparent',
+                    color: isActive ? '#ffffff' : '#a1a1aa',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    justifyContent: isSidebarOpen ? 'flex-start' : 'center',
+                    position: 'relative'
+                  }}
+                >
+                  {isActive && (
+                    <motion.div 
+                      layoutId="activeIndicator"
+                      style={{ position: 'absolute', left: '-16px', width: '3px', height: '16px', background: '#EC9424', borderRadius: '0 4px 4px 0' }}
+                    />
+                  )}
+                  <item.icon size={18} strokeWidth={isActive ? 2 : 1.5} color={isActive ? '#EC9424' : 'currentColor'} />
+                  {isSidebarOpen && <span style={{ fontWeight: isActive ? 500 : 400, fontSize: '13px' }}>{item.label}</span>}
+                </button>
+              );
+            })}
           </nav>
 
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '18px',
-              padding: '14px 18px',
-              borderRadius: '16px',
-              border: 'none',
-              background: 'rgba(239, 68, 68, 0.05)',
-              color: '#ef4444',
-              cursor: 'pointer',
-              justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-              marginTop: '20px',
-              transition: 'all 0.2s',
-              fontWeight: 700
-            }}
-          >
-            <LogOut size={22} />
-            {isSidebarOpen && <span>Sair do Sistema</span>}
-          </button>
+          {/* Bottom Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '24px' }}>
+            <div style={{ 
+              display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', borderRadius: '8px',
+              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+              justifyContent: isSidebarOpen ? 'flex-start' : 'center'
+            }}>
+               <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#27272a', border: '1px solid #3f3f46', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 600 }}>WA</span>
+               </div>
+               {isSidebarOpen && (
+                 <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 500, color: '#f8fafc', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>Willian Aragão</div>
+                    <div style={{ fontSize: '10px', color: '#52525b' }}>Admin Local</div>
+                 </div>
+               )}
+            </div>
+
+            <button
+              onClick={handleLogout}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'rgba(239, 68, 68, 0.05)',
+                color: '#ef4444',
+                cursor: 'pointer',
+                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
+                transition: 'all 0.2s',
+                fontWeight: 600,
+                fontSize: '13px'
+              }}
+            >
+              <LogOut size={16} />
+              {isSidebarOpen && <span>Sair do Canal</span>}
+            </button>
+          </div>
         </motion.aside>
       )}
 
@@ -556,7 +738,10 @@ const AdminDashboard = () => {
         flex: 1, 
         padding: isMobile ? '20px' : '40px 50px', 
         paddingBottom: isMobile ? '100px' : '40px',
-        overflowY: 'auto' 
+        overflowY: (activeTab === 'orders' && !isMobile) ? 'hidden' : 'auto',
+        height: isMobile ? 'auto' : '100vh',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         {activeTab !== 'finance' && (
           <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', gap: '20px' }}>
@@ -797,6 +982,8 @@ const AdminDashboard = () => {
              transactions={financeTransactions}
              categories={financeCategories}
              onAddTransaction={handleAddTransaction}
+             onDeleteTransaction={handleDeleteTransaction}
+             onUpdateTransaction={handleUpdateTransaction}
              onAddCategory={handleAddCategory}
              playNotificationSound={playNotificationSound}
              handlePrinterConnect={handlePrinterConnect}
