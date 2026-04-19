@@ -588,9 +588,9 @@ const App = () => {
                            </div>
                          )}
                        </div>
-                       <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                          <input style={{ flex: 1, background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
-                          <input style={{ flex: 2, background: theme.isDark ? '#2A2A2E' : '#fcfcfd', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Bairro" value={address.neighborhood} readOnly />
+                       <div style={{ display: 'flex', gap: '10px', marginTop: '12px', width: '100%' }}>
+                          <input style={{ flex: 1, minWidth: 0, width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
+                          <input style={{ flex: 2, minWidth: 0, width: '100%', background: theme.isDark ? '#2A2A2E' : '#fcfcfd', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Bairro" value={address.neighborhood} readOnly />
                        </div>
                     </div>
                     
