@@ -1079,118 +1079,183 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (GEOMETRIA DE COLINA ∩) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (REVOLUTION CONVEX BASE) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
-          bottom: '0',
-          left: '0',
-          right: '0',
+          bottom: '18px',
+          left: '15px',
+          right: '15px',
           zIndex: 5000,
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          paddingBottom: '8px',
+          justifyContent: 'center',
           pointerEvents: 'none'
         }}>
           <motion.nav 
-            initial={{ y: 100, opacity: 0 }}
+            initial={{ y: 150, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             style={{
               width: '100%',
-              maxWidth: '520px',
-              height: '115px',
-              background: 'rgba(10, 10, 12, 0.9)',
-              backdropFilter: 'blur(35px) saturate(220%)',
-              borderTop: '1.5px solid rgba(255, 255, 255, 0.15)',
+              maxWidth: '480px',
+              height: '140px',
               position: 'relative',
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              // Geometria de Horizonte Contínuo (∩) - Linha suave e infinita
-              clipPath: 'ellipse(120% 100% at 50% 100%)',
-              boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              borderRadius: '35px',
+              boxShadow: '0 25px 80px rgba(0,0,0,0.95)'
             }}
           >
-            {/* Linha de Ícones Mergulhando no Centro */}
-            <div style={{ 
-              display: 'flex', 
-              width: '100%', 
-              height: '65px', 
-              padding: '0 20px',
-              alignItems: 'flex-start',
-              paddingTop: '15px' 
-            }}>
-              <LayoutGroup>
-                {[
-                  { id: 'orders', icon: Home, offset: 10 },
-                  { id: 'menu', icon: ShoppingBag, offset: 2 },
-                  { id: 'search', icon: Search, offset: -6 },
-                  { id: 'finance', icon: DollarSign, offset: 2 },
-                  { id: 'orders-history', icon: ClipboardList, offset: 10 }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                       if (['orders', 'menu', 'finance'].includes(item.id)) {
-                          setActiveTab(item.id);
-                       }
-                    }}
-                    style={{
-                      flex: 1,
-                      background: 'none',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                      cursor: 'pointer',
-                      transform: `translateY(${item.offset}px)`, // Mergulha no centro
-                      WebkitTapHighlightColor: 'transparent',
-                      transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                    }}
-                  >
-                    <motion.div
-                      animate={{ 
-                        filter: activeTab === item.id ? 'brightness(1.6) drop-shadow(0 0 10px rgba(255,255,255,0.4))' : 'brightness(1)'
-                      }}
-                      style={{ position: 'relative', zIndex: 10 }}
-                    >
-                      <item.icon 
-                        size={22} 
-                        color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.4)'}
-                        strokeWidth={activeTab === item.id ? 2.5 : 1.5}
-                      />
-                    </motion.div>
+            {/* Fundo Glass com Gradientes */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: '#0b0b0f',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '35px',
+              zIndex: 0,
+              backdropFilter: 'blur(35px) saturate(220%)'
+            }} />
+            
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 45%)',
+              zIndex: 1,
+              pointerEvents: 'none'
+            }} />
 
-                    {activeTab === item.id && (
-                      <motion.div
-                        layoutId="psn-white-active-indicator"
-                        style={{
-                          position: 'absolute',
-                          bottom: '-8px',
-                          width: '35px',
-                          height: '4px',
-                          background: '#ffffff',
-                          borderRadius: '2px',
-                          boxShadow: '0 0 15px rgba(255,255,255,0.6)',
-                          zIndex: 5
-                        }}
-                      />
-                    )}
-                  </button>
-                ))}
-              </LayoutGroup>
+            {/* Arco Convexo Perfeito em SVG conforme código base */}
+            <svg
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '102%', 
+                height: '138px',
+                zIndex: 2,
+                transform: 'translateX(-1%)'
+              }}
+              viewBox="0 0 1000 220"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="menuFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                </linearGradient>
+              </defs>
+
+              <path
+                d="M0,150 C180,122 340,98 500,92 C660,98 820,122 1000,150 L1000,220 L0,220 Z"
+                fill="url(#menuFill)"
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth="1.2"
+              />
+
+              <path
+                d="M0,150 C180,122 340,98 500,92 C660,98 820,122 1000,150"
+                fill="none"
+                stroke="rgba(255,255,255,0.18)"
+                strokeWidth="1.2"
+              />
+            </svg>
+
+            {/* Ícones Grid Sincronizados com o Domo */}
+            <div style={{
+              position: 'absolute',
+              bottom: '48px',
+              left: 0,
+              right: 0,
+              padding: '0 25px',
+              zIndex: 10
+            }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                alignItems: 'flex-end',
+                gap: '8px'
+              }}>
+                <LayoutGroup>
+                  {[
+                    { id: 'orders', icon: Home, offset: 12 },
+                    { id: 'menu', icon: ShoppingBag, offset: 4 },
+                    { id: 'search', icon: Search, offset: -2 },
+                    { id: 'finance', icon: DollarSign, offset: 4 },
+                    { id: 'orders-history', icon: ClipboardList, offset: 12 }
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        if (['orders', 'menu', 'finance'].includes(item.id)) {
+                           setActiveTab(item.id);
+                        }
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        cursor: 'pointer',
+                        transform: `translateY(${item.offset}px)`,
+                        WebkitTapHighlightColor: 'transparent',
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      <div style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: activeTab === item.id ? 'rgba(255,255,255,0.08)' : 'transparent',
+                        border: activeTab === item.id ? '1px solid rgba(255,255,255,0.12)' : 'none',
+                        boxShadow: activeTab === item.id ? '0 10px 30px rgba(255,255,255,0.15)' : 'none',
+                        position: 'relative',
+                        transition: 'all 0.2s'
+                      }}>
+                        <item.icon 
+                          size={20} 
+                          color={activeTab === item.id ? '#ffffff' : 'rgba(255,255,255,0.45)'}
+                          strokeWidth={activeTab === item.id ? 2.5 : 1.5}
+                        />
+
+                        {activeTab === item.id && (
+                          <motion.div
+                            layoutId="active-pill-glow"
+                            style={{
+                              position: 'absolute',
+                              bottom: '-14px',
+                              height: '5px',
+                              width: '32px',
+                              borderRadius: '10px',
+                              background: 'rgba(255,255,255,0.85)',
+                              boxShadow: '0 0 15px rgba(255,255,255,0.5)',
+                              zIndex: 11
+                            }}
+                          />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </LayoutGroup>
+              </div>
             </div>
 
-            {/* Texto de Status INTERNO ao Arco (Mergulhado) */}
+            {/* Label Base */}
             <div style={{
-              flex: 1,
+              position: 'absolute',
+              bottom: '12px',
+              left: 0,
+              right: 0,
               display: 'flex',
-              alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: '10px'
+              zIndex: 10
             }}>
               <AnimatePresence mode="wait">
                 <motion.span
@@ -1199,11 +1264,9 @@ const AdminDashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
                   style={{
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    color: '#ffffff',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1.2px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.95)',
                     fontFamily: "'Inter', sans-serif"
                   }}
                 >
