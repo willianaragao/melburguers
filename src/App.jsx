@@ -4,7 +4,7 @@ import {
   BadgeCheck, MapPin, Search, Heart, Share2,
   ChevronDown, CheckCircle2, ChevronLeft,
   ShoppingCart, Trash2, Info, UserPlus,
-  Moon, Sun
+  Moon, Sun, Truck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -247,100 +247,122 @@ const App = () => {
       <div style={{ width: '100%', maxWidth: '500px', background: theme.surface, minHeight: '100vh', position: 'relative', boxShadow: isDarkMode ? '0 0 80px rgba(0,0,0,0.4)' : '0 0 80px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', transition: 'background 0.3s ease' }}>
         <div style={{ flex: 1, fontFamily: "'Inter', sans-serif", paddingBottom: '120px' }}>
       
-      {/* 1. HERO / HEADER */}
-      <div style={{ position: 'relative', height: '280px', background: '#000' }}>
+      {/* 1. HERO / HEADER (ESTILO CLÁSSICO) */}
+      <div style={{ position: 'relative', height: '240px', background: '#000', overflow: 'visible' }}>
         <img 
           src="/images/MEL Burgers iluminado e convidativo.png" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isDarkMode ? 0.7 : 0.9 }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
           alt="Banner Principal"
         />
-        <div style={{ position: 'absolute', inset: 0, background: isDarkMode ? 'linear-gradient(to bottom, transparent, #0C0C0E)' : 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.6) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 50%, rgba(0,0,0,0.4) 100%)' }} />
         
-        {/* BOTÃO DARK MODE TOGGLE */}
+        {/* BADGE DE STATUS NO BANNER */}
+        <div style={{ 
+          position: 'absolute', top: '50px', left: '20px', 
+          textAlign: 'left', pointerEvents: 'none' 
+        }}>
+          <h2 style={{ color: '#fff', fontSize: '26px', fontWeight: '900', textTransform: 'uppercase', marginBottom: '4px', letterSpacing: '1px' }}>ESTAMOS ABERTOS!</h2>
+          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', fontWeight: '700' }}>ABERTO DAS 19H ATÉ 1H PARA FAZER SEU PEDIDO</p>
+        </div>
+
+        {/* LOGO CIRCULAR GIGANTE (Efeito Honey Float) */}
+        <div style={{ 
+          position: 'absolute', bottom: '-40px', left: '25px', 
+          zIndex: 150, padding: '5px', background: 'white', borderRadius: '50%',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)' 
+        }}>
+          <div style={{ position: 'relative', width: '130px', height: '130px', borderRadius: '50%', overflow: 'hidden', border: '5px solid #fff' }}>
+             <img src="/images/logo.png" alt="Melburguers Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+             {/* Overlay de Mel escorrendo na borda do Logo */}
+             <div style={{ 
+               position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', 
+               backgroundImage: "url('/images/honey-frame.png')", backgroundSize: '100% 100%' 
+             }} />
+          </div>
+        </div>
+
+        {/* BOTÃO DARK MODE TOGGLE (Ajustado) */}
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
           style={{ 
             position: 'absolute', top: '24px', right: '24px', zIndex: 150, 
             background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', 
-            border: '1px solid rgba(255,255,255,0.2)', width: '44px', height: '44px', 
-            borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            cursor: 'pointer', color: 'white', transition: 'all 0.3s'
+            border: '1px solid rgba(255,255,255,0.2)', width: '40px', height: '40px', 
+            borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            cursor: 'pointer', color: 'white'
           }}
         >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
 
-      {/* 2. CARD DE INFORMAÇÕES DA LOJA */}
-      <div style={{ maxWidth: '640px', margin: '-45px auto 0', position: 'relative', zIndex: 110, padding: '0 16px' }}>
-        <div style={{ background: theme.surface, borderRadius: '28px', padding: '28px', boxShadow: isDarkMode ? '0 10px 40px rgba(0,0,0,0.5)' : '0 20px 60px rgba(0,0,0,0.08)', border: `1px solid ${theme.border}`, transition: 'all 0.3s' }}>
-           <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '24px' }}>
-              <div style={{ position: 'relative' }}>
-                <img src="/images/logo.png" alt="Logo" style={{ width: '72px', height: '72px', borderRadius: '20px', objectFit: 'cover', border: `2px solid ${theme.primary}` }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h1 style={{ fontSize: '24px', fontWeight: 900, color: theme.textZinc, letterSpacing: '-0.5px' }}>Melburguers</h1>
-                    <BadgeCheck size={20} fill="#0095f6" color="white" />
-                 </div>
-                 <p style={{ color: theme.textMuted, fontSize: '13px', marginTop: '4px' }}>Hambúrgueres Artesanais • Gourmet • <span style={{ color: theme.textZinc, fontWeight: 600 }}>Cabo Frio</span></p>
-              </div>
-           </div>
+      {/* 2. INFORMAÇÕES DA LOJA (ESTILO SOCIAL) */}
+      <div style={{ padding: '60px 24px 0', background: theme.surface }}>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 900, color: theme.textZinc, textTransform: 'uppercase' }}>Melburguers</h1>
+            <BadgeCheck size={18} fill="#0095f6" color="white" />
+         </div>
+         <p style={{ color: theme.textMuted, fontSize: '15px', marginBottom: '20px', fontWeight: 500 }}>Sabor que conquista na primeira mordida ✨</p>
+         
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '25px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.textZinc, fontSize: '14px', fontWeight: 600 }}>
+               <Truck size={16} /> Somente Delivery
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.textZinc, fontSize: '14px', fontWeight: 600 }}>
+               <MapPin size={16} /> Tamoios • Cabo Frio 🌴
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.textZinc, fontSize: '14px', fontWeight: 600 }}>
+               <Clock size={16} /> Seg a Seg • 19h às 01h
+            </div>
+         </div>
 
-           <div style={{ display: 'flex', justifyContent: 'space-around', padding: '18px 0', borderTop: `1px solid ${theme.border}` }}>
-              <div style={{ textAlign: 'center' }}>
-                 <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>15-30 min</div>
-                 <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>TEMPO</div>
-              </div>
-              <div style={{ width: '1px', background: theme.border }} />
-              <div style={{ textAlign: 'center' }}>
-                 <div style={{ fontSize: '14px', fontWeight: 800, color: theme.green }}>Grátis</div>
-                 <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>ENTREGA</div>
-              </div>
-              <div style={{ width: '1px', background: theme.border }} />
-              <div style={{ textAlign: 'center' }}>
-                 <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>R$ 15,00</div>
-                 <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>MÍNIMO</div>
-              </div>
-           </div>
-        </div>
+         {/* BOTÃO SEGUIR (ESTILO INSTAGRAM) */}
+         <button style={{ 
+           width: '100%', height: '52px', background: '#0095f6', color: 'white', 
+           border: 'none', borderRadius: '12px', fontWeight: '800', fontSize: '15px',
+           marginBottom: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+         }}>
+           Seguir
+         </button>
       </div>
 
-      {/* 3. CATEGORIAS */}
+      {/* 3. CATEGORIAS (ESTILO HONEY RETRO) */}
       <div style={{ 
         position: 'sticky', top: 0, zIndex: 120, 
-        background: scrolled ? (isDarkMode ? 'rgba(12,12,14,0.9)' : 'rgba(255,255,255,0.95)') : 'transparent', 
+        background: scrolled ? (isDarkMode ? 'rgba(12,12,14,0.95)' : 'rgba(255,255,255,0.98)') : theme.surface, 
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        padding: '16px 0', marginTop: '24px', 
+        padding: '10px 0',
         borderBottom: scrolled ? `1px solid ${theme.border}` : 'none',
-        transition: 'all 0.4s'
+        transition: 'all 0.3s'
       }}>
-        <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', padding: '15px 20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', padding: '15px 20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
            <style>
              {`
                .category-btn-honey {
                   position: relative;
-                  overflow: hidden;
-                  min-width: 120px;
-                  height: 48px;
-                  border-radius: 100px;
+                  min-width: 110px;
+                  height: 44px;
+                  border-radius: 22px;
                   display: flex;
                   align-items: center;
                   justify-content: center;
                   cursor: pointer;
-                  transition: all 0.3s ease;
-                  padding-top: 6px !important; 
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                  border: 1.5px solid #EC9424 !important;
+                  font-size: 14px;
+                  font-weight: 800;
+                  text-transform: capitalize;
                }
                .honey-drip {
                   position: absolute;
-                  top: -8px; 
-                  left: 0;
-                  right: 0;
-                  height: 38px; 
+                  top: -14px; 
+                  left: -2px;
+                  right: -2px;
+                  height: 32px; 
                   background-image: url('/images/honey-frame.png');
                   background-size: 100% 100%;
                   background-repeat: no-repeat;
-                  z-index: 10;
+                  z-index: 100;
                   pointer-events: none;
                }
              `}
@@ -351,19 +373,14 @@ const App = () => {
                onClick={() => scrollToCategory(cat)}
                className="category-btn-honey"
                style={{ 
-                 whiteSpace: 'nowrap',
-                 background: activeCategory === cat ? theme.primary : theme.cardBg, 
-                 color: activeCategory === cat ? 'white' : theme.textZinc,
-                 border: `1.5px solid ${activeCategory === cat ? theme.primary : theme.border}`,
-                 paddingLeft: '20px',
-                 paddingRight: '20px',
-                 fontSize: '14px',
-                 fontWeight: 850,
-                 transition: 'all 0.3s'
+                 background: activeCategory === cat ? '#EC9424' : 'transparent', 
+                 color: activeCategory === cat ? 'white' : '#EC9424',
+                 boxShadow: activeCategory === cat ? '0 8px 20px rgba(236,148,36,0.25)' : 'none',
+                 transform: activeCategory === cat ? 'scale(1.05)' : 'scale(1)'
                }}
              >
                <div className="honey-drip"></div>
-               <span style={{ position: 'relative', zIndex: 20 }}>{cat}</span>
+               <span style={{ position: 'relative', zIndex: 110 }}>{cat}</span>
              </button>
            ))}
         </div>
