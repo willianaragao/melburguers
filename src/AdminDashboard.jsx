@@ -1079,7 +1079,7 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (GEOMETRIA FIEL - VALE ◡) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (GEOMETRIA DE COLINA ∩) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
@@ -1107,8 +1107,8 @@ const AdminDashboard = () => {
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              // Geometria de Vale Côncavo (◡) - IGUAL À FOTO
-              clipPath: 'path("M0 0 C 150 35, 370 35, 520 0 V 100 H 0 Z")',
+              // Geometria de Colina Convexa (∩) - IGUAL AO DESENHO
+              clipPath: 'path("M0 45 C 130 0, 390 0, 520 45 V 110 H 0 Z")',
               boxShadow: '0 -15px 40px rgba(0,0,0,0.7)',
             }}
           >
@@ -1123,11 +1123,11 @@ const AdminDashboard = () => {
             }}>
               <LayoutGroup>
                 {[
-                  { id: 'orders', icon: Home, offset: 0 },
-                  { id: 'menu', icon: ShoppingBag, offset: 12 },
-                  { id: 'search', icon: Search, offset: 18 },
-                  { id: 'finance', icon: DollarSign, offset: 12 },
-                  { id: 'orders-history', icon: ClipboardList, offset: 0 }
+                  { id: 'orders', icon: Home, offset: 10 },
+                  { id: 'menu', icon: ShoppingBag, offset: 2 },
+                  { id: 'search', icon: Search, offset: -6 },
+                  { id: 'finance', icon: DollarSign, offset: 2 },
+                  { id: 'orders-history', icon: ClipboardList, offset: 10 }
                 ].map((item) => (
                   <button
                     key={item.id}
