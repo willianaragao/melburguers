@@ -1140,9 +1140,33 @@ const AdminDashboard = () => {
               />
               <path
                 d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
+                fill="rgba(5,5,10,0.92)"
+                stroke="rgba(255,255,255,0.08)"
+                strokeWidth="1.5"
+              />
+              
+              {/* Segmento de Luz Azul (Ilumina o arco existente) */}
+              <motion.path
+                d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
                 fill="none"
-                stroke="url(#strokeGlow)"
-                strokeWidth="1.2"
+                stroke="#00f3ff"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                style={{ filter: 'drop-shadow(0 0 10px rgba(0,243,255,0.9))' }}
+                initial={false}
+                animate={{
+                  strokeDasharray: "44 350",
+                  // Cálculo do offset para percorrer o trajeto de 390px
+                  // Ajustado para centralizar sob cada ícone
+                  strokeDashoffset: `${[
+                    -26,   // Pedidos (Refinado)
+                    -99,   // Cardápio (Refinado)
+                    -173,  // Busca (Centro Exato)
+                    -246,  // Financeiro (Refinado)
+                    -320   // Histórico (Refinado)
+                  ][['orders', 'menu', 'search', 'finance', 'orders-history'].indexOf(activeTab)]}px`
+                }}
+                transition={{ type: "spring", stiffness: 220, damping: 26 }}
               />
             </svg>
 
@@ -1192,10 +1216,10 @@ const AdminDashboard = () => {
 
 
 
-            {/* Container de Ícones (Sanduichados entre os arcos) */}
+            {/* Container de Ícones (Centralizado entre os arcos) */}
             <div style={{
               position: 'absolute',
-              top: '35px',
+              top: '42px', // Descido de 35px para 42px para centralizar melhor
               left: 0,
               right: 0,
               padding: '0 24px',
@@ -1260,65 +1284,12 @@ const AdminDashboard = () => {
                             style={{ 
                               position: 'relative', 
                               zIndex: 2,
-                              transform: ['orders', 'search', 'orders-history'].includes(item.id) 
+                              transform: item.id === 'search' 
                                 ? 'translateY(10px)' 
                                 : 'translateY(5px)'
                             }}
                           />
                         </motion.div>
-
-                        {/* Indicador Magnético Nativo (Efeito iOS/PSN) */}
-                        <div style={{
-                          position: 'relative',
-                          height: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          zIndex: 15
-                        }}>
-                          {isActive && (
-                            <motion.div
-                              layoutId="activeIndicator"
-                              transition={{ 
-                                type: "spring", 
-                                stiffness: 320, 
-                                damping: 28,
-                                // O segredo para o deslize suave é a mola no layout
-                                layout: { type: "spring", stiffness: 320, damping: 28 }
-                              }}
-                              style={{
-                                width: '44px',
-                                height: '8px',
-                                display: 'flex',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <svg 
-                                width="44" 
-                                height="8" 
-                                viewBox="0 0 44 8" 
-                                style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.6))' }}
-                              >
-                                <path 
-                                  d="M2,6 C12,4.5 32,4.5 42,6" 
-                                  fill="none" 
-                                  stroke="#ffffff" 
-                                  strokeWidth="3.2" 
-                                  strokeLinecap="round" 
-                                />
-                                {/* Glow sutil extra */}
-                                <path 
-                                  d="M2,6 C12,4.5 32,4.5 42,6" 
-                                  fill="none" 
-                                  stroke="#ffffff" 
-                                  strokeWidth="1" 
-                                  strokeLinecap="round" 
-                                  style={{ opacity: 0.6 }}
-                                />
-                              </svg>
-                            </motion.div>
-                          )}
-                        </div>
                       </motion.button>
                     );
                   })}
