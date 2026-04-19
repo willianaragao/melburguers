@@ -251,7 +251,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
                 border: `1px solid ${order.payment_method === 'PIX' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.1)'}`,
                 textTransform: 'uppercase'
               }}>
-                {order.payment_method}
+                {order.payment_method && order.payment_method.includes('Troco') ? 'Dinheiro' : order.payment_method}
               </span>
             )}
           </div>
@@ -275,6 +275,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
           animate={{ opacity: 1, y: 0 }}
           style={{ 
             marginTop: '16px', 
+            marginBottom: '20px',
             padding: '14px 18px', 
             background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.05) 100%)', 
             borderRadius: '16px',
