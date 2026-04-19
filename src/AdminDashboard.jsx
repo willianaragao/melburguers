@@ -12,6 +12,26 @@ import { supabase } from './utils/supabase';
 import { FinanceDashboard } from './FinanceDashboard';
 import { OrdersKanban } from './OrdersKanban';
 
+const MoneyBagIcon = ({ size = 24, className, style, strokeWidth = 2 }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor"
+    strokeWidth={strokeWidth}
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+    style={{ ...style, display: 'inline-block', verticalAlign: 'middle' }}
+  >
+    <path d="M6 12a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2Z" />
+    <path d="M9 8V6a3 3 0 0 1 3-3h0a3 3 0 0 1 3 3v2" />
+    <path d="M12 11v4" />
+    <path d="M10 13h4" />
+  </svg>
+);
+
 const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -312,6 +332,20 @@ const AdminDashboard = () => {
       alert("Erro ao salvar categoria no banco. Verifique sua conexão.");
     }
   };
+
+  const MoneyBagIcon = ({ size = 24, className }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+    style={{ display: 'inline-block', verticalAlign: 'middle' }}
+  >
+    <path d="M12,4c-1.1,0-2,.9-2,2c0,.37,.1,.71,.27,1c-1.39,.26-2.61,1.06-3.4,2.2c-1.1,1.6-1.1,3.8,0,5.4s3.3,2.4,5.13,2.4,4.03-.8,5.13-2.4s1.1-3.8,0-5.4c-.79-1.14-2.01-1.94-3.4-2.2c.17-.29,.27-.63,.27-1c0-1.1-.9-2-2-2Zm0,6c1.1,0,2,.9,2,2s-.9,2-2,2-2-.9-2-2,.9-2,2-2Zm0,1c-.55,0-1,.45-1,1s.45,1,1,1,1-.45,1-1-.45-1-1-1Zm-1,5v1h2v-1h.5c.28,0,.5-.22,.5-.5s-.22-.5-.5-.5h-1c-.28,0-.5-.22-.5-.5s.22-.5,.5-.5h.5v-1h.5v1h.5c.28,0,.5,.22,.5,.5s-.22-.5-.5-.5h-1c-.28,0-.5-.22-.5-.5s-.22-.5,.5-.5h2v-1h-2v1h-.5c-.28,0,.5,.22,.5,.5s-.22-.5,.5-.5h1c.28,0,.5,.22,.5,.5s-.22-.5-.5,.5h-.5v1h-.5Z" />
+    <path d="M12,1c-.6,0-1.2,.2-1.7,.6c-.3,.2-.5,.5-.6,.9c-.2,.6,0,1.2,.4,1.6c.5,.4,1.1,.6,1.9,.6s1.4-.2,1.9-.6c.4-.4,.6-1,.4-1.6c-.1-.4-.3-.7-.6-.9c-.5-.4-1.1-.6-1.7-.6Z" opacity="0.3" />
+  </svg>
+);
 
   useEffect(() => {
     if (orders.length > 0 && isAuthenticated) {
@@ -1131,10 +1165,11 @@ const AdminDashboard = () => {
                 </linearGradient>
               </defs>
 
-              {/* PREENCHIMENTO DA CÁPSULA (Sincronizado com as escalas + 2px de Overlap para evitar frestas) */}
+              {/* PREENCHIMENTO DA CÁPSULA (Onyx com Transparência Leve + Blur) */}
               <path
                 d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z"
-                fill="#050507"
+                fill="rgba(5, 5, 7, 0.94)"
+                style={{ backdropFilter: 'blur(8px)' }}
               />
 
               {/* RODAPÉ DO MENU (Abaixo da Luz - Cinza Chumbo) */}
@@ -1232,20 +1267,18 @@ const AdminDashboard = () => {
               }}>
                 <LayoutGroup>
                   {[
-                    { id: 'orders', icon: Home, offset: 8 },
+                    { id: 'orders-history', icon: ClipboardList, offset: 8 },
                     { id: 'menu', icon: ShoppingBag, offset: 0 },
                     { id: 'search', icon: Search, offset: -12 },
-                    { id: 'finance', icon: DollarSign, offset: 0 },
-                    { id: 'orders-history', icon: ClipboardList, offset: 8 }
+                    { id: 'finance', icon: MoneyBagIcon, offset: 0 },
+                    { id: 'orders', icon: Home, offset: 8 }
                   ].map((item, index) => {
                     const isActive = activeTab === item.id;
                     return (
                       <motion.button
                         key={item.id}
                         onClick={() => {
-                          if (['orders', 'menu', 'finance'].includes(item.id)) {
-                             setActiveTab(item.id);
-                          }
+                          setActiveTab(item.id);
                         }}
                         style={{
                           width: '48px',
