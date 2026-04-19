@@ -1079,7 +1079,7 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (ARCO CONVEXO) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (ARCO CONVEXO SIMÉTRICO) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
@@ -1090,8 +1090,8 @@ const AdminDashboard = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          paddingBottom: '0px',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          paddingBottom: '0'
         }}>
           <motion.nav 
             initial={{ y: 100, opacity: 0 }}
@@ -1100,34 +1100,35 @@ const AdminDashboard = () => {
               width: '100%',
               maxWidth: '500px',
               height: '110px',
-              background: 'rgba(10, 10, 12, 0.9)',
+              background: 'rgba(10, 10, 12, 0.92)',
               backdropFilter: 'blur(35px) saturate(220%)',
               borderTop: '1.5px solid rgba(255, 255, 255, 0.15)',
               position: 'relative',
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              // Curvatura de Arco Convexo (∩)
-              clipPath: 'path("M0 40 C 100 0, 400 0, 500 40 V 110 H 0 Z")',
+              // Curvatura de Arco Convexo (∩) GEOMETRIA PERFEITA
+              borderRadius: '70% 70% 0 0 / 45% 45% 0 0',
               boxShadow: '0 -20px 50px rgba(0,0,0,0.8)',
+              overflow: 'hidden'
             }}
           >
             {/* Linha de Ícones Acompanhando a Crista do Arco */}
             <div style={{ 
               display: 'flex', 
               width: '100%', 
-              height: '70px', 
-              padding: '0 25px',
+              height: '75px', 
+              padding: '0 30px',
               alignItems: 'flex-start',
-              paddingTop: '32px' 
+              paddingTop: '38px' 
             }}>
               <LayoutGroup>
                 {[
-                  { id: 'orders', icon: Home, offset: 5 },
-                  { id: 'menu', icon: ShoppingBag, offset: -8 },
-                  { id: 'search', icon: Search, offset: -15 },
-                  { id: 'finance', icon: DollarSign, offset: -8 },
-                  { id: 'orders-history', icon: ClipboardList, offset: 5 }
+                  { id: 'orders', icon: Home, offset: 8 },
+                  { id: 'menu', icon: ShoppingBag, offset: -6 },
+                  { id: 'search', icon: Search, offset: -14 },
+                  { id: 'finance', icon: DollarSign, offset: -6 },
+                  { id: 'orders-history', icon: ClipboardList, offset: 8 }
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -1145,20 +1146,20 @@ const AdminDashboard = () => {
                       justifyContent: 'center',
                       position: 'relative',
                       cursor: 'pointer',
-                      transform: `translateY(${item.offset}px)`, // Ícones sobem no centro
+                      transform: `translateY(${item.offset}px)`, // Ícones sobem no centro de forma simétrica
                       WebkitTapHighlightColor: 'transparent',
                       transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
                     }}
                   >
                     <motion.div
                       animate={{ 
-                        scale: activeTab === item.id ? 1.3 : 1,
-                        filter: activeTab === item.id ? 'brightness(1.5) drop-shadow(0 0 8px rgba(255,255,255,0.3))' : 'brightness(1)'
+                        scale: 1, // REMOVIDO AMPLIAMENTO
+                        filter: activeTab === item.id ? 'brightness(1.5) drop-shadow(0 0 10px rgba(255,255,255,0.4))' : 'brightness(1)'
                       }}
                       style={{ position: 'relative', zIndex: 10 }}
                     >
                       <item.icon 
-                        size={activeTab === item.id ? 28 : 22} 
+                        size={24} 
                         color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.35)'}
                         strokeWidth={activeTab === item.id ? 2.5 : 1.5}
                       />
@@ -1169,11 +1170,11 @@ const AdminDashboard = () => {
                         layoutId="psn-white-active-indicator"
                         style={{
                           position: 'absolute',
-                          bottom: '-15px',
-                          width: '40px',
+                          bottom: '-12px',
+                          width: '45px',
                           height: '5px',
                           background: '#ffffff',
-                          borderRadius: '3px',
+                          borderRadius: '3px 3px 0 0',
                           boxShadow: '0 0 20px 2px rgba(255,255,255,0.6)',
                           zIndex: 5
                         }}
@@ -1190,7 +1191,7 @@ const AdminDashboard = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: '8px'
+              paddingBottom: '10px'
             }}>
               <AnimatePresence mode="wait">
                 <motion.span
@@ -1203,7 +1204,7 @@ const AdminDashboard = () => {
                     fontWeight: 800,
                     color: '#ffffff',
                     textTransform: 'uppercase',
-                    letterSpacing: '1.5px',
+                    letterSpacing: '1.8px',
                     fontFamily: "'Inter', sans-serif",
                     textShadow: '0 2px 10px rgba(0,0,0,0.5)'
                   }}
