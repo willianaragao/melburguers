@@ -17,7 +17,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MessageSquare, Printer, Clock, Trash2, MapPin } from 'lucide-react';
+import { MessageSquare, Printer, Clock, Trash2, MapPin, LayoutGrid, LayoutList, Rows3, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const useIsMobile = () => {
@@ -175,179 +175,107 @@ const STATUS_COLORS = {
 };
 
 // === COMPONENTE VISUAL DO CARD ===
-const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
+const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'list' }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
+  
   const clientPhone = order.address?.customerPhone?.replace(/\D/g, '');
   const waLink = clientPhone ? `https://wa.me/55${clientPhone}` : null;
-  const timeElapsed = Math.floor((new Date() - new Date(order.created_at || order.timestamp)) / 60000);
-
-  const statusColor = STATUS_COLORS[order.status] || '#71717a';
+  const timeElapsed = Math.floor((new Date() - new Date(order.created_at || order.timestamp)) / 60000);  const statusColor = STATUS_COLORS[order.status] || '#71717a';
+  const isGrid = viewMode === 'grid';
+  const isCompact = viewMode === 'compact';
 
   return (
-    <div style={{
-      background: '#111113', // Superfície premium escura
-      border: '1px solid rgba(255,255,255,0.06)', // Borda externa fina
-      borderLeft: `3px solid ${statusColor}`, // Barra lateral de status
-      borderRadius: '12px',
-      padding: '16px',
-      marginBottom: '12px',
-      boxShadow: isDragging ? '0 10px 40px rgba(0,0,0,0.6)' : '0 2px 8px rgba(0,0,0,0.2)',
-      cursor: 'grab',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <div style={{ fontWeight: 500, fontSize: '11px', color: '#71717a', letterSpacing: '0.5px' }}>#{order.id}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#71717a', fontWeight: 400 }}>
-          <Clock size={12} style={{ opacity: 0.7 }} /> {timeElapsed} min
+    <div 
+      onClick={() => (isCompact || isGrid) && setIsExpanded(!isExpanded)}
+      style={{
+        background: '#111113',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderLeft: `3px solid ${statusColor}`,
+        borderRadius: '12px',
+        padding: isGrid ? '12px' : isCompact ? '10px 14px' : '16px',
+        marginBottom: isGrid ? '0' : '12px',
+        boxShadow: isDragging ? '0 10px 40px rgba(0,0,0,0.6)' : '0 2px 8px rgba(0,0,0,0.1)',
+        cursor: 'pointer',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Header do Card (Sempre Visível) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: (isCompact && !isExpanded) ? '0' : '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+           <div style={{ fontWeight: 800, fontSize: isGrid ? '10px' : '11px', color: '#71717a' }}>#{order.id.slice(-4)}</div>
+           {!isGrid && <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc' }}>{order.address?.customerName?.split(' ')[0] || 'Cliente'}</div>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ fontSize: '10px', color: '#71717a', fontWeight: 500 }}>{timeElapsed}m</div>
+          {(isCompact || isGrid) && (
+            <div style={{ color: '#EC9424' }}>
+              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </div>
+          )}
         </div>
       </div>
 
-      <div style={{ fontSize: '14px', color: '#f8fafc', fontWeight: 500, marginBottom: '12px', letterSpacing: '-0.3px' }}>
-        {order.address?.customerName || 'Cliente sem nome'}
-      </div>
-
-      {/* Resumo sutil dos itens */}
-      <div style={{ borderLeft: '2px solid rgba(255,255,255,0.06)', paddingLeft: '10px', marginBottom: '16px', fontSize: '11.5px', color: '#a1a1aa', maxHeight: '120px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
-        {order.items?.map((item, i) => (
-          <div key={i} style={{ marginBottom: '3px', fontWeight: 400 }}>{item.quantity}x {item.name}</div>
-        ))}
-      </div>
-
-      {/* Bloco de Endereço Premium */}
-      {order.address?.street && (
-        <div style={{ 
-          background: 'rgba(255,255,255,0.02)', 
-          borderLeft: '2px solid rgba(255,255,255,0.08)',
-          borderRadius: '6px',
-          padding: '10px 12px',
-          marginBottom: '16px',
-          display: 'flex',
-          gap: '10px',
-          alignItems: 'flex-start'
-        }}>
-          <MapPin size={14} style={{ color: '#71717a', marginTop: '2px', flexShrink: 0 }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '11.5px', color: '#f8fafc', fontWeight: 500, lineHeight: '1.4' }}>
-              {order.address.street}, {order.address.number}
-            </span>
-            <span style={{ fontSize: '10.5px', color: '#71717a', fontWeight: 400 }}>
-              {order.address.neighborhood} • {order.address.city}
-            </span>
-            {(order.address.complement || order.address.reference) && (
-              <span style={{ fontSize: '10px', color: '#52525b', fontWeight: 400, fontStyle: 'italic', marginTop: '2px' }}>
-                {order.address.complement && `Compl: ${order.address.complement}`}
-                {order.address.complement && order.address.reference && ' | '}
-                {order.address.reference && `Ref: ${order.address.reference}`}
-              </span>
-            )}
-          </div>
+      {isGrid && !isExpanded && (
+        <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc', marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {order.address?.customerName || 'Cliente'}
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '14px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '10px', color: '#71717a', marginBottom: '2px' }}>Total</span>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>R$ {order.total?.toFixed(2)}</span>
-            {order.payment_method && (
-              <span style={{ 
-                fontSize: '9px', 
-                fontWeight: 700, 
-                padding: '2px 6px', 
-                borderRadius: '4px', 
-                background: order.payment_method === 'PIX' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)',
-                color: order.payment_method === 'PIX' ? '#22c55e' : '#a1a1aa',
-                border: `1px solid ${order.payment_method === 'PIX' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.1)'}`,
-                textTransform: 'uppercase'
-              }}>
-                {order.payment_method && order.payment_method.includes('Troco') ? 'Dinheiro' : order.payment_method}
-              </span>
+      {/* Conteúdo Expansível (ou sempre visível no modo lista) */}
+      <AnimatePresence>
+        {(viewMode === 'list' || isExpanded) && (
+          <motion.div
+            initial={isCompact || isGrid ? { height: 0, opacity: 0 } : false}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden'}}
+          >
+            {isGrid && isExpanded && <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc', marginBottom: '8px' }}>{order.address?.customerName}</div>}
+
+            <div style={{ borderLeft: '2px solid rgba(255,255,255,0.06)', paddingLeft: '10px', marginBottom: '12px', fontSize: isGrid ? '10px' : '11.5px', color: '#a1a1aa' }}>
+              {order.items?.map((item, i) => (
+                <div key={i} style={{ marginBottom: '2px' }}>{item.quantity}x {item.name}</div>
+              ))}
+            </div>
+
+            {order.address?.street && (
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 10px', borderRadius: '6px', marginBottom: '12px', display: 'flex', gap: '8px' }}>
+                <MapPin size={12} style={{ color: '#71717a', flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ fontSize: '10.5px', color: '#f8fafc', lineHeight: '1.4' }}>
+                  {order.address.street}, {order.address.number}
+                </div>
+              </div>
             )}
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <DeleteButton order={order} updateStatus={updateStatus} />
-          <button 
-            onPointerDown={(e) => e.stopPropagation()} 
-            onClick={(e) => { e.stopPropagation(); handlePrint(order); }}
-            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', padding: '6px', cursor: 'pointer', color: '#71717a', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Printer size={12} />
-          </button>
-        </div>
-      </div>
 
-      {/* Alerta de Troco Premium iOS-Inspired */}
-      {(order.change_needed || order.troco || (order.payment_method && order.payment_method.includes('Troco'))) && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ 
-            marginTop: '16px', 
-            marginBottom: '20px',
-            padding: '14px 18px', 
-            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.05) 100%)', 
-            borderRadius: '16px',
-            border: '1px solid rgba(245, 158, 11, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 8px 20px -6px rgba(245, 158, 11, 0.15)',
-            backdropFilter: 'blur(4px)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ 
-              width: '32px', 
-              height: '32px', 
-              borderRadius: '10px', 
-              background: 'rgba(245, 158, 11, 0.15)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
-            }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 12px #f59e0b' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+               <div style={{ fontSize: isGrid ? '11px' : '13px', fontWeight: 800, color: '#EC9424' }}>
+                 R$ {order.total?.toFixed(2)}
+               </div>
+               <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', padding: '5px', color: '#a1a1aa' }}>
+                    <Printer size={12} />
+                  </button>
+                  <DeleteButton order={order} updateStatus={updateStatus} />
+               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(245, 158, 11, 0.8)', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                Atenção ao Troco
-              </span>
-              <span style={{ fontSize: '14px', fontWeight: 850, color: '#f59e0b', letterSpacing: '-0.2px' }}>
-                Pagar troco de {
-                  order.change_needed || 
-                  order.troco || 
-                  (order.payment_method && order.payment_method.split('R$ ')[1]?.replace(')', ''))
-                }
-              </span>
+            
+            <div style={{ marginTop: '10px' }}>
+              <ActionButton order={order} updateStatus={updateStatus} />
             </div>
-          </div>
-          
-          <div style={{ 
-            background: 'rgba(245, 158, 11, 0.1)', 
-            padding: '6px 10px', 
-            borderRadius: '8px', 
-            fontSize: '11px', 
-            fontWeight: 900, 
-            color: '#f59e0b' 
-          }}>
-            💸 DINHEIRO
-          </div>
-        </motion.div>
-      )}
-
-      <div style={{ display: 'flex', gap: '8px' }}>
-        {waLink && (
-          <a 
-            onPointerDown={(e) => e.stopPropagation()} 
-            href={waLink} target="_blank" rel="noreferrer" 
-            style={{ flex: 1, background: 'transparent', color: '#a1a1aa', border: '1px solid rgba(255,255,255,0.06)', padding: '8px', borderRadius: '8px', fontSize: '11px', textDecoration: 'none', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp
-          </a>
+          </motion.div>
         )}
-        <ActionButton order={order} updateStatus={updateStatus} />
-      </div>
+      </AnimatePresence>
+
+      {/* No Modo Compacto Retraído, mostra apenas o valor e nome */}
+      {isCompact && !isExpanded && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+           <div style={{ fontSize: '10px', color: '#71717a' }}>{order.items?.length || 0} itens • {order.payment_method}</div>
+           <div style={{ fontSize: '13px', fontWeight: 800, color: '#EC9424' }}>R$ {order.total?.toFixed(2)}</div>
+        </div>
+      )}
     </div>
   );
 };
@@ -433,7 +361,7 @@ const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
 };
 
 // === COMPONENTE PRINCIPAL KANBAN ===
-export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }) => {
+export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, viewMode = 'list' }) => {
   const isMobile = useIsMobile();
   const [activeOrder, setActiveOrder] = useState(null);
 
@@ -535,11 +463,13 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }
 
     return (
       <div style={{ 
-        display: 'flex', 
+        display: isMobile && viewMode === 'grid' ? 'grid' : 'flex', 
+        gridTemplateColumns: viewMode === 'grid' ? '1fr 1fr' : 'none',
         flexDirection: 'column', 
         gap: '12px', 
-        padding: '0 0 100px 0',
-        width: '100%' 
+        padding: '0 0 120px 0',
+        width: '100%',
+        overflowY: 'visible' // Para permitir que o main controle o scroll
       }}>
         {filteredByStatus.length === 0 ? (
           <div style={{ color: '#71717a', fontSize: '14px', textAlign: 'center', width: '100%', padding: '60px 20px' }}>
@@ -549,7 +479,7 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }
           <AnimatePresence mode="popLayout">
             {filteredByStatus.map(order => (
               <motion.div key={order.id} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
-                <OrderCard order={order} handlePrint={handlePrint} updateStatus={updateStatus} isDragging={false} />
+                <OrderCard order={order} handlePrint={handlePrint} updateStatus={updateStatus} isDragging={false} viewMode={viewMode} />
               </motion.div>
             ))}
           </AnimatePresence>

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShoppingBag, Printer, Bell, CheckCircle, Clock, 
   RefreshCcw, ChevronRight, LayoutDashboard, Settings, Edit, Plus, Trash2, Save, X, Image as ImageIcon,
-  DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare
+  DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare,
+  LayoutList, LayoutGrid, Rows3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { printOrder, formatOrderForPrinter, connectToPrinter, sendToPrinter } from './utils/printer';
@@ -31,7 +32,9 @@ const AdminDashboard = () => {
   
   // Finance State
   const [financeTransactions, setFinanceTransactions] = useState([]);
-  const [financeCategories, setFinanceCategories] = useState([
+  const [financeCategories, setFinanceCategories] = useState([]);
+  const [viewMode, setViewMode] = useState('list'); // 'list', 'grid', 'compact'
+  const [defaultCategories] = useState([
     { id: '1', name: 'Suprimentos', color: '#3b82f6' },
     { id: '2', name: 'Contas', color: '#ef4444' },
     { id: '3', name: 'Funcionários', color: '#10b981' },
@@ -777,6 +780,20 @@ const AdminDashboard = () => {
             </div>
             
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {isMobile && (
+                <button 
+                  onClick={() => {
+                    const modes = ['list', 'grid', 'compact'];
+                    const nextIndex = (modes.indexOf(viewMode) + 1) % modes.length;
+                    setViewMode(modes[nextIndex]);
+                  }}
+                  style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  {viewMode === 'list' && <LayoutList size={18} />}
+                  {viewMode === 'grid' && <LayoutGrid size={18} />}
+                  {viewMode === 'compact' && <Rows3 size={18} />}
+                </button>
+              )}
               {isMobile ? (
                 <button 
                   onClick={playNotificationSound}
@@ -901,7 +918,7 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <OrdersKanban orders={filteredOrders} updateStatus={updateStatus} handlePrint={handlePrint} statusFilter={statusFilter} />
+            <OrdersKanban orders={filteredOrders} updateStatus={updateStatus} handlePrint={handlePrint} statusFilter={statusFilter} viewMode={viewMode} />
           </>
         )}
 
