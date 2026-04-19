@@ -3,9 +3,9 @@ import {
   ShoppingBag, Printer, Bell, CheckCircle, Clock, 
   RefreshCcw, ChevronRight, LayoutDashboard, Settings, Edit, Plus, Trash2, Save, X, Image as ImageIcon,
   DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare,
-  LayoutList, LayoutGrid, Rows3
+  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { printOrder, formatOrderForPrinter, connectToPrinter, sendToPrinter } from './utils/printer';
 import { getMenuData, saveMenuData } from './utils/menuStore';
 import { supabase } from './utils/supabase';
@@ -1079,22 +1079,15 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* Mobile Bottom Navigation (UIMAX Glass) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation */}
       {isMobile && (
-        <nav style={{
+        <div style={{
           position: 'fixed',
-          bottom: '20px',
-          left: '20px',
-          right: '20px',
-          height: '74px',
-          background: 'rgba(45, 27, 20, 0.95)',
-          backdropFilter: 'blur(15px)',
-          borderRadius: '24px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          bottom: '15px',
+          left: '15px',
+          right: '15px',
+          zIndex: 5000,
           display: 'flex',
-          alignItems: 'center',
-          padding: '0 10px',
-          zIndex: 1000,
           border: '1px solid rgba(255,255,255,0.1)',
           overflowX: 'auto',
           scrollbarWidth: 'none',
