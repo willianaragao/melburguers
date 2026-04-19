@@ -1079,7 +1079,7 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (ARCO EM SINCRO) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (GEOMETRIA FIEL - VALE ◡) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
@@ -1090,46 +1090,44 @@ const AdminDashboard = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          pointerEvents: 'none',
-          paddingBottom: '0'
+          paddingBottom: '8px',
+          pointerEvents: 'none'
         }}>
           <motion.nav 
-            initial={{ y: 120, opacity: 0 }}
+            initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             style={{
               width: '100%',
-              maxWidth: '500px',
-              height: '115px',
-              background: 'rgba(10, 10, 12, 0.95)',
-              backdropFilter: 'blur(40px) saturate(240%)',
-              borderTop: '1.5px solid rgba(255, 255, 255, 0.18)',
+              maxWidth: '520px',
+              height: '100px',
+              background: 'rgba(10, 10, 12, 0.9)',
+              backdropFilter: 'blur(35px) saturate(220%)',
+              borderTop: '1.5px solid rgba(255, 255, 255, 0.15)',
               position: 'relative',
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              // Arqueamento Harmonizado com os Ícones (Domo Síncrono)
-              borderRadius: '100% 100% 0 0 / 160% 160% 0 0',
-              boxShadow: '0 -25px 70px rgba(0,0,0,0.95)',
-              overflow: 'hidden'
+              // Geometria de Vale Côncavo (◡) - IGUAL À FOTO
+              clipPath: 'path("M0 0 C 150 35, 370 35, 520 0 V 100 H 0 Z")',
+              boxShadow: '0 -15px 40px rgba(0,0,0,0.7)',
             }}
           >
-            {/* Camada de Ícones Síncronos */}
+            {/* Linha de Ícones Mergulhando no Centro */}
             <div style={{ 
               display: 'flex', 
               width: '100%', 
-              height: '70px', 
-              padding: '0 30px',
+              height: '65px', 
+              padding: '0 20px',
               alignItems: 'flex-start',
-              paddingTop: '38px',
-              zIndex: 2
+              paddingTop: '15px' 
             }}>
               <LayoutGroup>
                 {[
-                  { id: 'orders', icon: Home, offset: 12 },
-                  { id: 'menu', icon: ShoppingBag, offset: -2 },
-                  { id: 'search', icon: Search, offset: -16 },
-                  { id: 'finance', icon: DollarSign, offset: -2 },
-                  { id: 'orders-history', icon: ClipboardList, offset: 12 }
+                  { id: 'orders', icon: Home, offset: 0 },
+                  { id: 'menu', icon: ShoppingBag, offset: 12 },
+                  { id: 'search', icon: Search, offset: 18 },
+                  { id: 'finance', icon: DollarSign, offset: 12 },
+                  { id: 'orders-history', icon: ClipboardList, offset: 0 }
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -1147,20 +1145,20 @@ const AdminDashboard = () => {
                       justifyContent: 'center',
                       position: 'relative',
                       cursor: 'pointer',
-                      transform: `translateY(${item.offset}px)`, // Curva síncrona com o topo
+                      transform: `translateY(${item.offset}px)`, // Mergulha no centro
                       WebkitTapHighlightColor: 'transparent',
                       transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
                     }}
                   >
                     <motion.div
                       animate={{ 
-                        filter: activeTab === item.id ? 'brightness(1.6) drop-shadow(0 0 12px rgba(255,255,255,0.45))' : 'brightness(1)'
+                        filter: activeTab === item.id ? 'brightness(1.6) drop-shadow(0 0 10px rgba(255,255,255,0.4))' : 'brightness(1)'
                       }}
                       style={{ position: 'relative', zIndex: 10 }}
                     >
                       <item.icon 
                         size={22} 
-                        color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.35)'}
+                        color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.4)'}
                         strokeWidth={activeTab === item.id ? 2.5 : 1.5}
                       />
                     </motion.div>
@@ -1170,8 +1168,8 @@ const AdminDashboard = () => {
                         layoutId="psn-white-active-indicator"
                         style={{
                           position: 'absolute',
-                          bottom: '-12px',
-                          width: '40px',
+                          bottom: '-8px',
+                          width: '35px',
                           height: '4px',
                           background: '#ffffff',
                           borderRadius: '2px',
@@ -1185,43 +1183,27 @@ const AdminDashboard = () => {
               </LayoutGroup>
             </div>
 
-            {/* Divisor de Horizonte em Arco Síncrono */}
-            <div style={{
-              position: 'absolute',
-              top: '78px',
-              left: '0',
-              right: '0',
-              height: '35px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '70% 70% 0 0 / 100% 100% 0 0',
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%)',
-              zIndex: 1,
-              pointerEvents: 'none'
-            }} />
-
-            {/* Rótulo de Status */}
+            {/* Texto de Status INTERNO ao Arco (Mergulhado) */}
             <div style={{
               flex: 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: '10px',
-              zIndex: 1
+              paddingBottom: '10px'
             }}>
               <AnimatePresence mode="wait">
                 <motion.span
                   key={activeTab}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.05 }}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
                   style={{
                     fontSize: '11px',
                     fontWeight: 800,
                     color: '#ffffff',
                     textTransform: 'uppercase',
-                    letterSpacing: '2.2px',
-                    fontFamily: "'Inter', sans-serif",
-                    marginTop: '20px'
+                    letterSpacing: '1.2px',
+                    fontFamily: "'Inter', sans-serif"
                   }}
                 >
                   {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
