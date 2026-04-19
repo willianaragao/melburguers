@@ -59,7 +59,7 @@ const ActionButton = ({ order, updateStatus }) => {
 
   switch (order.status) {
     case 'pendente':
-      btnText = 'Confirmar Pagamento';
+      btnText = 'Confirmar Pedido';
       nextStatus = 'preparo';
       break;
     case 'preparo':
