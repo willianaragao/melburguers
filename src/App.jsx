@@ -294,7 +294,7 @@ const App = () => {
                   justify-content: center;
                   cursor: pointer;
                   transition: all 0.3s ease;
-                  padding-top: 16px !important; /* Valor original do index.css */
+                  padding-top: 6px !important; 
                }
                .honey-drip {
                   position: absolute;
