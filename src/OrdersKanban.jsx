@@ -268,27 +268,61 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
         </div>
       </div>
 
-      {/* Alerta de Troco */}
+      {/* Alerta de Troco Premium iOS-Inspired */}
       {(order.change_needed || order.troco || (order.payment_method && order.payment_method.includes('Troco'))) && (
-        <div style={{ 
-          marginTop: '15px', 
-          padding: '12px', 
-          background: 'rgba(245, 158, 11, 0.08)', 
-          borderRadius: '12px',
-          border: '1px solid rgba(245, 158, 11, 0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 10px #f59e0b' }} />
-          <span style={{ fontSize: '11px', fontWeight: 800, color: '#f59e0b', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-            TROCO PARA R$ {
-              order.change_needed || 
-              order.troco || 
-              (order.payment_method && order.payment_method.split('R$ ')[1]?.replace(')', ''))
-            }
-          </span>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ 
+            marginTop: '16px', 
+            padding: '14px 18px', 
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.05) 100%)', 
+            borderRadius: '16px',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 8px 20px -6px rgba(245, 158, 11, 0.15)',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '10px', 
+              background: 'rgba(245, 158, 11, 0.15)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 12px #f59e0b' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(245, 158, 11, 0.8)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                Atenção ao Troco
+              </span>
+              <span style={{ fontSize: '14px', fontWeight: 850, color: '#f59e0b', letterSpacing: '-0.2px' }}>
+                Pagar troco de {
+                  order.change_needed || 
+                  order.troco || 
+                  (order.payment_method && order.payment_method.split('R$ ')[1]?.replace(')', ''))
+                }
+              </span>
+            </div>
+          </div>
+          
+          <div style={{ 
+            background: 'rgba(245, 158, 11, 0.1)', 
+            padding: '6px 10px', 
+            borderRadius: '8px', 
+            fontSize: '11px', 
+            fontWeight: 900, 
+            color: '#f59e0b' 
+          }}>
+            💸 DINHEIRO
+          </div>
+        </motion.div>
       )}
 
       <div style={{ display: 'flex', gap: '8px' }}>
