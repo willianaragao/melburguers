@@ -1,55 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
-  ShoppingBag, Plus, Clock, Star, ArrowRight, Home, 
-  BadgeCheck, MoreHorizontal, UserPlus, MapPin, 
-  Truck, Link as LinkIcon, ChevronDown, Printer, CheckCircle2
+  Plus, Clock, Star, ArrowRight, Home, 
+  BadgeCheck, MapPin, Search, Heart, Share2,
+  ChevronDown, CheckCircle2, ChevronLeft,
+  ShoppingCart, Trash2, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { supabase } from './utils/supabase';
 import { getMenuData } from './utils/menuStore';
-import { printOrder, formatOrderForPrinter } from './utils/printer';
+
+// === CONFIGURAÇÃO DE TEMA (PALETA MELBURGUERS PREMIUM) ===
+const theme = {
+  primary: '#EC9424',        // Ouro Melburguers
+  background: '#F8F8FA',    // Cinza Ultra-Claro (Padrão iFood/SaaS)
+  surface: '#FFFFFF',       // Superfícies Brancas
+  textZinc: '#18181B',      // Texto quase preto
+  textMuted: '#71717A',     // Texto secundário
+  green: '#22c55e',         // Cores de sucesso/preço
+  red: '#f43f5e',           // Descontos/Ações de perigo
+  accent: '#FDF2E9',        // Tom de ouro pastel para fundos de botões
+};
 
 const App = () => {
   const [appMenuData, setAppMenuData] = useState(getMenuData());
-  const [activeCategory, setActiveCategory] = useState('Lanches');
+  const [activeCategory, setActiveCategory] = useState(null);
   const [cart, setCart] = useState([]);
-  const [isOpen, setIsOpen] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart', 'address' ou 'payment'
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('PIX');
-  const [changeNeeded, setChangeNeeded] = useState('');
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [address, setAddress] = useState({
-    street: '',
-    number: '',
-    neighborhood: '',
-    complement: '',
-    zipCode: '',
-    customerName: '',
-    customerPhone: '',
+    street: '', number: '', neighborhood: '', complement: '', zipCode: '', customerName: '', customerPhone: '',
   });
+  const [isMenuLoading, setIsMenuLoading] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
-  const [isMenuLoading, setIsMenuLoading] = useState(true);
 
-  // Carregar Menu do Supabase
+  // === CARREGAMENTO INICIAL ===
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const { data, error } = await supabase
-          .from('menu_config')
-          .select('data')
-          .eq('id', 1)
-          .single();
-        
+        const { data } = await supabase.from('menu_config').select('data').eq('id', 1).single();
         if (data) {
           setAppMenuData(data.data);
+          const cats = Object.keys(data.data.menu);
+          if (cats.length > 0) setActiveCategory(cats[0]);
         }
       } catch (err) {
-        console.error("Erro ao carregar menu do Supabase:", err);
+        console.error("Erro ao carregar menu:", err);
       } finally {
         setIsMenuLoading(false);
       }
@@ -57,42 +57,80 @@ const App = () => {
     fetchMenu();
   }, []);
 
-  // Coordenadas aproximadas da Rua das Oliveiras, Unamar, Cabo Frio
+  // === GEOLOCALIZAÇÃO E BUSCA DE ENDEREÇO ===
   const SHOP_COORDS = { lat: -22.6225, lng: -42.0163 };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Raio da Terra em km
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // Distância em km
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
   };
 
   const getCalculatedFee = (distance, streetName = "") => {
-    // Regra de Exceção: Rua das Lebres sempre R$ 7,00
-    if (streetName.toLowerCase().includes("lebres")) {
-      return 7;
-    }
-    
+    if (streetName.toLowerCase().includes("lebres")) return 7;
     let fee = 5;
-    if (distance > 2) {
-      fee += (distance - 2) * 1.20;
-    }
+    if (distance > 2) fee += (distance - 2) * 1.20;
     return fee;
   };
 
-  const categories = Object.keys(appMenuData.menu);
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      const query = address.street.trim();
+      if (query.length > 3 && !isSearchingAddress) {
+        try {
+          const cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '').replace(/\d+.*$/, '').trim();
+          if (!cleanQuery) return;
+          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + " Tamoios Cabo Frio")}&limit=5&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
+          const data = await response.json();
+          if (data && data.features) setAddressSuggestions(data.features.filter(f => f.properties.countrycode === 'BR'));
+        } catch (err) { console.error("Erro na busca:", err); }
+      } else { setAddressSuggestions([]); }
+    }, 200);
+    return () => clearTimeout(searchTimeout);
+  }, [address.street]);
 
-  const addToCart = (item) => {
-    setCart([...cart, item]);
+  const handleSelectSuggestion = (feature) => {
+    const [lon, lat] = feature.geometry.coordinates;
+    const p = feature.properties;
+    const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
+    const streetName = p.street || p.name || "";
+    const fee = getCalculatedFee(distance, streetName);
+    
+    setDeliveryFee(fee);
+    setIsSearchingAddress(true);
+    setAddress({
+      ...address,
+      street: streetName,
+      neighborhood: p.district || p.suburb || p.locality || '',
+      zipCode: p.postcode || '',
+    });
+    setAddressSuggestions([]);
+    setTimeout(() => setIsSearchingAddress(false), 400);
   };
+
+  // === EFEITO DE ROLAGEM PARA O HEADER ===
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 100);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // === CÁLCULO DE TOTAIS ===
+  const categories = useMemo(() => {
+    if (appMenuData && appMenuData.menu) return Object.keys(appMenuData.menu);
+    return [];
+  }, [appMenuData]);
 
   const cartSubtotal = cart.reduce((acc, item) => acc + item.price, 0);
   const cartTotal = cartSubtotal + deliveryFee;
+
+  // === AÇÕES DO CARRINHO ===
+  const addToCart = (item) => {
+    setCart([...cart, item]);
+    if (navigator.vibrate) navigator.vibrate(50); 
+  };
 
   const removeFromCart = (index) => {
     const newCart = [...cart];
@@ -100,887 +138,396 @@ const App = () => {
     setCart(newCart);
   };
 
-  useEffect(() => {
-    const searchTimeout = setTimeout(async () => {
-      const query = address.street.trim();
-      if (query.length > 3 && !isSearchingAddress) { // Aumentado para 3 caracteres para evitar buscas irrelevantes muito cedo
-        try {
-          // Otimizando a limpeza da query
-          let cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '');
-          cleanQuery = cleanQuery.replace(/\d+.*$/, '').trim();
-          
-          if (!cleanQuery) return;
-
-          // Busca ultra-focada em Tamoios/Unamar/Cabo Frio
-          const searchQuery = `${cleanQuery} Tamoios Cabo Frio`;
-          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=6&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}&location_bias_scale=0.9`);
-          const data = await response.json();
-          
-          if (data && data.features) {
-            const brFeatures = data.features.filter(f => 
-              f.properties.countrycode === 'BR' && 
-              (f.properties.street || f.properties.district || f.properties.suburb || f.properties.locality || f.properties.name)
-            ).slice(0, 5); // Limitar a 5 para carregar mais rápido visualmente
-            setAddressSuggestions(brFeatures);
-          }
-        } catch (err) {
-          console.error("Erro na busca de endereço:", err);
-        }
-      } else {
-        setAddressSuggestions([]);
-      }
-    }, 150); // Reduzido para 150ms para resposta quase instantânea
-
-    return () => clearTimeout(searchTimeout);
-  }, [address.street]);
-
-  const formatSuggestion = (feature) => {
-    const p = feature.properties;
-    const road = p.street || p.name || "";
-    // No Brasil, bairro pode vir em district, suburb ou locality
-    const neighborhood = p.district || p.suburb || p.locality || "";
-    const city = p.city || "";
-    
-    let label = road;
-    if (neighborhood && neighborhood.toLowerCase() !== road.toLowerCase()) {
-      label += `, ${neighborhood}`;
+  const scrollToCategory = (cat) => {
+    setActiveCategory(cat);
+    const element = document.getElementById(`category-${cat}`);
+    if (element) {
+      window.scrollTo({
+        top: element.offsetTop - 110,
+        behavior: 'smooth'
+      });
     }
-    if (city && city.toLowerCase() !== "cabo frio") {
-      label += ` - ${city}`;
-    }
-    
-    return label || "Endereço encontrado";
   };
 
-  const handleSelectSuggestion = (feature) => {
-    const [lon, lat] = feature.geometry.coordinates;
-    const p = feature.properties;
-    
-    const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
-    
-    const streetName = p.street || p.name || "";
-    const fee = getCalculatedFee(distance, streetName);
-    
-    setDeliveryFee(fee);
-    setIsSearchingAddress(true);
-    
-    const numberMatch = address.street.match(/\d+/);
-    const extractedNumber = numberMatch ? numberMatch[0] : '';
-
-    setAddress({
-      ...address,
-      street: p.street || p.name || address.street,
-      number: extractedNumber || address.number,
-      neighborhood: p.district || p.suburb || p.locality || '',
-      zipCode: p.postcode || '',
-    });
-    
-    setAddressSuggestions([]);
-    setTimeout(() => setIsSearchingAddress(false), 400); // Reduzido bloqueio para 400ms
-  };
-
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocalização não suportada pelo seu navegador.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-      
-      try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-        const data = await response.json();
-        const addr = data.address || {};
-        
-        const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
-        const finalStreet = addr.road || addr.street || addr.suburb || '';
-        const finalFee = getCalculatedFee(distance, finalStreet);
-        setDeliveryFee(finalFee);
-
-        setAddress(prev => ({
-          ...prev,
-          street: finalStreet,
-          neighborhood: addr.suburb || addr.neighbourhood || addr.city_district || '',
-        }));
-      } catch (err) {
-        alert("Não conseguimos converter sua localização em texto. Por favor, preencha manualmente!");
-      }
-    }, (error) => {
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          alert("Permissão negada! Verifique se a localização está ativa no Android/iOS e permitida no cadeado do navegador.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          alert("Sinal de GPS indisponível no momento.");
-          break;
-        case error.TIMEOUT:
-          alert("A busca demorou muito. Tente novamente em um local mais aberto.");
-          break;
-        default:
-          alert("Ocorreu um erro desconhecido na localização.");
-      }
-    }, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
-    });
-  };
-
-  const handleCheckout = () => {
+  // === CHECKOUT FINAL ===
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
     if (!address.street || !address.number || !address.neighborhood) {
       alert("Por favor, preencha o endereço completo!");
       return;
     }
 
-    // 1. Definição imediata dos dados do pedido
-    const orderData = {
-      id: Math.random().toString(36).substr(2, 5).toUpperCase(),
-      items: cart,
-      subtotal: cartSubtotal,
-      deliveryFee: deliveryFee,
-      total: cartTotal,
-      address: address,
-      paymentMethod: paymentMethod,
-      timestamp: new Date().toISOString(),
-      status: 'pendente'
-    };
-
-    // 2. ENVIO IMEDIATO PARA O SUPABASE (Realtime Admin)
-    console.log("Tentando salvar pedido no Supabase...", orderData);
+    const orderId = Math.random().toString(36).substr(2, 5).toUpperCase();
     
-    supabase.from('pedidos').insert([{
-      order_id: orderData.id,
-      items: orderData.items,
-      subtotal: orderData.subtotal,
-      delivery_fee: orderData.deliveryFee,
-      total: orderData.total,
-      address: orderData.address,
-      payment_method: orderData.paymentMethod,
-      status: 'pendente'
-    }]).then(({ error, data }) => {
-      if (error) {
-        console.error("ERRO CRÍTICO SUPABASE:", error);
-        alert(`Erro ao enviar para o painel: ${error.message}. Verifique se a tabela 'pedidos' tem as colunas corretas.`);
-      } else {
-        console.log("Pedido salvo com sucesso no banco!", data);
-      }
-    });
+    try {
+      await supabase.from('pedidos').insert([{
+        order_id: orderId, items: cart, subtotal: cartSubtotal,
+        delivery_fee: deliveryFee, total: cartTotal, address: address,
+        payment_method: paymentMethod, status: 'pendente'
+      }]);
 
-    // 3. Efeito de Confete (Instantâneo)
-    confetti({
-      particleCount: 200,
-      spread: 90,
-      origin: { y: 0.6 },
-      zIndex: 4000,
-      colors: ['#EC9424', '#2D1B14', '#22c55e']
-    });
+      confetti({
+        particleCount: 200,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: [theme.primary, theme.green, '#000']
+      });
 
-    // 4. Mostrar tela de sucesso imediatamente
-    setIsOrderSuccess(true);
-    setIsCartOpen(false);
-
-    // 5. WhatsApp Message Template — Mel Burgers
-    const phoneNumber = "5522996153138"; 
-    let message = "\u2705 *PEDIDO CONFIRMADO \u2014 MEL BURGERS* \uD83C\uDF54\uD83C\uDF6F\n\n";
-    
-    message += "━━━━━━━━━━━━━━━━━\n\n";
-    message += "\uD83E\uDDFE *RESUMO DO PEDIDO*\n";
-    cart.forEach(item => {
-      message += `\u2022 ${item.name} \u2014 R$ ${item.price.toFixed(2).replace('.', ',')}\n`;
-    });
-    
-    message += "\n━━━━━━━━━━━━━━━━━\n\n";
-    message += "\uD83D\uDCCD *DADOS DE ENTREGA*\n";
-    message += `${address.street}, ${address.number}\n`;
-    message += `Bairro: ${address.neighborhood}\n`;
-    if (address.zipCode) message += `CEP: ${address.zipCode}\n`;
-    if (address.complement) message += `Refer\u00EAncia: ${address.complement}\n`;
-    
-    message += "\n━━━━━━━━━━━━━━━━━\n\n";
-    message += "\uD83D\uDCB3 *FORMA DE PAGAMENTO*\n";
-    message += `${paymentMethod} confirmado ✔️\n`;
-    if (paymentMethod === 'Dinheiro' && changeNeeded) {
-      message += `Troco para: R$ ${parseFloat(changeNeeded).toFixed(2).replace('.', ',')}\n`;
+      setIsOrderSuccess(true);
+      setIsCartOpen(false);
+      
+      const message = `*NOVO PEDIDO MELBURGUERS #${orderId}*\n\nItems: ${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\nTotal: R$ ${cartTotal.toFixed(2)}`;
+      window.open(`https://wa.me/5522996153138?text=${encodeURIComponent(message)}`, '_blank');
+      
+    } catch (err) {
+      alert("Erro ao enviar pedido para o restaurante.");
     }
-    
-    message += "\n━━━━━━━━━━━━━━━━━\n\n";
-    message += `\uD83D\uDCB0 *TOTAL: R$ ${cartTotal.toFixed(2).replace('.', ',')}*\n`;
-    
-    message += "\n━━━━━━━━━━━━━━━━━\n";
-    message += "\uD83D\uDC68\u200D\uD83C\uDF73 *STATUS DO PEDIDO*\n";
-    message += "Seu pedido j\u00E1 est\u00E1 em preparo \uD83D\uDD25\n\n";
-    message += "\uD83D\uDEB4\u200D\u2642\uFE0F Em breve sair\u00E1 para entrega!\n";
-    
-    message += "\n━━━━━━━━━━━━━━━━━\n";
-    message += "\uD83D\uDCF2 *ACOMPANHE PELO WHATSAPP*\n";
-    message += "Nossa equipe pode entrar em contato para atualiza\u00E7\u00F5es\n\n";
-    message += "\u2728 Obrigado por escolher a Mel Burgers!\n";
-    message += "\uD83C\uDF54 Sabor que conquista na primeira mordida";
-    
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-
-    // 6. Envio para n8n em segundo plano
-    fetch('https://SUA-URL-N8N.com/webhook/pedidos-mel-burgers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData),
-      keepalive: true
-    }).catch(err => console.error("Erro n8n:", err));
-
-    // 7. Redirecionamento 
-    setTimeout(() => {
-      window.open(whatsappUrl, '_blank');
-    }, 4000);
   };
 
+  if (isMenuLoading) return (
+    <div style={{ background: theme.background, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <motion.div 
+        animate={{ rotate: 360 }} 
+        transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }} 
+        style={{ width: 40, height: 40, border: `3px solid ${theme.primary}22`, borderTopColor: theme.primary, borderRadius: '50%' }} 
+      />
+    </div>
+  );
+
   return (
-    <div className="app-container">
-      {/* Banner Top */}
-      <div className="banner-top">
-        <img src="/images/MEL Burgers iluminado e convidativo.png" alt="Mel Burgers Banner" />
+    <div style={{ background: theme.background, minHeight: '100vh', fontFamily: "'Inter', sans-serif", paddingBottom: '120px' }}>
+      
+      {/* 1. HERO / HEADER */}
+      <div style={{ position: 'relative', height: '280px', background: '#000' }}>
+        <img 
+          src="/images/MEL Burgers iluminado e convidativo.png" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }}
+          alt="Banner Principal"
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.6) 100%)' }} />
       </div>
 
-      {/* Compact Instagram Header */}
-      <header className="insta-header">
-        <div className="profile-top">
-          <div className="avatar-wrapper">
-            <div className="avatar-inner">
-              <img src="/images/logo.png" alt="Mel Burgers Logo" />
-            </div>
-          </div>
-          
-          <div className="profile-title-area">
-            <div className="username-row" style={{ justifyContent: 'flex-end' }}>
-              <MoreHorizontal size={20} style={{ color: '#8e8e8e' }} />
-            </div>
-          </div>
+      {/* 2. CARD DE INFORMAÇÕES DA LOJA */}
+      <div style={{ maxWidth: '640px', margin: '-45px auto 0', position: 'relative', zIndex: 110, padding: '0 16px' }}>
+        <div style={{ background: theme.surface, borderRadius: '28px', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.03)' }}>
+           <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{ position: 'relative' }}>
+                <img src="/images/logo.png" alt="Logo" style={{ width: '72px', height: '72px', borderRadius: '20px', objectFit: 'cover', border: `2px solid ${theme.primary}` }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h1 style={{ fontSize: '24px', fontWeight: 900, color: theme.textZinc, letterSpacing: '-0.5px' }}>Melburguers</h1>
+                    <BadgeCheck size={20} fill="#0095f6" color="white" />
+                 </div>
+                 <p style={{ color: theme.textMuted, fontSize: '13px', marginTop: '4px' }}>Hambúrgueres Artesanais • Gourmet • <span style={{ color: theme.textZinc, fontWeight: 600 }}>Cabo Frio</span></p>
+              </div>
+           </div>
+
+           <div style={{ display: 'flex', justifyContent: 'space-around', padding: '18px 0', borderTop: '1px solid #f2f2f5' }}>
+              <div style={{ textAlign: 'center' }}>
+                 <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>15-30 min</div>
+                 <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>TEMPO</div>
+              </div>
+              <div style={{ width: '1px', background: '#f2f2f5' }} />
+              <div style={{ textAlign: 'center' }}>
+                 <div style={{ fontSize: '14px', fontWeight: 800, color: theme.green }}>Grátis</div>
+                 <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>ENTREGA</div>
+              </div>
+              <div style={{ width: '1px', background: '#f2f2f5' }} />
+              <div style={{ textAlign: 'center' }}>
+                 <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>R$ 15,00</div>
+                 <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>MÍNIMO</div>
+              </div>
+           </div>
         </div>
+      </div>
 
-        <div className="bio-area">
-          <div className="bio-text">
-            <strong>MELBURGERS</strong> <BadgeCheck size={18} fill="#0095f6" stroke="white" style={{ verticalAlign: 'middle', marginLeft: '4px' }} /> <br />
-            Sabor que conquista na primeira mordida ✨ <br />
-            <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
-            Somente Delivery <br />
-            <MapPin size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
-            Tamoios • Cabo Frio 🌴 <br />
-            <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
-            Seg a Seg • 19h às 01h
-          </div>
-
+      {/* 3. CATEGORIAS */}
+      <div style={{ 
+        position: 'sticky', top: 0, zIndex: 120, 
+        background: scrolled ? 'rgba(255,255,255,0.95)' : 'transparent', 
+        backdropFilter: scrolled ? 'blur(12px)' : 'none',
+        padding: '16px 0', marginTop: '24px', 
+        borderBottom: scrolled ? '1px solid rgba(0,0,0,0.06)' : 'none',
+        transition: 'all 0.4s'
+      }}>
+        <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', padding: '15px 20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+           <style>
+             {`
+               .category-btn-honey {
+                  position: relative;
+                  overflow: hidden;
+                  min-width: 120px;
+                  height: 48px;
+                  border-radius: 100px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  cursor: pointer;
+                  transition: all 0.3s ease;
+                  padding-top: 16px !important; /* Valor original do index.css */
+               }
+               .honey-drip {
+                  position: absolute;
+                  top: -8px; /* Valor original do index.css */
+                  left: 0;
+                  right: 0;
+                  height: 38px; /* Valor original do index.css */
+                  background-image: url('/images/honey-frame.png');
+                  background-size: 100% 100%;
+                  background-repeat: no-repeat;
+                  z-index: 10;
+                  pointer-events: none;
+               }
+             `}
+           </style>
+           {categories.map(cat => (
+             <button 
+               key={cat} 
+               onClick={() => scrollToCategory(cat)}
+               className="category-btn-honey"
+               style={{ 
+                 whiteSpace: 'nowrap',
+                 background: activeCategory === cat ? theme.primary : 'white', 
+                 color: activeCategory === cat ? 'white' : theme.textZinc,
+                 border: `1.5px solid ${activeCategory === cat ? theme.primary : '#e2e2e7'}`,
+                 boxShadow: activeCategory === cat ? `0 10px 25px ${theme.primary}44` : 'none',
+                 paddingLeft: '20px',
+                 paddingRight: '20px',
+                 fontSize: '14px',
+                 fontWeight: 850
+               }}
+             >
+               <div className="honey-drip"></div>
+               <span style={{ position: 'relative', zIndex: 20 }}>{cat}</span>
+             </button>
+           ))}
         </div>
+      </div>
 
-        <div className="header-actions">
-          <a 
-            href="https://www.instagram.com/melburgerrs?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="action-btn btn-primary"
-            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            Seguir
-          </a>
-          <button 
-            className="action-btn btn-secondary btn-icon" 
-            style={{ position: 'relative' }}
-            onClick={() => {
-              setIsCartOpen(true);
-              setCheckoutStep('cart');
-            }}
-          >
-            <ShoppingBag size={20} />
-            {cart.length > 0 && (
-              <span className="cart-badge-mini">{cart.length}</span>
-            )}
-          </button>
-        </div>
-      </header>
-
-      {/* Category Nav */}
-      <nav className="category-nav">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            className={`category-btn ${activeCategory === cat ? 'active' : ''} has-honey-frame`}
-            onClick={() => setActiveCategory(cat)}
-          >
-            <div className="honey-frame-overlay"></div>
-            {cat}
-          </button>
-        ))}
-      </nav>
-
-      {/* Menu List */}
-      <main className="menu-section">
-        <h2 className="section-title">{activeCategory}</h2>
-        
-        <div className="items-grid">
-          <AnimatePresence mode="wait">
-            {appMenuData.menu[activeCategory].map((item, index) => (
-              <motion.div
-                key={item.id}
-                className="menu-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+      {/* 4. OFERTAS */}
+      <div style={{ padding: '32px 20px 0' }}>
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <h2 style={{ fontSize: '19px', fontWeight: 900, color: theme.textZinc, letterSpacing: '-0.3px' }}>Famosos do Melburguers</h2>
+            <ArrowRight size={20} color={theme.primary} />
+         </div>
+         <div style={{ display: 'flex', gap: '18px', overflowX: 'auto', paddingBottom: '16px', scrollbarWidth: 'none' }}>
+            {appMenuData.menu[categories[0]]?.slice(0, 4).map((item, i) => (
+              <motion.div 
+                key={i}
+                whileTap={{ scale: 0.96 }}
+                style={{ flex: '0 0 170px', borderRadius: '24px', overflow: 'hidden', position: 'relative' }}
               >
-                <div className="card-img">
-                  <img src={item.image} alt={item.name} loading="lazy" />
-                </div>
-                <div className="card-info">
-                  <div className="card-header">
-                    <h3>{item.name}</h3>
-                    <p>{item.description}</p>
-                  </div>
-                  <div className="card-footer">
-                    <div className="price-container">
-                      {item.original_price && (
-                        <span className="price-old">R$ {item.original_price.toFixed(2).replace('.', ',')}</span>
-                      )}
-                      <span className="price-tag">R$ {item.price.toFixed(2).replace('.', ',')}</span>
-                    </div>
-                    <button className="add-btn" onClick={() => addToCart(item)}>
-                      <Plus size={20} />
-                    </button>
-                  </div>
-                </div>
+                 <div style={{ height: '170px', width: '100%', borderRadius: '24px', overflow: 'hidden', position: 'relative' }}>
+                    <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <motion.div 
+                       whileTap={{ scale: 1.2 }}
+                       onClick={() => addToCart(item)}
+                       style={{ position: 'absolute', bottom: '12px', right: '12px', background: theme.surface, borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 15px rgba(0,0,0,0.2)' }} 
+                    >
+                       <Plus size={22} color={theme.primary} strokeWidth={3} />
+                    </motion.div>
+                 </div>
+                 <div style={{ padding: '10px 4px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>{item.name}</div>
+                    <div style={{ color: theme.green, fontWeight: 900, fontSize: '15px', marginTop: '4px' }}>R$ {item.price.toFixed(2)}</div>
+                 </div>
               </motion.div>
             ))}
-          </AnimatePresence>
-        </div>
-      </main>
+         </div>
+      </div>
 
-      {/* Footer Info */}
-      <footer style={{ padding: '0 20px 120px', textAlign: 'center', opacity: 0.6, fontSize: '13px' }}>
-        <p>Aberto das 19h às 1h</p>
-        <p>Desenvolvido com ❤️ para Mel Burgers</p>
-      </footer>
+      {/* 5. LISTAGEM DE PRODUTOS */}
+      <div style={{ maxWidth: '640px', margin: '40px auto 0', padding: '0 20px' }}>
+         {categories.map(cat => (
+           <section id={`category-${cat}`} key={cat} style={{ marginBottom: '48px' }}>
+              <h2 style={{ fontSize: '19px', fontWeight: 900, color: theme.textZinc, marginBottom: '24px', borderLeft: `5px solid ${theme.primary}`, paddingLeft: '14px' }}>{cat}</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                 {appMenuData.menu[cat].map((item, i) => (
+                   <motion.div 
+                     key={i}
+                     initial={{ opacity: 0, y: 15 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     style={{ 
+                       background: theme.surface, borderRadius: '24px', padding: '18px', 
+                       display: 'flex', gap: '20px', alignItems: 'center',
+                       border: '1px solid rgba(0,0,0,0.02)', boxShadow: '0 6px 20px rgba(0,0,0,0.02)'
+                     }}
+                   >
+                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 800, color: theme.textZinc, marginBottom: '4px' }}>{item.name}</span>
+                        <div style={{ fontSize: '12.5px', color: theme.textMuted, lineHeight: '1.5', marginBottom: '16px' }}>{item.description}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                           <span style={{ fontSize: '16px', fontWeight: 900, color: theme.green }}>R$ {item.price.toFixed(2)}</span>
+                           <motion.button 
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => addToCart(item)}
+                              style={{ background: theme.accent, border: 'none', width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                           >
+                              <Plus size={22} color={theme.primary} strokeWidth={3} />
+                           </motion.button>
+                        </div>
+                     </div>
+                     <div style={{ width: '110px', height: '110px', borderRadius: '20px', overflow: 'hidden' }}>
+                        <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                     </div>
+                   </motion.div>
+                 ))}
+              </div>
+           </section>
+         ))}
+      </div>
 
-      {/* Floating Cart */}
-      {cart.length > 0 && (
-        <motion.div
-          className="cart-floating"
-          initial={{ y: 100, x: "-50%", opacity: 0 }}
-          animate={{ y: 0, x: "-50%", opacity: 1 }}
-          whileTap={{ scale: 0.95, x: "-50%" }}
-          onClick={() => {
-            setIsCartOpen(true);
-            setCheckoutStep('cart');
-          }}
-        >
-          <div className="cart-info">
-            <span className="cart-count">{cart.length}</span>
-            <div className="cart-view-text">Ver Carrinho</div>
-          </div>
-          <div className="cart-price">
-            R$ {cartTotal.toFixed(2).replace('.', ',')}
-          </div>
-        </motion.div>
-      )}
+      {/* 6. CARRINHO FLUTUANTE ULTRA-PREMIUM */}
+      <AnimatePresence>
+        {cart.length > 0 && !isCartOpen && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }} 
+            animate={{ y: 0, opacity: 1 }} 
+            exit={{ y: 100, opacity: 0 }}
+            style={{ 
+              position: 'fixed', 
+              bottom: '32px', 
+              left: '20px', 
+              right: '20px', 
+              zIndex: 1000, 
+              display: 'flex', 
+              justifyContent: 'center' 
+            }}
+          >
+             <motion.button 
+               whileHover={{ backgroundColor: '#16161D' }}
+               whileTap={{ scale: 0.97 }}
+               onClick={() => setIsCartOpen(true)}
+               style={{ 
+                 background: '#0B0B0F', 
+                 color: 'rgba(255,255,255,0.95)', 
+                 border: '1px solid rgba(255,255,255,0.08)', 
+                 height: '64px', 
+                 width: '100%', 
+                 maxWidth: '480px', 
+                 borderRadius: '100px',
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 padding: '0 28px', 
+                 boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                 cursor: 'pointer',
+                 backdropFilter: 'blur(10px)',
+                 position: 'relative',
+                 overflow: 'hidden'
+               }}
+             >
+                {/* Efeito de brilho sutil no topo */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)' }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', width: '36px', height: '36px', borderRadius: '50%', marginRight: '16px' }}>
+                   <ShoppingCart size={18} strokeWidth={1.5} />
+                </div>
+                
+                <div style={{ flex: 1, textAlign: 'center', fontWeight: 500, fontSize: '12px', letterSpacing: '1.2px', textTransform: 'uppercase', opacity: 0.9 }}>
+                   Ver Carrinho
+                </div>
+                
+                <div style={{ fontWeight: 600, fontSize: '15px', paddingLeft: '16px', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                   R$ {cartSubtotal.toFixed(2)}
+                </div>
+             </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Cart Modal Overlay */}
+      {/* 7. MODAL DE FINALIZAÇÃO */}
       <AnimatePresence>
         {isCartOpen && (
           <motion.div 
-            className="cart-modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
             onClick={() => setIsCartOpen(false)}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 1001,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px'
-            }}
           >
             <motion.div 
-              className="cart-modal-content"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                background: 'white',
-                width: '100%',
-                maxWidth: '440px',
-                maxHeight: '90vh',
-                borderRadius: '32px',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 25px 60px rgba(0,0,0,0.2)',
-                position: 'relative',
-              }}
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              style={{ width: '100%', maxWidth: '540px', background: 'white', borderRadius: '35px 35px 0 0', padding: '35px 24px', maxHeight: '92vh', overflowY: 'auto' }}
+              onClick={e => e.stopPropagation()}
             >
-              <div className="modal-header" style={{ padding: '16px 20px', position: 'relative', textAlign: 'center', borderBottom: '1px solid #f5f5f5' }}>
-                <div className="modal-handle" style={{ width: '40px', height: '4px', background: '#ddd', borderRadius: '2px', margin: '0 auto 12px' }}></div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#2D1B14' }}>
-                  {checkoutStep === 'cart' ? 'Seu Carrinho' : checkoutStep === 'address' ? 'Endereço de Entrega' : 'Forma de Pagamento'}
-                </h3>
-                <button 
-                  className="close-modal" 
-                  onClick={() => setIsCartOpen(false)} 
-                  style={{ position: 'absolute', right: '15px', top: '15px', background: '#f5f5f5', border: 'none', width: '30px', height: '30px', borderRadius: '50%', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                >
-                  ×
-                </button>
-              </div>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                  <h2 style={{ fontSize: '22px', fontWeight: 900, color: theme.textZinc }}>Seu Carrinho</h2>
+                  <button onClick={() => setIsCartOpen(false)} style={{ background: '#f5f5f7', border: 'none', padding: '10px', borderRadius: '50%' }}><ChevronDown size={24}/></button>
+               </div>
 
-              <div className="cart-items-list" style={{ 
-                flex: 1, 
-                overflowY: 'auto', 
-                padding: '0 20px',
-                minHeight: '300px'
-              }}>
-                {checkoutStep === 'cart' ? (
-                  cart.length === 0 ? (
-                    <div className="empty-cart" style={{ textAlign: 'center', padding: '50px 0', opacity: 0.3 }}>
-                      <ShoppingBag size={48} style={{ margin: '0 auto 10px' }} />
-                      <p>Seu carrinho está vazio</p>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginBottom: '35px' }}>
+                  {cart.map((item, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fcfcfd', padding: '14px', borderRadius: '16px' }}>
+                       <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 900, color: theme.primary }}>1x</span>
+                          <span style={{ fontSize: '15px', fontWeight: 700 }}>{item.name}</span>
+                       </div>
+                       <button onClick={() => removeFromCart(i)} style={{ background: 'none', border: 'none', color: theme.red }}><Trash2 size={18}/></button>
                     </div>
-                  ) : (
-                    cart.map((item, index) => (
-                      <div key={index} className="cart-item" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 0', borderBottom: '1px solid #f5f5f5' }}>
-                        <div className="cart-item-img" style={{ width: '60px', height: '60px', borderRadius: '12px', overflow: 'hidden' }}>
-                          <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                        <div className="cart-item-info" style={{ flex: 1 }}>
-                          <h4 style={{ margin: 0, fontSize: '15px' }}>{item.name}</h4>
-                          <span className="cart-item-price" style={{ color: '#EC9424', fontWeight: '700', fontSize: '14px' }}>R$ {item.price.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                        <button 
-                          className="remove-item" 
-                          onClick={() => removeFromCart(index)}
-                          style={{ background: '#fff0f0', color: '#ff4444', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600' }}
-                        >
-                          Remover
-                        </button>
-                      </div>
-                    ))
-                  )
-                ) : checkoutStep === 'address' ? (
-                  <div className="address-form" style={{ padding: '10px 0' }}>
-                    <button 
-                      onClick={handleGetLocation}
-                      style={{ 
-                        width: '100%', 
-                        padding: '12px', 
-                        marginBottom: '20px', 
-                        borderRadius: '12px', 
-                        border: '1px solid #EC9424',
-                        background: '#FFF9F0',
-                        color: '#EC9424',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <MapPin size={18} /> Usar minha localização atual
-                    </button>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', position: 'relative' }}>
-                        <div style={{ position: 'relative' }}>
-                          <input 
-                            type="text" 
-                            placeholder="Rua / Logradouro" 
-                            value={address.street}
-                            onChange={(e) => setAddress({...address, street: e.target.value})}
-                            className="address-input"
-                            style={{ width: '100%', paddingLeft: '40px' }}
-                          />
-                          <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}>
-                            <MapPin size={18} />
-                          </div>
-                          {addressSuggestions.length > 0 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            background: 'white',
-                            border: '1px solid #eee',
-                            borderRadius: '12px',
-                            marginTop: '5px',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            zIndex: 1002,
-                            maxHeight: '200px',
-                            overflowY: 'auto'
-                          }}>
-                            {addressSuggestions.map((suggestion, idx) => (
-                              <div 
-                                key={idx}
-                                onClick={() => handleSelectSuggestion(suggestion)}
-                                style={{
-                                  padding: '12px 15px',
-                                  borderBottom: idx === addressSuggestions.length - 1 ? 'none' : '1px solid #f5f5f5',
-                                  cursor: 'pointer',
-                                  fontSize: '0.9rem',
-                                  color: '#333'
-                                }}
-                              >
-                                {formatSuggestion(suggestion)}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <input 
-                          type="text" 
-                          placeholder="Nº" 
-                          value={address.number}
-                          onChange={(e) => setAddress({...address, number: e.target.value})}
-                          style={{ width: '80px' }}
-                          className="address-input"
-                        />
-                        <input 
-                          type="text" 
-                          placeholder="Bairro" 
-                          value={address.neighborhood}
-                          onChange={(e) => setAddress({...address, neighborhood: e.target.value})}
-                          style={{ flex: 1 }}
-                          className="address-input"
-                        />
-                      </div>
-                      <input 
-                        type="text" 
-                        placeholder="CEP (Preenchido automático)" 
-                        value={address.zipCode}
-                        onChange={(e) => setAddress({...address, zipCode: e.target.value})}
-                        className="address-input"
-                      />
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <input 
-                          type="text" 
-                          placeholder="Seu Nome" 
-                          value={address.customerName}
-                          onChange={(e) => setAddress({...address, customerName: e.target.value})}
-                          style={{ flex: 1 }}
-                          className="address-input"
-                        />
-                        <input 
-                          type="tel" 
-                          placeholder="WhasApp (DDD)" 
-                          value={address.customerPhone}
-                          onChange={(e) => setAddress({...address, customerPhone: e.target.value})}
-                          style={{ flex: 1 }}
-                          className="address-input"
-                        />
-                      </div>
-                      <input 
-                        type="text" 
-                        placeholder="Ponto de Referência / Complemento" 
-                        value={address.complement}
-                        onChange={(e) => setAddress({...address, complement: e.target.value})}
-                        className="address-input"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="payment-form" style={{ padding: '10px 0' }}>
-                    <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '10px' }}>
-                      Escolha como deseja pagar:
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '20px' }}>
-                      {['PIX', 'Cartão', 'Dinheiro'].map((method) => (
-                        <button
-                          key={method}
-                          onClick={() => setPaymentMethod(method)}
-                          style={{
-                            padding: '12px 5px',
-                            borderRadius: '10px',
-                            border: '1px solid',
-                            borderColor: paymentMethod === method ? '#EC9424' : '#eee',
-                            background: paymentMethod === method ? '#FFF9F0' : 'white',
-                            color: paymentMethod === method ? '#EC9424' : '#888',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {method}
-                        </button>
-                      ))}
-                    </div>
-                    <AnimatePresence mode="wait">
-                      {paymentMethod === 'PIX' && (
-                        <motion.div 
-                          key="pix"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          style={{ 
-                            padding: '20px', 
-                            background: '#f0fdf4', 
-                            borderRadius: '16px', 
-                            border: '2px dashed #22c55e', 
-                            textAlign: 'center' 
-                          }}
-                        >
-                          <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#166534' }}>
-                            <strong>Nossa Chave PIX:</strong><br />
-                            <span style={{ fontSize: '16px', color: '#14532d', fontWeight: '800' }}>CNPJ 64.745.137/0001-58</span>
-                          </p>
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard.writeText("64745137000158");
-                              alert("Chave PIX Copiada!");
-                            }}
-                            style={{ 
-                              width: '100%',
-                              padding: '12px', 
-                              background: '#22c55e', 
-                              color: 'white', 
-                              border: 'none', 
-                              borderRadius: '12px', 
-                              cursor: 'pointer', 
-                              fontSize: '14px', 
-                              fontWeight: 'bold',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px'
-                            }}
-                          >
-                            Copiar Chave PIX
-                          </button>
-                          <p style={{ marginTop: '10px', fontSize: '11px', color: '#166534', opacity: 0.8 }}>
-                            O comprovante deverá ser enviado no próximo passo.
-                          </p>
-                        </motion.div>
-                      )}
-                      {paymentMethod === 'Dinheiro' && (
-                        <motion.div 
-                          key="cash"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                        >
-                          <label style={{ fontSize: '14px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Troco para quanto?</label>
-                          <input 
-                            type="number" 
-                            placeholder="Ex: 50,00" 
-                            value={changeNeeded}
-                            onChange={(e) => setChangeNeeded(e.target.value)}
-                            className="address-input"
-                          />
-                          <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>Deixe em branco se não precisar de troco.</p>
-                        </motion.div>
-                      )}
-                      {paymentMethod === 'Cartão' && (
-                        <motion.div 
-                          key="card"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          style={{ textAlign: 'center', padding: '10px', color: '#888', fontSize: '14px' }}
-                        >
-                          Levaremos a maquininha até você! 💳
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </div>
+                  ))}
+               </div>
 
-              {cart.length > 0 && (
-                <div className="modal-footer" style={{ padding: '20px', borderTop: '1px solid #f5f5f5', background: 'white' }}>
-                  <div className="total-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', opacity: 0.6 }}>Subtotal</span>
-                    <span style={{ fontSize: '14px', opacity: 0.6 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</span>
+               <div style={{ background: '#f8f8fa', padding: '16px', borderRadius: '16px', border: '1px solid #e2e2e7', position: 'relative', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                     <MapPin size={16} color={theme.primary} />
+                     <span style={{ fontSize: '13px', fontWeight: 700 }}>Endereço de Entrega</span>
                   </div>
-                  <div className="total-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <span style={{ fontSize: '14px', color: '#EC9424' }}>Frete</span>
-                    <span style={{ fontSize: '14px', color: '#EC9424' }}>+ R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      style={{ width: '100%', background: 'white', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '12px', fontSize: '14px', outline: 'none' }}
+                      placeholder="Comece a digitar sua rua..."
+                      value={address.street}
+                      onChange={e => setAddress({...address, street: e.target.value})}
+                    />
+                    {addressSuggestions.length > 0 && (
+                      <div style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: 'white', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3000, overflow: 'hidden' }}>
+                         {addressSuggestions.map((f, i) => (
+                           <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px 16px', fontSize: '13px', borderBottom: '1px solid #f4f4f5', cursor: 'pointer' }}>
+                              <div style={{ fontWeight: 700 }}>{f.properties.street || f.properties.name}</div>
+                              <div style={{ fontSize: '11px', color: theme.textMuted }}>{f.properties.district || 'Cabo Frio'}</div>
+                           </div>
+                         ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="total-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '18px' }}>Total</span>
-                    <span className="total-price" style={{ fontWeight: 800, fontSize: '22px', color: '#EC9424' }}>R$ {cartTotal.toFixed(2).replace('.', ',')}</span>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                     <input style={{ flex: 1, border: '1px solid #eaeaef', padding: '12px', borderRadius: '10px', fontSize: '13px' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
+                     <input style={{ flex: 2, border: '1px solid #eaeaef', padding: '12px', borderRadius: '10px', fontSize: '13px', background: '#fcfcfd' }} placeholder="Bairro" value={address.neighborhood} readOnly />
                   </div>
-                  
-                  {checkoutStep === 'cart' ? (
-                    <button 
-                      className="checkout-btn" 
-                      onClick={() => setCheckoutStep('address')}
-                      style={{ width: '100%', padding: '16px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '700', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                    >
-                      <Truck size={20} /> Ir para entrega
-                    </button>
-                  ) : checkoutStep === 'address' ? (
-                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                      <button 
-                        className="action-btn btn-secondary" 
-                        onClick={() => setCheckoutStep('cart')}
-                        style={{ flex: '0 0 80px', height: '54px', borderRadius: '15px', border: '1px solid #eee', background: 'white', fontSize: '0.9rem' }}
-                      >
-                        Voltar
-                      </button>
-                      <button 
-                        className="checkout-btn" 
-                        onClick={() => {
-                          const cleanPhone = address.customerPhone?.replace(/\D/g, '') || '';
-                          
-                          if (!address.street || !address.number || !address.neighborhood) {
-                            alert("Por favor, preencha o seu endereço completo!");
-                            return;
-                          }
-                          
-                          if (!address.customerName || address.customerName.length < 3) {
-                            alert("Por favor, insira seu nome completo!");
-                            return;
-                          }
+               </div>
 
-                          if (cleanPhone.length < 10) {
-                            alert("Por favor, insira um número de WhatsApp válido (com DDD)!");
-                            return;
-                          }
+               <div style={{ padding: '20px 4px', borderTop: '2px solid #f4f4f5' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '22px', fontWeight: 950, color: theme.textZinc }}>
+                     <span>Total</span>
+                     <span>R$ {cartTotal.toFixed(2)}</span>
+                  </div>
+               </div>
 
-                          setCheckoutStep('payment');
-                        }}
-                        style={{ flex: 1, height: '54px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '800', fontSize: '0.95rem', padding: '0 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
-                      >
-                        Prosseguir para o pagamento
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                      <button 
-                        className="action-btn btn-secondary" 
-                        onClick={() => setCheckoutStep('address')}
-                        style={{ flex: '0 0 80px', height: '54px', borderRadius: '15px', border: '1px solid #eee', background: 'white', fontSize: '0.9rem' }}
-                      >
-                        Voltar
-                      </button>
-                      <button 
-                        className="checkout-btn" 
-                        onClick={handleCheckout}
-                        disabled={isPrinting}
-                        style={{ flex: 1, height: '54px', borderRadius: '15px', background: '#EC9424', color: 'white', border: 'none', fontWeight: '800', fontSize: '0.95rem', padding: '0 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
-                      >
-                        {isPrinting ? 'Enviando...' : 'Finalizar via WhatsApp'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+               <button 
+                 onClick={handleCheckout}
+                 style={{ width: '100%', height: '66px', background: theme.primary, color: 'white', border: 'none', borderRadius: '22px', marginTop: '30px', fontSize: '17px', fontWeight: 900 }}
+               >
+                 FINALIZAR PEDIDO
+               </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Success Overay */}
+      {/* 8. TELA DE SUCESSO */}
       <AnimatePresence>
         {isOrderSuccess && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: '#ffffff',
-              zIndex: 3000,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '30px',
-              textAlign: 'center'
-            }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}
           >
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", damping: 15 }}
-            >
-              <div style={{ 
-                width: '100px', 
-                height: '100px', 
-                background: '#f0fdf4', 
-                borderRadius: '50%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                margin: '0 auto 25px',
-                color: '#22c55e'
-              }}>
-                <CheckCircle2 size={60} />
-              </div>
-              <h1 style={{ color: '#2D1B14', fontSize: '2rem', fontWeight: '800', marginBottom: '15px' }}>
-                Pedido Realizado!
-              </h1>
-              <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '30px', maxWidth: '300px' }}>
-                Parabéns! Seu pedido foi enviado para nossa cozinha. Estamos abrindo o WhatsApp para você confirmar...
-              </p>
-              
-              <button 
-                className="checkout-btn"
-                onClick={() => {
-                  // Fallback btn caso o popup bloqueie
-                  const phoneNumber = "5522996153138";
-                  window.location.href = `https://wa.me/${phoneNumber}`;
-                }}
-                style={{
-                  width: '100%',
-                  padding: '18px',
-                  borderRadius: '16px',
-                  background: '#25D366',
-                  color: 'white',
-                  border: 'none',
-                  fontWeight: '700',
-                  fontSize: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  boxShadow: '0 10px 20px rgba(37, 211, 102, 0.2)'
-                }}
-              >
-                Ir para o WhatsApp manualmente
-              </button>
-              
-              <button 
-                onClick={() => {
-                  setIsOrderSuccess(false);
-                  setCart([]);
-                  setCheckoutStep('cart');
-                }}
-                style={{
-                  marginTop: '20px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#888',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Voltar ao Cardápio
-              </button>
-            </motion.div>
+             <CheckCircle2 size={70} color={theme.green} style={{ marginBottom: '32px' }} />
+             <h1 style={{ fontSize: '28px', fontWeight: 950, color: theme.textZinc, marginBottom: '16px' }}>Pedido em Preparo!</h1>
+             <button onClick={() => { setIsOrderSuccess(false); setCart([]); }} style={{ background: theme.textZinc, color: 'white', border: 'none', padding: '18px 45px', borderRadius: '20px', fontWeight: 800 }}>VOLTAR AO INÍCIO</button>
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };
