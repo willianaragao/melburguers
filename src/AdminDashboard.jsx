@@ -1088,51 +1088,117 @@ const AdminDashboard = () => {
           right: '15px',
           zIndex: 5000,
           display: 'flex',
-          border: '1px solid rgba(255,255,255,0.1)',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          justifyContent: 'center',
+          pointerEvents: 'none'
         }}>
-          {[
-            { id: 'orders', icon: LayoutDashboard, label: 'Pedidos' },
-            { id: 'menu', icon: ShoppingBag, label: 'Cardápio' },
-            { id: 'finance', icon: DollarSign, label: 'Financeiro' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              style={{
-                flex: '0 0 auto',
-                width: '33.33%',
-                minWidth: '100px',
-                height: '100%',
-                background: 'none',
-                border: 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                color: activeTab === item.id ? '#EC9424' : 'rgba(255,255,255,0.4)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative'
-              }}
-            >
-              <motion.div
-                animate={{ scale: activeTab === item.id ? 1.2 : 1 }}
-              >
-                <item.icon size={24} />
-              </motion.div>
-              <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.label}</span>
-              {activeTab === item.id && (
-                <motion.div 
-                  layoutId="mobileActiveDot"
-                  style={{ position: 'absolute', bottom: '6px', width: '4px', height: '4px', background: '#EC9424', borderRadius: '50%' }}
-                />
-              )}
-            </button>
-          ))}
-        </nav>
+          <motion.nav 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              height: '74px',
+              background: 'linear-gradient(180deg, rgba(16, 16, 18, 0.7) 0%, rgba(10, 10, 12, 0.9) 100%)',
+              backdropFilter: 'blur(25px) saturate(180%)',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '24px',
+              display: 'flex',
+              padding: '0 12px 18px 12px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255,255,255,0.05) inset',
+              position: 'relative',
+              pointerEvents: 'auto',
+              clipPath: 'polygon(0% 0%, 5% 0%, 50% 6%, 95% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            }}
+          >
+            {/* Active Label (Centralizado e Discreto) */}
+            <div style={{
+              position: 'absolute',
+              bottom: '6px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: '10px',
+              fontWeight: 750,
+              color: 'rgba(255, 255, 255, 0.8)',
+              textTransform: 'uppercase',
+              letterSpacing: '1.2px',
+              pointerEvents: 'none'
+            }}>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={activeTab}
+                  initial={{ y: 5, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -5, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : 'Financeiro'}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+
+            <LayoutGroup>
+              {[
+                { id: 'orders', icon: Home, label: 'Início' },
+                { id: 'menu', icon: ShoppingBag, label: 'Cardápio' },
+                { id: 'search', icon: Search, label: 'Buscar' },
+                { id: 'finance', icon: DollarSign, label: 'Financeiro' },
+                { id: 'orders-history', icon: ClipboardList, label: 'Histórico' }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                     if (['orders', 'menu', 'finance'].includes(item.id)) {
+                        setActiveTab(item.id);
+                     }
+                  }}
+                  style={{
+                    flex: 1,
+                    background: 'none',
+                    border: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: '4px',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent'
+                  }}
+                >
+                  {activeTab === item.id && (
+                    <motion.div
+                      layoutId="psn-active-glow"
+                      style={{
+                        position: 'absolute',
+                        top: '12%',
+                        width: '32px',
+                        height: '32px',
+                        background: 'radial-gradient(circle, rgba(236, 148, 36, 0.15) 0%, transparent 70%)',
+                        zIndex: 0
+                      }}
+                    />
+                  )}
+                  
+                  <motion.div
+                    animate={{ 
+                      scale: activeTab === item.id ? 1.25 : 1,
+                      y: activeTab === item.id ? -1 : 0
+                    }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                    style={{ position: 'relative', zIndex: 1 }}
+                  >
+                    <item.icon 
+                      size={20} 
+                      color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.3)'}
+                      strokeWidth={activeTab === item.id ? 2 : 1.5}
+                    />
+                  </motion.div>
+                </button>
+              ))}
+            </LayoutGroup>
+          </motion.nav>
+        </div>
       )}
     </div>
   );
