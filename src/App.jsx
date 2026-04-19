@@ -3,23 +3,41 @@ import {
   Plus, Clock, Star, ArrowRight, Home, 
   BadgeCheck, MapPin, Search, Heart, Share2,
   ChevronDown, CheckCircle2, ChevronLeft,
-  ShoppingCart, Trash2, Info, UserPlus
+  ShoppingCart, Trash2, Info, UserPlus,
+  Moon, Sun
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { supabase } from './utils/supabase';
 import { getMenuData } from './utils/menuStore';
 
-// === CONFIGURAÇÃO DE TEMA (PALETA MELBURGUERS PREMIUM) ===
-const theme = {
-  primary: '#EC9424',        // Ouro Melburguers
-  background: '#F8F8FA',    // Cinza Ultra-Claro (Padrão iFood/SaaS)
-  surface: '#FFFFFF',       // Superfícies Brancas
-  textZinc: '#18181B',      // Texto quase preto
-  textMuted: '#71717A',     // Texto secundário
-  green: '#22c55e',         // Cores de sucesso/preço
-  red: '#f43f5e',           // Descontos/Ações de perigo
-  accent: '#FDF2E9',        // Tom de ouro pastel para fundos de botões
+// === CONFIGURAÇÃO DE TEMAS (PALETA MELBURGUERS PREMIUM) ===
+const lightTheme = {
+  primary: '#EC9424',        
+  background: '#F8F8FA',    
+  surface: '#FFFFFF',       
+  textZinc: '#18181B',      
+  textMuted: '#71717A',     
+  green: '#22c55e',         
+  red: '#f43f5e',           
+  accent: '#FDF2E9',        
+  border: '#E2E2E7',
+  cardBg: '#FFFFFF',
+  isDark: false
+};
+
+const darkTheme = {
+  primary: '#EC9424',       
+  background: '#0C0C0E',    
+  surface: '#121215',       
+  textZinc: '#F8F8FA',      
+  textMuted: '#94949E',     
+  green: '#4ade80',         
+  red: '#fb7185',           
+  accent: 'rgba(236, 148, 36, 0.15)',        
+  border: '#2A2A2E',
+  cardBg: '#18181B',
+  isDark: true
 };
 
 const App = () => {
@@ -39,6 +57,9 @@ const App = () => {
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [changeNeeded, setChangeNeeded] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const theme = isDarkMode ? darkTheme : lightTheme;
 
   // === CARREGAMENTO INICIAL ===
   useEffect(() => {
@@ -207,7 +228,7 @@ const App = () => {
     } catch (err) {
       console.error('Erro fatal no checkout:', err);
       const errorMsg = err.message || "Erro desconhecido";
-      alert(`ERRO NO BANCO DE DADOS: ${errorMsg}\\n\\nPor favor, tire um print desta tela e me envie!`);
+      alert(`ERRO NO BANCO DE DADOS: ${errorMsg}\n\nPor favor, tire um print desta tela e me envie!`);
     }
   };
 
@@ -222,23 +243,37 @@ const App = () => {
   );
 
   return (
-    <div style={{ background: theme.background, minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '500px', background: theme.surface, minHeight: '100vh', position: 'relative', boxShadow: '0 0 80px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: theme.background, minHeight: '100vh', display: 'flex', justifyContent: 'center', transition: 'background 0.3s ease' }}>
+      <div style={{ width: '100%', maxWidth: '500px', background: theme.surface, minHeight: '100vh', position: 'relative', boxShadow: isDarkMode ? '0 0 80px rgba(0,0,0,0.4)' : '0 0 80px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', transition: 'background 0.3s ease' }}>
         <div style={{ flex: 1, fontFamily: "'Inter', sans-serif", paddingBottom: '120px' }}>
       
       {/* 1. HERO / HEADER */}
       <div style={{ position: 'relative', height: '280px', background: '#000' }}>
         <img 
           src="/images/MEL Burgers iluminado e convidativo.png" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isDarkMode ? 0.7 : 0.9 }}
           alt="Banner Principal"
         />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.6) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: isDarkMode ? 'linear-gradient(to bottom, transparent, #0C0C0E)' : 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, rgba(0,0,0,0.6) 100%)' }} />
+        
+        {/* BOTÃO DARK MODE TOGGLE */}
+        <button 
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          style={{ 
+            position: 'absolute', top: '24px', right: '24px', zIndex: 150, 
+            background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', 
+            border: '1px solid rgba(255,255,255,0.2)', width: '44px', height: '44px', 
+            borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            cursor: 'pointer', color: 'white', transition: 'all 0.3s'
+          }}
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
       </div>
 
       {/* 2. CARD DE INFORMAÇÕES DA LOJA */}
       <div style={{ maxWidth: '640px', margin: '-45px auto 0', position: 'relative', zIndex: 110, padding: '0 16px' }}>
-        <div style={{ background: theme.surface, borderRadius: '28px', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.03)' }}>
+        <div style={{ background: theme.surface, borderRadius: '28px', padding: '28px', boxShadow: isDarkMode ? '0 10px 40px rgba(0,0,0,0.5)' : '0 20px 60px rgba(0,0,0,0.08)', border: `1px solid ${theme.border}`, transition: 'all 0.3s' }}>
            <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '24px' }}>
               <div style={{ position: 'relative' }}>
                 <img src="/images/logo.png" alt="Logo" style={{ width: '72px', height: '72px', borderRadius: '20px', objectFit: 'cover', border: `2px solid ${theme.primary}` }} />
@@ -252,17 +287,17 @@ const App = () => {
               </div>
            </div>
 
-           <div style={{ display: 'flex', justifyContent: 'space-around', padding: '18px 0', borderTop: '1px solid #f2f2f5' }}>
+           <div style={{ display: 'flex', justifyContent: 'space-around', padding: '18px 0', borderTop: `1px solid ${theme.border}` }}>
               <div style={{ textAlign: 'center' }}>
                  <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>15-30 min</div>
                  <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>TEMPO</div>
               </div>
-              <div style={{ width: '1px', background: '#f2f2f5' }} />
+              <div style={{ width: '1px', background: theme.border }} />
               <div style={{ textAlign: 'center' }}>
                  <div style={{ fontSize: '14px', fontWeight: 800, color: theme.green }}>Grátis</div>
                  <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>ENTREGA</div>
               </div>
-              <div style={{ width: '1px', background: '#f2f2f5' }} />
+              <div style={{ width: '1px', background: theme.border }} />
               <div style={{ textAlign: 'center' }}>
                  <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>R$ 15,00</div>
                  <div style={{ fontSize: '10px', color: theme.textMuted, marginTop: '2px', fontWeight: 600 }}>MÍNIMO</div>
@@ -274,10 +309,10 @@ const App = () => {
       {/* 3. CATEGORIAS */}
       <div style={{ 
         position: 'sticky', top: 0, zIndex: 120, 
-        background: scrolled ? 'rgba(255,255,255,0.95)' : 'transparent', 
+        background: scrolled ? (isDarkMode ? 'rgba(12,12,14,0.9)' : 'rgba(255,255,255,0.95)') : 'transparent', 
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         padding: '16px 0', marginTop: '24px', 
-        borderBottom: scrolled ? '1px solid rgba(0,0,0,0.06)' : 'none',
+        borderBottom: scrolled ? `1px solid ${theme.border}` : 'none',
         transition: 'all 0.4s'
       }}>
         <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', padding: '15px 20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -298,10 +333,10 @@ const App = () => {
                }
                .honey-drip {
                   position: absolute;
-                  top: -8px; /* Valor original do index.css */
+                  top: -8px; 
                   left: 0;
                   right: 0;
-                  height: 38px; /* Valor original do index.css */
+                  height: 38px; 
                   background-image: url('/images/honey-frame.png');
                   background-size: 100% 100%;
                   background-repeat: no-repeat;
@@ -317,14 +352,14 @@ const App = () => {
                className="category-btn-honey"
                style={{ 
                  whiteSpace: 'nowrap',
-                 background: activeCategory === cat ? theme.primary : 'white', 
+                 background: activeCategory === cat ? theme.primary : theme.cardBg, 
                  color: activeCategory === cat ? 'white' : theme.textZinc,
-                 border: `1.5px solid ${activeCategory === cat ? theme.primary : '#e2e2e7'}`,
-                 boxShadow: activeCategory === cat ? `0 10px 25px ${theme.primary}44` : 'none',
+                 border: `1.5px solid ${activeCategory === cat ? theme.primary : theme.border}`,
                  paddingLeft: '20px',
                  paddingRight: '20px',
                  fontSize: '14px',
-                 fontWeight: 850
+                 fontWeight: 850,
+                 transition: 'all 0.3s'
                }}
              >
                <div className="honey-drip"></div>
@@ -379,9 +414,11 @@ const App = () => {
                      whileInView={{ opacity: 1, y: 0 }}
                      viewport={{ once: true }}
                      style={{ 
-                       background: theme.surface, borderRadius: '24px', padding: '18px', 
+                       background: theme.cardBg, borderRadius: '24px', padding: '18px', 
                        display: 'flex', gap: '20px', alignItems: 'center',
-                       border: '1px solid rgba(0,0,0,0.02)', boxShadow: '0 6px 20px rgba(0,0,0,0.02)'
+                       border: isDarkMode ? `1px solid ${theme.border}` : '1px solid rgba(0,0,0,0.02)', 
+                       boxShadow: isDarkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 6px 20px rgba(0,0,0,0.02)',
+                       transition: 'all 0.3s'
                      }}
                    >
                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -426,28 +463,28 @@ const App = () => {
             }}
           >
              <motion.button 
-               whileHover={{ backgroundColor: '#16161D' }}
+               whileHover={{ backgroundColor: isDarkMode ? '#252529' : '#16161D' }}
                whileTap={{ scale: 0.97 }}
                onClick={() => setIsCartOpen(true)}
                style={{ 
-                 background: '#0B0B0F', 
-                 color: 'rgba(255,255,255,0.95)', 
-                 border: '1px solid rgba(255,255,255,0.08)', 
-                 height: '64px', 
-                 width: '100%', 
-                 maxWidth: '480px', 
-                 borderRadius: '100px',
-                 display: 'flex', 
-                 alignItems: 'center', 
-                 padding: '0 28px', 
-                 boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                 cursor: 'pointer',
-                 backdropFilter: 'blur(10px)',
-                 position: 'relative',
-                 overflow: 'hidden'
+                  background: isDarkMode ? '#1A1A1E' : '#0B0B0F', 
+                  color: 'rgba(255,255,255,0.95)', 
+                  border: isDarkMode ? `1px solid ${theme.primary}44` : '1px solid rgba(255,255,255,0.08)', 
+                  height: '64px', 
+                  width: '100%', 
+                  maxWidth: '480px', 
+                  borderRadius: '100px',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  padding: '0 28px', 
+                  boxShadow: isDarkMode ? '0 20px 60px rgba(0,0,0,0.6)' : '0 25px 50px -12px rgba(0,0,0,0.5)',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(10px)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s'
                }}
              >
-                {/* Efeito de brilho sutil no topo */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)' }} />
                 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', width: '36px', height: '36px', borderRadius: '50%', marginRight: '16px' }}>
@@ -476,76 +513,74 @@ const App = () => {
           >
             <motion.div 
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              style={{ width: '100%', maxWidth: '540px', background: 'white', borderRadius: '35px 35px 0 0', padding: '35px 24px', maxHeight: '92vh', overflowY: 'auto' }}
+              style={{ width: '100%', maxWidth: '540px', background: theme.surface, borderRadius: '35px 35px 0 0', padding: '35px 24px', maxHeight: '92vh', overflowY: 'auto', transition: 'background 0.3s ease' }}
               onClick={e => e.stopPropagation()}
             >
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
                   <h2 style={{ fontSize: '22px', fontWeight: 900, color: theme.textZinc }}>Seu Carrinho</h2>
-                  <button onClick={() => setIsCartOpen(false)} style={{ background: '#f5f5f7', border: 'none', padding: '10px', borderRadius: '50%' }}><ChevronDown size={24}/></button>
+                  <button onClick={() => setIsCartOpen(false)} style={{ background: theme.isDark ? '#2A2A2E' : '#f5f5f7', border: 'none', padding: '10px', borderRadius: '50%', color: theme.textZinc }}><ChevronDown size={24}/></button>
                </div>
 
-               {/* ETAPA 1: CARRINHO */}
                {checkoutStep === 'cart' && (
                  <>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '35px' }}>
                       {cart.map((item, i) => (
-                        <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center', background: '#fcfcfd', padding: '12px', borderRadius: '18px', border: '1px solid #f0f0f5' }}>
+                        <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center', background: theme.cardBg, padding: '12px', borderRadius: '18px', border: `1px solid ${theme.border}` }}>
                            <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'cover' }} />
                            <div style={{ flex: 1 }}>
                               <div style={{ fontSize: '15px', fontWeight: 700, color: theme.textZinc }}>{item.name}</div>
                               <div style={{ fontSize: '13px', fontWeight: 800, color: theme.green, marginTop: '2px' }}>R$ {item.price.toFixed(2)}</div>
                            </div>
-                           <button onClick={() => removeFromCart(i)} style={{ background: '#fff0f0', border: 'none', padding: '8px', borderRadius: '10px', color: theme.red }}><Trash2 size={18}/></button>
+                           <button onClick={() => removeFromCart(i)} style={{ background: theme.isDark ? 'rgba(244,63,94,0.1)' : '#fff0f0', border: 'none', padding: '8px', borderRadius: '10px', color: theme.red, cursor: 'pointer' }}><Trash2 size={18}/></button>
                         </div>
                       ))}
                    </div>
                    <button 
                      onClick={() => setCheckoutStep('address')}
-                      style={{ width: '100%', height: '62px', background: theme.textZinc, color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900, fontSize: '15px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
+                      style={{ width: '100%', height: '62px', background: theme.primary, color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900, fontSize: '15px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
                    >
                      CONTINUAR PARA ENTREGA
                    </button>
                  </>
                )}
 
-               {/* ETAPA 2: ENDEREÇO E IDENTIFICAÇÃO */}
                {checkoutStep === 'address' && (
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ background: '#f8f8fa', padding: '20px', borderRadius: '24px', border: '1px solid #e2e2e7' }}>
+                    <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '24px', border: `1px solid ${theme.border}` }}>
                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                           <UserPlus size={18} color={theme.primary} />
-                          <span style={{ fontSize: '14px', fontWeight: 700 }}>Seus Dados</span>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Seus Dados</span>
                        </div>
                        <input 
-                         style={{ width: '100%', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '14px', fontSize: '14px', marginBottom: '12px', outline: 'none' }}
+                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '14px', marginBottom: '12px', outline: 'none', color: theme.textZinc }}
                          placeholder="Seu Nome Completo"
                          value={address.customerName}
                          onChange={e => setAddress({...address, customerName: e.target.value})}
                        />
                        <input 
-                         style={{ width: '100%', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none' }}
+                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none', color: theme.textZinc }}
                          placeholder="WhatsApp (Ex: 22 99999-9999)"
                          value={address.customerPhone}
                          onChange={e => setAddress({...address, customerPhone: e.target.value})}
                        />
                     </div>
 
-                    <div style={{ background: '#f8f8fa', padding: '20px', borderRadius: '24px', border: '1px solid #e2e2e7' }}>
+                    <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '24px', border: `1px solid ${theme.border}` }}>
                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                           <MapPin size={18} color={theme.primary} />
-                          <span style={{ fontSize: '14px', fontWeight: 700 }}>Endereço de Entrega</span>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Endereço de Entrega</span>
                        </div>
                        <div style={{ position: 'relative' }}>
                          <input 
-                           style={{ width: '100%', background: 'white', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none' }}
+                           style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none', color: theme.textZinc }}
                            placeholder="Nome da rua..."
                            value={address.street}
                            onChange={e => setAddress({...address, street: e.target.value})}
                          />
                          {addressSuggestions.length > 0 && (
-                           <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, background: 'white', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3500, overflow: 'hidden' }}>
+                           <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, background: theme.surface, borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3500, overflow: 'hidden' }}>
                               {addressSuggestions.map((f, i) => (
-                                <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px 16px', fontSize: '13px', borderBottom: '1px solid #f4f4f5', cursor: 'pointer' }}>
+                                <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px 16px', fontSize: '13px', borderBottom: `1px solid ${theme.border}`, cursor: 'pointer', color: theme.textZinc }}>
                                    <div style={{ fontWeight: 700 }}>{f.properties.street || f.properties.name}</div>
                                    <div style={{ fontSize: '11px', color: theme.textMuted }}>{f.properties.district || 'Cabo Frio'}</div>
                                 </div>
@@ -554,8 +589,8 @@ const App = () => {
                          )}
                        </div>
                        <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                          <input style={{ flex: 1, border: '1px solid #eaeaef', padding: '12px', borderRadius: '12px', fontSize: '14px' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
-                          <input style={{ flex: 2, border: '1px solid #eaeaef', padding: '12px', borderRadius: '12px', fontSize: '14px', background: '#fcfcfd' }} placeholder="Bairro" value={address.neighborhood} readOnly />
+                          <input style={{ flex: 1, background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '14px', color: theme.textZinc }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
+                          <input style={{ flex: 2, background: theme.isDark ? '#2A2A2E' : '#fcfcfd', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '14px', color: theme.textZinc }} placeholder="Bairro" value={address.neighborhood} readOnly />
                        </div>
                     </div>
                     
@@ -569,25 +604,23 @@ const App = () => {
                         setCheckoutStep('payment');
                       }}
                       style={{ 
-                        width: '100%', height: '62px', background: theme.textZinc, color: 'white', border: 'none', 
+                        width: '100%', height: '62px', background: theme.primary, color: 'white', border: 'none', 
                         borderRadius: '20px', fontWeight: 900, fontSize: '15px', cursor: 'pointer',
                         boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
                       }}
                     >
                       IR PARA PAGAMENTO
                     </button>
-                    <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600 }}>Voltar ao carrinho</button>
+                    <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Voltar ao carrinho</button>
                  </div>
                )}
 
-               {/* ETAPA 3: PAGAMENTO */}
                {checkoutStep === 'payment' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    
-                    <div style={{ background: '#f8f8fa', padding: '20px', borderRadius: '24px', border: '1px solid #e2e2e7' }}>
+                    <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '24px', border: `1px solid ${theme.border}` }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
                            <ShoppingCart size={18} color={theme.primary} />
-                           <span style={{ fontSize: '14px', fontWeight: 700 }}>Selecione o Pagamento</span>
+                           <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Selecione o Pagamento</span>
                         </div>
                         <div style={{ display: 'flex', gap: '10px' }}>
                            {['PIX', 'Cartão', 'Dinheiro'].map(method => (
@@ -596,8 +629,8 @@ const App = () => {
                                onClick={() => setPaymentMethod(method)}
                                style={{
                                  flex: 1, padding: '16px 5px', borderRadius: '16px', fontSize: '13px', fontWeight: 900,
-                                 border: `2px solid ${paymentMethod === method ? theme.primary : '#e2e2e7'}`,
-                                 background: paymentMethod === method ? 'white' : 'transparent',
+                                 border: `2px solid ${paymentMethod === method ? theme.primary : theme.border}`,
+                                 background: paymentMethod === method ? (theme.isDark ? '#2A2A2E' : 'white') : 'transparent',
                                  color: paymentMethod === method ? theme.primary : theme.textMuted,
                                  transition: 'all 0.2s', cursor: 'pointer'
                                }}
@@ -607,66 +640,38 @@ const App = () => {
                            ))}
                         </div>
                     </div>
-                    <AnimatePresence mode="wait">
-                      {paymentMethod === 'PIX' && (
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          style={{ 
-                            padding: '24px', 
-                            background: '#f0fdf4', 
-                            borderRadius: '20px', 
-                            border: '2px dashed #22c55e', 
-                            textAlign: 'center'
-                          }}
-                        >
-                          <div style={{ color: '#166534', fontWeight: 800, fontSize: '12px', marginBottom: '8px', letterSpacing: '1px' }}>NOSSA CHAVE PIX</div>
-                          <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d', marginBottom: '16px' }}>64.745.137/0001-58</div>
+                    
+                    {paymentMethod === 'PIX' && (
+                        <div style={{ padding: '24px', background: theme.isDark ? 'rgba(74,222,128,0.1)' : '#f0fdf4', borderRadius: '20px', border: `2px dashed ${theme.green}`, textAlign: 'center' }}>
+                          <div style={{ color: theme.green, fontWeight: 800, fontSize: '12px', marginBottom: '8px', letterSpacing: '1px' }}>NOSSA CHAVE PIX</div>
+                          <div style={{ fontSize: '17px', fontWeight: 900, color: theme.textZinc, marginBottom: '16px' }}>64.745.137/0001-58</div>
                           <button 
                             onClick={() => {
                               navigator.clipboard.writeText("64745137000158");
                               alert("Chave PIX Copiada! 💸");
                             }}
-                            style={{ 
-                              width: '100%', padding: '14px', background: 'white', border: '1.5px solid #22c55e', 
-                              borderRadius: '14px', color: '#166534', fontWeight: 900, fontSize: '12px', cursor: 'pointer'
-                            }}
+                            style={{ width: '100%', padding: '14px', background: theme.surface, border: `1.5px solid ${theme.green}`, borderRadius: '14px', color: theme.green, fontWeight: 900, fontSize: '12px', cursor: 'pointer' }}
                           >
                             COPIAR CHAVE PIX
                           </button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                        </div>
+                    )}
                     
-                    <AnimatePresence mode="wait">
-                      {paymentMethod === 'Dinheiro' && (
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          style={{ background: '#f8f8fa', padding: '20px', borderRadius: '20px', border: '1px solid #e2e2e7' }}
-                        >
+                    {paymentMethod === 'Dinheiro' && (
+                        <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '20px', border: `1px solid ${theme.border}` }}>
                           <label style={{ fontSize: '13px', fontWeight: 800, display: 'block', marginBottom: '10px', color: theme.textZinc }}>Troco para quanto?</label>
                           <input 
-                            type="text" 
-                            inputMode="decimal"
-                            placeholder="Ex: 50,00" 
-                            value={changeNeeded}
+                            type="text" inputMode="decimal" placeholder="Ex: 50,00" value={changeNeeded}
                             onChange={(e) => setChangeNeeded(e.target.value)}
-                            style={{ 
-                              width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid #e2e2e7', 
-                              fontSize: '14px', outline: 'none', background: 'white' 
-                            }}
+                            style={{ width: '100%', padding: '14px', borderRadius: '14px', border: `1px solid ${theme.border}`, fontSize: '14px', outline: 'none', background: theme.isDark ? '#2A2A2E' : 'white', color: theme.textZinc }}
                           />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                        </div>
+                    )}
 
-                    <div style={{ padding: '24px 4px', borderTop: '1px solid #e2e2e7', marginTop: '10px' }}>
+                    <div style={{ padding: '24px 4px', borderTop: `1px solid ${theme.border}`, marginTop: '10px' }}>
                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                           <span style={{ color: theme.textMuted, fontWeight: 700, fontSize: '14px' }}>Produtos</span>
-                          <span style={{ fontWeight: 800, fontSize: '14px' }}>R$ {cartSubtotal.toFixed(2)}</span>
+                          <span style={{ fontWeight: 800, fontSize: '14px', color: theme.textZinc }}>R$ {cartSubtotal.toFixed(2)}</span>
                        </div>
                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}>
                           <span style={{ color: theme.textMuted, fontWeight: 700, fontSize: '14px' }}>Entrega</span>
@@ -679,19 +684,16 @@ const App = () => {
                     </div>
 
                     <button 
-                      onClick={() => {
-                        if (!paymentMethod) return alert("Por favor, selecione uma forma de pagamento.");
-                        handleCheckout();
-                      }}
+                      onClick={handleCheckout}
                       style={{ 
-                        width: '100%', height: '70px', background: theme.textZinc, color: 'white', border: 'none',
+                        width: '100%', height: '70px', background: theme.primary, color: 'white', border: 'none',
                         borderRadius: '24px', fontSize: '17px', fontWeight: 900, cursor: 'pointer',
                         boxShadow: '0 15px 35px rgba(0,0,0,0.2)'
                       }}
                     >
                       FINALIZAR E ENVIAR WHATSAPP
                     </button>
-                    <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600, marginTop: '20px' }}>Voltar ao endereço</button>
+                    <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600, marginTop: '20px', cursor: 'pointer' }}>Voltar ao endereço</button>
                  </div>
                )}
             </motion.div>
@@ -699,75 +701,22 @@ const App = () => {
         )}
       </AnimatePresence>
 
-      {/* 8. TELA DE SUCESSO (DEPLOY GITHUB) */}
       <AnimatePresence>
         {isOrderSuccess && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: '#ffffff',
-              zIndex: 3000,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '30px',
-              textAlign: 'center'
-            }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: theme.surface, zIndex: 3000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px', textAlign: 'center' }}
           >
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", damping: 15 }}
-            >
-              <div style={{ 
-                width: '100px', 
-                height: '100px', 
-                background: '#f0fdf4', 
-                borderRadius: '50%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                margin: '0 auto 25px',
-                color: '#22c55e'
-              }}>
+            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", damping: 15 }}>
+              <div style={{ width: '100px', height: '100px', background: theme.isDark ? 'rgba(74,222,128,0.1)' : '#f0fdf4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px', color: theme.green }}>
                 <CheckCircle2 size={60} />
               </div>
-              <h1 style={{ color: '#2D1B14', fontSize: '2rem', fontWeight: '800', marginBottom: '15px' }}>
-                Pedido Realizado!
-              </h1>
-              <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '30px', maxWidth: '300px' }}>
-                Parabéns! Seu pedido foi enviado para nossa cozinha. Estamos abrindo o WhatsApp para você confirmar...
-              </p>
+              <h1 style={{ color: theme.textZinc, fontSize: '2rem', fontWeight: '800', marginBottom: '15px' }}>Pedido Realizado!</h1>
+              <p style={{ color: theme.textMuted, fontSize: '1.1rem', marginBottom: '30px', maxWidth: '300px' }}>Parabéns! Seu pedido foi enviado para nossa cozinha. Estamos abrindo o WhatsApp para você confirmar...</p>
               
               <button 
-                className="checkout-btn"
-                onClick={() => {
-                  const message = `*NOVO PEDIDO MELBURGUERS*...`; // Mensagem simplificada pro fallback
-                  window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent(message)}`;
-                }}
-                style={{
-                  width: '100%',
-                  padding: '18px',
-                  borderRadius: '16px',
-                  background: '#25D366',
-                  color: 'white',
-                  border: 'none',
-                  fontWeight: '700',
-                  fontSize: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  boxShadow: '0 10px 20px rgba(37, 211, 102, 0.2)'
-                }}
+                onClick={() => window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent("*Paguei o pedido!*")}`}
+                style={{ width: '100%', padding: '18px', borderRadius: '16px', background: '#25D366', color: 'white', border: 'none', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(37, 211, 102, 0.2)', cursor: 'pointer', fontWeight: 700 }}
               >
                 Ir para o WhatsApp manualmente
               </button>
@@ -777,17 +726,8 @@ const App = () => {
                   setIsOrderSuccess(false);
                   setCart([]);
                   setCheckoutStep('cart');
-                  setAddress({ ...address, street: '', number: '', neighborhood: '', complement: '' });
                 }}
-                style={{
-                  marginTop: '20px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#888',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
+                style={{ marginTop: '20px', background: 'none', border: 'none', color: theme.textMuted, fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}
               >
                 Voltar ao Cardápio
               </button>
