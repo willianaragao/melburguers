@@ -738,8 +738,8 @@ const AdminDashboard = () => {
               background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
               justifyContent: isSidebarOpen ? 'flex-start' : 'center'
             }}>
-               <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#27272a', border: '1px solid #3f3f46', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '10px', fontWeight: 600 }}>WA</span>
+               <div style={{ width: '28px', height: '28px', borderRadius: '50%', overflow: 'hidden', border: '1.5px solid rgba(255,255,255,0.1)', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src="/images/logo.png" alt="Willian" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                </div>
                {isSidebarOpen && (
                  <div style={{ flex: 1, overflow: 'hidden' }}>
