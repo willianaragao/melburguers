@@ -552,13 +552,13 @@ const App = () => {
                           <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Seus Dados</span>
                        </div>
                        <input 
-                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '14px', marginBottom: '12px', outline: 'none', color: theme.textZinc }}
+                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '16px', marginBottom: '12px', outline: 'none', color: theme.textZinc }}
                          placeholder="Seu Nome Completo"
                          value={address.customerName}
                          onChange={e => setAddress({...address, customerName: e.target.value})}
                        />
                        <input 
-                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none', color: theme.textZinc }}
+                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '16px', outline: 'none', color: theme.textZinc }}
                          placeholder="WhatsApp (Ex: 22 99999-9999)"
                          value={address.customerPhone}
                          onChange={e => setAddress({...address, customerPhone: e.target.value})}
@@ -572,7 +572,7 @@ const App = () => {
                        </div>
                        <div style={{ position: 'relative' }}>
                          <input 
-                           style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none', color: theme.textZinc }}
+                           style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '16px', outline: 'none', color: theme.textZinc }}
                            placeholder="Nome da rua..."
                            value={address.street}
                            onChange={e => setAddress({...address, street: e.target.value})}
@@ -589,8 +589,8 @@ const App = () => {
                          )}
                        </div>
                        <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                          <input style={{ flex: 1, background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '14px', color: theme.textZinc }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
-                          <input style={{ flex: 2, background: theme.isDark ? '#2A2A2E' : '#fcfcfd', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '14px', color: theme.textZinc }} placeholder="Bairro" value={address.neighborhood} readOnly />
+                          <input style={{ flex: 1, background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
+                          <input style={{ flex: 2, background: theme.isDark ? '#2A2A2E' : '#fcfcfd', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Bairro" value={address.neighborhood} readOnly />
                        </div>
                     </div>
                     
@@ -663,7 +663,7 @@ const App = () => {
                           <input 
                             type="text" inputMode="decimal" placeholder="Ex: 50,00" value={changeNeeded}
                             onChange={(e) => setChangeNeeded(e.target.value)}
-                            style={{ width: '100%', padding: '14px', borderRadius: '14px', border: `1px solid ${theme.border}`, fontSize: '14px', outline: 'none', background: theme.isDark ? '#2A2A2E' : 'white', color: theme.textZinc }}
+                            style={{ width: '100%', padding: '14px', borderRadius: '14px', border: `1px solid ${theme.border}`, fontSize: '16px', outline: 'none', background: theme.isDark ? '#2A2A2E' : 'white', color: theme.textZinc }}
                           />
                         </div>
                     )}
