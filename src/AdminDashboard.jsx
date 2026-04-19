@@ -1079,103 +1079,113 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (REVOLUTION CONVEX BASE) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (ULTIMATE PSN CONVEX) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
-          bottom: '18px',
-          left: '15px',
-          right: '15px',
+          bottom: '22px',
+          left: '12px',
+          right: '12px',
           zIndex: 5000,
           display: 'flex',
           justifyContent: 'center',
           pointerEvents: 'none'
         }}>
           <motion.nav 
-            initial={{ y: 150, opacity: 0 }}
+            initial={{ y: 200, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             style={{
               width: '100%',
-              maxWidth: '480px',
-              height: '140px',
+              maxWidth: '420px',
+              height: '170px',
               position: 'relative',
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              borderRadius: '35px',
+              borderRadius: '28px',
               boxShadow: '0 25px 80px rgba(0,0,0,0.95)'
             }}
           >
-            {/* Fundo Glass com Gradientes */}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: '#0b0b0f',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '35px',
-              zIndex: 0,
-              backdropFilter: 'blur(35px) saturate(220%)'
-            }} />
-            
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 45%)',
-              zIndex: 1,
-              pointerEvents: 'none'
-            }} />
-
-            {/* Arco Convexo Perfeito em SVG conforme código base */}
+            {/* Casco Principal SVG com Gradientes Complexos */}
             <svg
               style={{
                 position: 'absolute',
-                bottom: 0,
-                left: 0,
-                width: '102%', 
-                height: '138px',
-                zIndex: 2,
-                transform: 'translateX(-1%)'
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 1
               }}
-              viewBox="0 0 1000 220"
+              viewBox="0 0 390 170"
               preserveAspectRatio="none"
             >
               <defs>
-                <linearGradient id="menuFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
-                  <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                <linearGradient id="shellFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(24,24,28,0.96)" />
+                  <stop offset="55%" stopColor="rgba(17,17,20,0.94)" />
+                  <stop offset="100%" stopColor="rgba(12,12,15,0.98)" />
                 </linearGradient>
+                <linearGradient id="strokeGlow" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
+                  <stop offset="50%" stopColor="rgba(255,255,255,0.18)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
+                </linearGradient>
+                <radialGradient id="centerLight" cx="50%" cy="40%" r="45%">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.15)" />
+                  <stop offset="45%" stopColor="rgba(255,255,255,0.05)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                </radialGradient>
               </defs>
 
+              {/* Geometria de Arco Convexo Forte */}
               <path
-                d="M0,150 C180,122 340,98 500,92 C660,98 820,122 1000,150 L1000,220 L0,220 Z"
-                fill="url(#menuFill)"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth="1.2"
+                d="M0,140 C42,110 95,92 145,84 C185,78 205,78 245,84 C295,92 348,110 390,140 L390,170 L0,170 Z"
+                fill="url(#shellFill)"
               />
 
+              {/* Brilho Interno Central */}
+              <ellipse cx="195" cy="112" rx="160" ry="54" fill="url(#centerLight)" />
+
+              {/* Linha Superior Acompanhando o Arco */}
               <path
-                d="M0,150 C180,122 340,98 500,92 C660,98 820,122 1000,150"
+                d="M0,140 C42,110 95,92 145,84 C185,78 205,78 245,84 C295,92 348,110 390,140"
                 fill="none"
-                stroke="rgba(255,255,255,0.18)"
-                strokeWidth="1.2"
+                stroke="url(#strokeGlow)"
+                strokeWidth="1.5"
               />
             </svg>
 
-            {/* Ícones Grid Sincronizados com o Domo */}
+            {/* Halo Projetado (Segue o Item Ativo) */}
+            <motion.div
+              style={{
+                position: 'absolute',
+                top: '68px',
+                width: '100px',
+                height: '80px',
+                marginLeft: '-50px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(160,200,255,0.28), rgba(160,200,255,0.06) 50%, transparent 72%)',
+                filter: 'blur(12px)',
+                zIndex: 2,
+                pointerEvents: 'none'
+              }}
+              animate={{ left: (['orders', 'menu', 'search', 'finance', 'orders-history'].indexOf(activeTab) * 20 + 10) + '%' }}
+              transition={{ type: "spring", stiffness: 220, damping: 24 }}
+            />
+
+            {/* Container de Ícones */}
             <div style={{
               position: 'absolute',
-              bottom: '48px',
+              top: '52px',
               left: 0,
               right: 0,
-              padding: '0 25px',
+              padding: '0 24px',
               zIndex: 10
             }}>
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
-                alignItems: 'flex-end',
-                gap: '8px'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start'
               }}>
                 <LayoutGroup>
                   {[
@@ -1184,73 +1194,91 @@ const AdminDashboard = () => {
                     { id: 'search', icon: Search, offset: -2 },
                     { id: 'finance', icon: DollarSign, offset: 4 },
                     { id: 'orders-history', icon: ClipboardList, offset: 12 }
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        if (['orders', 'menu', 'finance'].includes(item.id)) {
-                           setActiveTab(item.id);
-                        }
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        cursor: 'pointer',
-                        transform: `translateY(${item.offset}px)`,
-                        WebkitTapHighlightColor: 'transparent',
-                        transition: 'all 0.3s'
-                      }}
-                    >
-                      <div style={{
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: activeTab === item.id ? 'rgba(255,255,255,0.08)' : 'transparent',
-                        border: activeTab === item.id ? '1px solid rgba(255,255,255,0.12)' : 'none',
-                        boxShadow: activeTab === item.id ? '0 10px 30px rgba(255,255,255,0.15)' : 'none',
-                        position: 'relative',
-                        transition: 'all 0.2s'
-                      }}>
-                        <item.icon 
-                          size={20} 
-                          color={activeTab === item.id ? '#ffffff' : 'rgba(255,255,255,0.45)'}
-                          strokeWidth={activeTab === item.id ? 2.5 : 1.5}
-                        />
+                  ].map((item, index) => {
+                    const isActive = activeTab === item.id;
+                    return (
+                      <motion.button
+                        key={item.id}
+                        onClick={() => {
+                          if (['orders', 'menu', 'finance'].includes(item.id)) {
+                             setActiveTab(item.id);
+                          }
+                        }}
+                        style={{
+                          width: '48px',
+                          background: 'none',
+                          border: 'none',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          WebkitTapHighlightColor: 'transparent'
+                        }}
+                        animate={{ y: isActive ? item.offset - 4 : item.offset }}
+                        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                      >
+                        <motion.div
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative'
+                          }}
+                          animate={{
+                            scale: isActive ? 1.15 : 1,
+                            opacity: isActive ? 1 : 0.75
+                          }}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="active-pill"
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.12)',
+                                zIndex: 1
+                              }}
+                            />
+                          )}
+                          <item.icon 
+                            size={isActive ? 28 : 24} 
+                            color="#ffffff"
+                            strokeWidth={isActive ? 2.5 : 1.8}
+                            style={{ position: 'relative', zIndex: 2 }}
+                          />
+                        </motion.div>
 
-                        {activeTab === item.id && (
+                        {isActive && (
                           <motion.div
-                            layoutId="active-pill-glow"
+                            layoutId="active-underline"
                             style={{
-                              position: 'absolute',
-                              bottom: '-14px',
+                              marginTop: '25px',
                               height: '5px',
-                              width: '32px',
+                              width: '38px',
                               borderRadius: '10px',
-                              background: 'rgba(255,255,255,0.85)',
-                              boxShadow: '0 0 15px rgba(255,255,255,0.5)',
+                              background: '#ffffff',
+                              boxShadow: '0 0 20px rgba(255,255,255,0.5)',
                               zIndex: 11
                             }}
                           />
                         )}
-                      </div>
-                    </button>
-                  ))}
+                      </motion.button>
+                    );
+                  })}
                 </LayoutGroup>
               </div>
             </div>
 
-            {/* Label Base */}
+            {/* Texto Central Imersivo */}
             <div style={{
               position: 'absolute',
-              bottom: '12px',
+              bottom: '10px',
               left: 0,
               right: 0,
               display: 'flex',
@@ -1260,14 +1288,15 @@ const AdminDashboard = () => {
               <AnimatePresence mode="wait">
                 <motion.span
                   key={activeTab}
-                  initial={{ opacity: 0, y: 5 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
                   style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'rgba(255,255,255,0.95)',
-                    fontFamily: "'Inter', sans-serif"
+                    fontSize: '18px',
+                    fontWeight: 500,
+                    color: 'rgba(255,255,255,0.92)',
+                    letterSpacing: '0.5px'
                   }}
                 >
                   {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
