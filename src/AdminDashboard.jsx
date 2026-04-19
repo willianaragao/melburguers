@@ -12,20 +12,27 @@ import { supabase } from './utils/supabase';
 import { FinanceDashboard } from './FinanceDashboard';
 import { OrdersKanban } from './OrdersKanban';
 
-const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
-  <img 
-    src="/foto%20icones/icone%20financeiro.png" 
-    alt="Financeiro"
-    style={{ 
-      ...style, 
-      width: size, 
-      height: size, 
-      objectFit: 'contain',
-      filter: isActive ? 'brightness(1.5) drop-shadow(0 0 5px rgba(255,255,255,0.3))' : 'brightness(1) opacity(0.7)',
-      transition: 'all 0.3s ease'
-    }}
+const MoneyBagIcon = ({ size = 24, className, style, isActive, strokeWidth = 2 }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor"
+    strokeWidth={strokeWidth}
+    strokeLinecap="round" 
+    strokeLinejoin="round"
     className={className}
-  />
+    style={{ ...style, display: 'inline-block', verticalAlign: 'middle', transition: 'all 0.3s ease' }}
+  >
+    {/* Corpo do Saco */}
+    <path d="M6 12c0-3 2-5 6-5s6 2 6 5v2c0 3-2 5-6 5s-6-2-6-5v-2Z" />
+    {/* Amarração no Topo */}
+    <path d="M10 7V5c0-1.1.9-2 2-2h0c1.1 0 2 .9 2 2v2" />
+    {/* Cifrão Estilizado */}
+    <path d="M12 10v4" />
+    <path d="M10 11.5h4" />
+  </svg>
 );
 
 const AdminDashboard = () => {
