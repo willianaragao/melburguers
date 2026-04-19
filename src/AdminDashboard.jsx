@@ -1303,16 +1303,20 @@ const AdminDashboard = () => {
                             position: 'relative'
                           }}
                           animate={{
-                            scale: 1,
-                            opacity: isActive ? 1 : 0.75
+                            scale: isActive ? 1.5 : 0.85,
+                            opacity: isActive ? 1 : 0.5,
+                            filter: isActive 
+                              ? 'drop-shadow(0 0 12px rgba(0, 243, 255, 0.8))' 
+                              : 'drop-shadow(0 0 4px rgba(0, 243, 255, 0.2))'
                           }}
+                          transition={{ type: "spring", stiffness: 300, damping: 22 }}
                         >
 
                           <item.icon 
-                            size={24} 
+                            size={isActive ? 28 : 22} 
                             isActive={isActive}
                             color="#ffffff"
-                            strokeWidth={isActive ? 2.5 : 1.8}
+                            strokeWidth={isActive ? 2.2 : 1.6}
                             style={{ 
                               position: 'relative', 
                               zIndex: 2,
@@ -1347,11 +1351,12 @@ const AdminDashboard = () => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                   style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
+                    fontSize: '15px',
+                    fontWeight: '900',
                     color: '#ffffff',
-                    letterSpacing: '0.8px',
-                    textTransform: 'uppercase'
+                    letterSpacing: '2.5px',
+                    textTransform: 'uppercase',
+                    textShadow: '0 0 12px rgba(0, 243, 255, 0.6)'
                   }}
                 >
                   {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
