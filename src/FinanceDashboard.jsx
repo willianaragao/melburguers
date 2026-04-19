@@ -55,16 +55,16 @@ export const FinanceDashboard = ({
 
   // Math Utils
   const totalOrders = useMemo(() => orders.reduce((acc, o) => acc + (o.total || 0), 0), [orders]);
-  const totalManualIncome = useMemo(() => transactions.filter(t => t.type === 'entry').reduce((acc, t) => acc + (t.amount || 0), 0), [transactions]);
+  const totalManualIncome = useMemo(() => transactions.filter(t => t.type === 'entry').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0), [transactions]);
   const totalIn = totalOrders + totalManualIncome;
-  const totalOut = useMemo(() => transactions.filter(t => t.type === 'exit').reduce((acc, t) => acc + (t.amount || 0), 0), [transactions]);
+  const totalOut = useMemo(() => transactions.filter(t => t.type === 'exit').reduce((acc, t) => acc + parseFloat(t.amount || 0), 0), [transactions]);
   const netProfit = totalIn - totalOut;
 
   // Chart Data
   const chartData = useMemo(() => {
     return categories.map(cat => ({
       name: cat.name,
-      value: transactions.filter(t => t.type === 'exit' && t.category_id === cat.id).reduce((acc, t) => acc + (t.amount || 0), 0),
+      value: transactions.filter(t => t.type === 'exit' && t.category_id === cat.id).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0),
       color: cat.color
     })).filter(d => d.value > 0);
   }, [categories, transactions]);
@@ -83,11 +83,12 @@ export const FinanceDashboard = ({
       })),
       ...transactions.map(t => {
         const cat = categories.find(c => c.id === t.category_id);
+        const amountNum = parseFloat(t.amount || 0);
         return {
           id: `txn-${t.id || Math.random()}`,
           type: t.type,
           desc: t.description,
-          amount: t.amount,
+          amount: amountNum,
           date: new Date(t.created_at || new Date()),
           category: cat ? cat.name : (t.type === 'entry' ? 'Receita Manual' : 'Geral'),
           color: cat ? cat.color : (t.type === 'entry' ? theme.greenSober : theme.textFaint),
@@ -399,7 +400,7 @@ export const FinanceDashboard = ({
 
              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {categories.map((cat) => {
-                  const catTotal = transactions.filter(t => t.type === 'exit' && t.category_id === cat.id).reduce((acc, t) => acc + (t.amount || 0), 0);
+                  const catTotal = transactions.filter(t => t.type === 'exit' && t.category_id === cat.id).reduce((acc, t) => acc + parseFloat(t.amount || 0), 0);
                   const perc = totalOut > 0 ? ((catTotal / totalOut) * 100).toFixed(0) : 0;
                   return (
                     <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
