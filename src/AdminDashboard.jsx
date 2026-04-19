@@ -1096,7 +1096,7 @@ const AdminDashboard = () => {
             animate={{ y: 0, opacity: 1 }}
             style={{
               width: '100%',
-              height: '160px',
+              height: '115px',
               position: 'relative',
               pointerEvents: 'auto',
               display: 'flex',
@@ -1107,16 +1107,17 @@ const AdminDashboard = () => {
               boxShadow: '0 -15px 50px rgba(0,0,0,0.8)'
             }}
           >
-            {/* Casco Principal SVG - Arco Aberto e Amplo */}
+            {/* Casco Principal SVG - Recalibrado para 115px */}
             <svg
               style={{
                 position: 'absolute',
                 inset: 0,
                 width: '100%',
-                height: '100%',
-                zIndex: 1
+                height: '166%',
+                zIndex: 1,
+                transform: 'translateY(-66px)'
               }}
-              viewBox="0 0 390 160"
+              viewBox="0 0 390 115"
               preserveAspectRatio="none"
             >
               <defs>
@@ -1132,29 +1133,53 @@ const AdminDashboard = () => {
                 </linearGradient>
               </defs>
 
-              {/* Arco Achatado e Amplo: Curva suave margeando os nomes */}
+              {/* ARCO INFERIOR (Base - Recalibrado) */}
               <path
-                d="M0,142 C100,128 150,124 195,124 C240,124 290,128 390,142 V160 H0 Z"
+                d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102 V115 H0 Z"
                 fill="url(#shellFill)"
               />
-
-              {/* Linha de Horizonte Baixa (Rente aos nomes) */}
               <path
-                d="M0,142 C100,128 150,124 195,124 C240,124 290,128 390,142"
+                d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
                 fill="none"
                 stroke="url(#strokeGlow)"
                 strokeWidth="1.2"
               />
             </svg>
 
-            {/* Halo de Seleção (Mais baixo e suave) */}
+            {/* ARCO SUPERIOR (Viseira - Recalibrado para 115px) */}
+            <svg
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '191%',
+                zIndex: 20, 
+                pointerEvents: 'none'
+              }}
+              viewBox="0 0 390 115"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28 V0 H0 Z"
+                fill="rgba(0, 0, 0, 0.48)"
+                style={{ backdropFilter: 'blur(3px)' }}
+              />
+              <path
+                d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28"
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.12)"
+                strokeWidth="1"
+              />
+            </svg>
+
+            {/* Halo de Seleção */}
             <motion.div
               style={{
                 position: 'absolute',
-                top: '85px',
-                width: '120px',
-                height: '70px',
-                marginLeft: '-60px',
+                top: '25px',
+                width: '110px',
+                height: '60px',
+                marginLeft: '-55px',
                 borderRadius: '50%',
                 background: 'radial-gradient(circle, rgba(160,200,255,0.22), rgba(160,200,255,0.04) 50%, transparent 72%)',
                 filter: 'blur(15px)',
@@ -1165,14 +1190,16 @@ const AdminDashboard = () => {
               transition={{ type: "spring", stiffness: 200, damping: 25 }}
             />
 
-            {/* Container de Ícones (Baixados para o novo arco) */}
+
+
+            {/* Container de Ícones (Sanduichados entre os arcos) */}
             <div style={{
               position: 'absolute',
-              top: '82px',
+              top: '35px',
               left: 0,
               right: 0,
               padding: '0 24px',
-              zIndex: 10
+              zIndex: 5
             }}>
               <div style={{
                 display: 'flex',
@@ -1182,9 +1209,9 @@ const AdminDashboard = () => {
                 <LayoutGroup>
                   {[
                     { id: 'orders', icon: Home, offset: 8 },
-                    { id: 'menu', icon: ShoppingBag, offset: 2 },
-                    { id: 'search', icon: Search, offset: 0 },
-                    { id: 'finance', icon: DollarSign, offset: 2 },
+                    { id: 'menu', icon: ShoppingBag, offset: 0 },
+                    { id: 'search', icon: Search, offset: -12 },
+                    { id: 'finance', icon: DollarSign, offset: 0 },
                     { id: 'orders-history', icon: ClipboardList, offset: 8 }
                   ].map((item, index) => {
                     const isActive = activeTab === item.id;
@@ -1207,7 +1234,7 @@ const AdminDashboard = () => {
                           cursor: 'pointer',
                           WebkitTapHighlightColor: 'transparent'
                         }}
-                        animate={{ y: isActive ? item.offset - 4 : item.offset }}
+                        animate={{ y: item.offset }}
                         transition={{ type: "spring", stiffness: 320, damping: 22 }}
                       >
                         <motion.div
@@ -1221,45 +1248,77 @@ const AdminDashboard = () => {
                             position: 'relative'
                           }}
                           animate={{
-                            scale: isActive ? 1.15 : 1,
+                            scale: 1,
                             opacity: isActive ? 1 : 0.75
                           }}
                         >
-                          {isActive && (
-                            <motion.div
-                              layoutId="active-pill"
-                              style={{
-                                position: 'absolute',
-                                inset: 0,
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.12)',
-                                zIndex: 1
-                              }}
-                            />
-                          )}
+
                           <item.icon 
-                            size={isActive ? 28 : 24} 
+                            size={24} 
                             color="#ffffff"
                             strokeWidth={isActive ? 2.5 : 1.8}
-                            style={{ position: 'relative', zIndex: 2 }}
+                            style={{ 
+                              position: 'relative', 
+                              zIndex: 2,
+                              transform: ['orders', 'search', 'orders-history'].includes(item.id) 
+                                ? 'translateY(10px)' 
+                                : 'translateY(5px)'
+                            }}
                           />
                         </motion.div>
 
-                        {isActive && (
-                          <motion.div
-                            layoutId="active-underline"
-                            style={{
-                              marginTop: '25px',
-                              height: '5px',
-                              width: '38px',
-                              borderRadius: '10px',
-                              background: '#ffffff',
-                              boxShadow: '0 0 20px rgba(255,255,255,0.5)',
-                              zIndex: 11
-                            }}
-                          />
-                        )}
+                        {/* Indicador Magnético Nativo (Efeito iOS/PSN) */}
+                        <div style={{
+                          position: 'relative',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 15
+                        }}>
+                          {isActive && (
+                            <motion.div
+                              layoutId="activeIndicator"
+                              transition={{ 
+                                type: "spring", 
+                                stiffness: 320, 
+                                damping: 28,
+                                // O segredo para o deslize suave é a mola no layout
+                                layout: { type: "spring", stiffness: 320, damping: 28 }
+                              }}
+                              style={{
+                                width: '44px',
+                                height: '8px',
+                                display: 'flex',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <svg 
+                                width="44" 
+                                height="8" 
+                                viewBox="0 0 44 8" 
+                                style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.6))' }}
+                              >
+                                <path 
+                                  d="M2,6 C12,4.5 32,4.5 42,6" 
+                                  fill="none" 
+                                  stroke="#ffffff" 
+                                  strokeWidth="3.2" 
+                                  strokeLinecap="round" 
+                                />
+                                {/* Glow sutil extra */}
+                                <path 
+                                  d="M2,6 C12,4.5 32,4.5 42,6" 
+                                  fill="none" 
+                                  stroke="#ffffff" 
+                                  strokeWidth="1" 
+                                  strokeLinecap="round" 
+                                  style={{ opacity: 0.6 }}
+                                />
+                              </svg>
+                            </motion.div>
+                          )}
+                        </div>
                       </motion.button>
                     );
                   })}
@@ -1270,7 +1329,7 @@ const AdminDashboard = () => {
             {/* Texto de Identificação (Abaixo da Linha do Arco) */}
             <div style={{
               position: 'absolute',
-              bottom: '15px',
+              bottom: '5px',
               left: 0,
               right: 0,
               display: 'flex',
@@ -1285,7 +1344,7 @@ const AdminDashboard = () => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                   style={{
-                    fontSize: '15px',
+                    fontSize: '13px',
                     fontWeight: 600,
                     color: '#ffffff',
                     letterSpacing: '0.8px',
