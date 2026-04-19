@@ -12,24 +12,20 @@ import { supabase } from './utils/supabase';
 import { FinanceDashboard } from './FinanceDashboard';
 import { OrdersKanban } from './OrdersKanban';
 
-const MoneyBagIcon = ({ size = 24, className, style, strokeWidth = 2 }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor"
-    strokeWidth={strokeWidth}
-    strokeLinecap="round" 
-    strokeLinejoin="round"
+const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
+  <img 
+    src="/foto%20icones/icone%20financeiro.png" 
+    alt="Financeiro"
+    style={{ 
+      ...style, 
+      width: size, 
+      height: size, 
+      objectFit: 'contain',
+      filter: isActive ? 'brightness(1.5) drop-shadow(0 0 5px rgba(255,255,255,0.3))' : 'brightness(1) opacity(0.7)',
+      transition: 'all 0.3s ease'
+    }}
     className={className}
-    style={{ ...style, display: 'inline-block', verticalAlign: 'middle' }}
-  >
-    <path d="M6 12a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2Z" />
-    <path d="M9 8V6a3 3 0 0 1 3-3h0a3 3 0 0 1 3 3v2" />
-    <path d="M12 11v4" />
-    <path d="M10 13h4" />
-  </svg>
+  />
 );
 
 const AdminDashboard = () => {
@@ -1312,6 +1308,7 @@ const AdminDashboard = () => {
 
                           <item.icon 
                             size={24} 
+                            isActive={isActive}
                             color="#ffffff"
                             strokeWidth={isActive ? 2.5 : 1.8}
                             style={{ 
