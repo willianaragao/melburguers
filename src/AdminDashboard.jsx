@@ -1099,7 +1099,7 @@ const AdminDashboard = () => {
             style={{
               width: '100%',
               maxWidth: '520px',
-              height: '100px',
+              height: '115px',
               background: 'rgba(10, 10, 12, 0.9)',
               backdropFilter: 'blur(35px) saturate(220%)',
               borderTop: '1.5px solid rgba(255, 255, 255, 0.15)',
@@ -1108,8 +1108,9 @@ const AdminDashboard = () => {
               display: 'flex',
               flexDirection: 'column',
               // Geometria de Colina Convexa (∩) - IGUAL AO DESENHO
-              clipPath: 'path("M0 45 C 130 0, 390 0, 520 45 V 110 H 0 Z")',
-              boxShadow: '0 -15px 40px rgba(0,0,0,0.7)',
+              borderRadius: '80% 80% 0 0 / 50% 50% 0 0',
+              boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
+              overflow: 'hidden'
             }}
           >
             {/* Linha de Ícones Mergulhando no Centro */}
