@@ -1303,20 +1303,20 @@ const AdminDashboard = () => {
                             position: 'relative'
                           }}
                           animate={{
-                            scale: isActive ? 1.5 : 0.85,
-                            opacity: isActive ? 1 : 0.5,
+                            scale: 1,
+                            opacity: isActive ? 1 : 0.6,
                             filter: isActive 
                               ? 'drop-shadow(0 0 12px rgba(0, 243, 255, 0.8))' 
-                              : 'drop-shadow(0 0 4px rgba(0, 243, 255, 0.2))'
+                              : 'drop-shadow(0 0 2px rgba(0, 243, 255, 0.1))'
                           }}
                           transition={{ type: "spring", stiffness: 300, damping: 22 }}
                         >
 
                           <item.icon 
-                            size={isActive ? 28 : 22} 
+                            size={24} 
                             isActive={isActive}
                             color="#ffffff"
-                            strokeWidth={isActive ? 2.2 : 1.6}
+                            strokeWidth={isActive ? 2.2 : 1.8}
                             style={{ 
                               position: 'relative', 
                               zIndex: 2,
