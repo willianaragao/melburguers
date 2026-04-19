@@ -1079,69 +1079,46 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (RECONSTRUÇÃO FIEL) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
-          bottom: '15px',
-          left: '15px',
-          right: '15px',
+          bottom: '0',
+          left: '0',
+          right: '0',
           zIndex: 5000,
           display: 'flex',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center',
+          paddingBottom: '12px',
           pointerEvents: 'none'
         }}>
           <motion.nav 
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             style={{
-              width: '100%',
+              width: '94%',
               maxWidth: '440px',
-              height: '74px',
-              background: 'linear-gradient(180deg, rgba(16, 16, 18, 0.7) 0%, rgba(10, 10, 12, 0.9) 100%)',
-              backdropFilter: 'blur(25px) saturate(180%)',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '24px',
+              height: '68px',
+              background: 'rgba(12, 12, 14, 0.85)',
+              backdropFilter: 'blur(30px) saturate(160%)',
+              border: '1px solid rgba(255, 255, 255, 0.04)',
+              borderTop: '1.5px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '24px 24px 28px 28px',
               display: 'flex',
-              padding: '0 12px 18px 12px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255,255,255,0.05) inset',
+              padding: '0 10px',
+              boxShadow: '0 30px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.03) inset',
               position: 'relative',
               pointerEvents: 'auto',
-              clipPath: 'polygon(0% 0%, 5% 0%, 50% 6%, 95% 0%, 100% 0%, 100% 100%, 0% 100%)',
+              // Curva côncava orgânica suave
+              clipPath: 'path("M0 24C0 10.7452 10.7452 0 24 0C110.151 4.5 329.849 4.5 416 0C429.255 0 440 10.7452 440 24V44C440 57.2548 429.255 68 416 68H24C10.7452 68 0 57.2548 0 44V24Z")',
             }}
           >
-            {/* Active Label (Centralizado e Discreto) */}
-            <div style={{
-              position: 'absolute',
-              bottom: '6px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              fontSize: '10px',
-              fontWeight: 750,
-              color: 'rgba(255, 255, 255, 0.8)',
-              textTransform: 'uppercase',
-              letterSpacing: '1.2px',
-              pointerEvents: 'none'
-            }}>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={activeTab}
-                  initial={{ y: 5, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -5, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : 'Financeiro'}
-                </motion.span>
-              </AnimatePresence>
-            </div>
-
             <LayoutGroup>
               {[
-                { id: 'orders', icon: Home, label: 'Início' },
+                { id: 'orders', icon: Home, label: 'Geral' },
                 { id: 'menu', icon: ShoppingBag, label: 'Cardápio' },
-                { id: 'search', icon: Search, label: 'Buscar' },
+                { id: 'search', icon: Search, label: 'Explorar' },
                 { id: 'finance', icon: DollarSign, label: 'Financeiro' },
                 { id: 'orders-history', icon: ClipboardList, label: 'Histórico' }
               ].map((item) => (
@@ -1160,44 +1137,67 @@ const AdminDashboard = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginTop: '4px',
+                    height: '100%',
                     position: 'relative',
                     cursor: 'pointer',
                     WebkitTapHighlightColor: 'transparent'
                   }}
                 >
+                  <motion.div
+                    animate={{ 
+                      scale: activeTab === item.id ? 1.2 : 1,
+                      y: activeTab === item.id ? -3 : 0
+                    }}
+                    style={{ position: 'relative', zIndex: 10 }}
+                  >
+                    <item.icon 
+                      size={24} 
+                      color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.35)'}
+                      strokeWidth={activeTab === item.id ? 2.2 : 1.5}
+                    />
+                  </motion.div>
+
+                  {/* High-Intensity White Light Indicator (PSN Style) */}
                   {activeTab === item.id && (
                     <motion.div
-                      layoutId="psn-active-glow"
+                      layoutId="psn-white-light"
                       style={{
                         position: 'absolute',
-                        top: '12%',
-                        width: '32px',
-                        height: '32px',
-                        background: 'radial-gradient(circle, rgba(236, 148, 36, 0.15) 0%, transparent 70%)',
-                        zIndex: 0
+                        bottom: '0',
+                        width: '24px',
+                        height: '3px',
+                        background: '#ffffff',
+                        borderRadius: '4px 4px 0 0',
+                        boxShadow: '0 -2px 10px 2px rgba(255,255,255,0.4)',
+                        zIndex: 5
                       }}
                     />
                   )}
-                  
-                  <motion.div
-                    animate={{ 
-                      scale: activeTab === item.id ? 1.25 : 1,
-                      y: activeTab === item.id ? -1 : 0
-                    }}
-                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                    style={{ position: 'relative', zIndex: 1 }}
-                  >
-                    <item.icon 
-                      size={20} 
-                      color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.3)'}
-                      strokeWidth={activeTab === item.id ? 2 : 1.5}
-                    />
-                  </motion.div>
                 </button>
               ))}
             </LayoutGroup>
           </motion.nav>
+
+          {/* Rótulo Externo Centralizado (Fora da barra, como na foto) */}
+          <div style={{ height: '24px', marginTop: '10px' }}>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={activeTab}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#ffffff',
+                  textTransform: 'capitalize',
+                  letterSpacing: '0.4px'
+                }}
+              >
+                {activeTab === 'orders' ? 'Início' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
+              </motion.span>
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </div>
