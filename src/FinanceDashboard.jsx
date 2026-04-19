@@ -3,7 +3,7 @@ import {
   TrendingUp, TrendingDown, DollarSign,
   ArrowUpRight, ArrowDownRight, Bell, Printer,
   X, Plus, PieChart as PieIcon, ListFilter,
-  AlertCircle, ChevronRight, Activity, Edit, Trash2
+  AlertCircle, ChevronRight, Activity, Edit, Trash2, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -257,15 +257,42 @@ export const FinanceDashboard = ({
                             onChange={e => setNewTransaction({...newTransaction, amount: e.target.value})}
                           />
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <select 
-                            style={{ width: '100%', height: '44px', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: newTransaction.categoryId ? theme.textPrimary : theme.textFaint, outline: 'none', fontSize: '13px', cursor: 'pointer', appearance: 'none' }}
-                            value={newTransaction.categoryId}
-                            onChange={e => setNewTransaction({...newTransaction, categoryId: e.target.value})}
+                        <div style={{ flex: 1, position: 'relative' }}>
+                          <div 
+                            onClick={(e) => {
+                              const menu = e.currentTarget.nextElementSibling;
+                              menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                            }}
+                            style={{ width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: newTransaction.categoryId ? theme.textPrimary : theme.textFaint, outline: 'none', fontSize: '13px', cursor: 'pointer', paddingRight: '4px' }}
                           >
-                            <option value="">{activeTab === 'entradas' ? 'Canal' : 'Categoria'}</option>
-                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                          </select>
+                            <span>{categories.find(c => c.id === newTransaction.categoryId)?.name || 'Categorias'}</span>
+                            <ChevronDown size={14} color={theme.textFaint} />
+                          </div>
+                          <div style={{ display: 'none', position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: theme.bgSurface, border: `1px solid ${theme.borderMuted}`, borderRadius: '12px', marginTop: '8px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+                            <div 
+                              onClick={() => {
+                                setNewTransaction({...newTransaction, categoryId: ''});
+                                document.querySelectorAll('[style*="display: block"]').forEach(el => el.style.display = 'none');
+                              }}
+                              style={{ padding: '12px 16px', fontSize: '13px', color: theme.textFaint, cursor: 'pointer', borderBottom: `1px solid ${theme.borderSubtle}` }}
+                            >
+                              Limpar Seleção
+                            </div>
+                            {categories.map(c => (
+                              <div 
+                                key={c.id}
+                                onClick={() => {
+                                  setNewTransaction({...newTransaction, categoryId: c.id});
+                                  document.querySelectorAll('[style*="display: block"]').forEach(el => el.style.display = 'none');
+                                }}
+                                style={{ padding: '12px 16px', fontSize: '13px', color: theme.textPrimary, cursor: 'pointer', transition: 'background 0.2s' }}
+                                onMouseEnter={e => e.currentTarget.style.background = theme.hoverBg}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                              >
+                                {c.name}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                       
@@ -480,14 +507,34 @@ export const FinanceDashboard = ({
                                 value={editingExpense.amount}
                                 onChange={e => setEditingExpense({...editingExpense, amount: e.target.value})}
                               />
-                              <select 
-                                style={{ flex: 1, background: theme.bgSurface, border: `1px solid ${theme.borderMuted}`, color: 'white', padding: '8px 12px', borderRadius: '8px', fontSize: '13px' }}
-                                value={editingExpense.category_id}
-                                onChange={e => setEditingExpense({...editingExpense, category_id: e.target.value})}
-                              >
-                                <option value="">Canal/Categoria</option>
-                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                              </select>
+                                <div style={{ flex: 1, position: 'relative' }}>
+                                  <div 
+                                    onClick={(e) => {
+                                      const menu = e.currentTarget.nextElementSibling;
+                                      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                                    }}
+                                    style={{ width: '100%', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: theme.bgSurface, border: `1px solid ${theme.borderMuted}`, color: 'white', padding: '0 12px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+                                  >
+                                    <span>{categories.find(c => c.id === editingExpense.category_id)?.name || 'Categorias'}</span>
+                                    <ChevronDown size={14} color={theme.textFaint} />
+                                  </div>
+                                  <div style={{ display: 'none', position: 'absolute', bottom: '100%', left: 0, right: 0, zIndex: 10100, background: theme.bgSurface, border: `1px solid ${theme.borderMuted}`, borderRadius: '12px', marginBottom: '8px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+                                    {categories.map(c => (
+                                      <div 
+                                        key={c.id}
+                                        onClick={() => {
+                                          setEditingExpense({...editingExpense, category_id: c.id});
+                                          document.querySelectorAll('[style*="display: block"]').forEach(el => el.style.display = 'none');
+                                        }}
+                                        style={{ padding: '10px 16px', fontSize: '13px', color: theme.textPrimary, cursor: 'pointer', transition: 'background 0.2s' }}
+                                        onMouseEnter={e => e.currentTarget.style.background = theme.hoverBg}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                      >
+                                        {c.name}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                                <button onClick={handleSaveEdit} style={{ flex: 1, background: theme.textPrimary, color: theme.bgApp, border: 'none', height: '32px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
