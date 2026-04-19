@@ -1285,8 +1285,8 @@ const AdminDashboard = () => {
                               position: 'relative', 
                               zIndex: 2,
                               transform: item.id === 'search' 
-                                ? 'translateY(10px)' 
-                                : 'translateY(5px)'
+                                ? 'translateY(7px)' 
+                                : 'none'
                             }}
                           />
                         </motion.div>
