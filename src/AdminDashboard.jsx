@@ -1079,13 +1079,13 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (ULTIMATE PSN CONVEX) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (FIXED DOCK VERSION) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
-          bottom: '22px',
-          left: '12px',
-          right: '12px',
+          bottom: '0',
+          left: '0',
+          right: '0',
           zIndex: 5000,
           display: 'flex',
           justifyContent: 'center',
@@ -1096,18 +1096,18 @@ const AdminDashboard = () => {
             animate={{ y: 0, opacity: 1 }}
             style={{
               width: '100%',
-              maxWidth: '420px',
-              height: '170px',
+              height: '160px',
               position: 'relative',
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              borderRadius: '28px',
-              boxShadow: '0 25px 80px rgba(0,0,0,0.95)'
+              // Dock preso ao fundo: arredondamos apenas o topo
+              borderRadius: '35px 35px 0 0',
+              boxShadow: '0 -15px 50px rgba(0,0,0,0.8)'
             }}
           >
-            {/* Casco Principal SVG com Gradientes Complexos */}
+            {/* Casco Principal SVG - Arco Aberto e Amplo */}
             <svg
               style={{
                 position: 'absolute',
@@ -1116,67 +1116,59 @@ const AdminDashboard = () => {
                 height: '100%',
                 zIndex: 1
               }}
-              viewBox="0 0 390 170"
+              viewBox="0 0 390 160"
               preserveAspectRatio="none"
             >
               <defs>
                 <linearGradient id="shellFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="rgba(24,24,28,0.96)" />
                   <stop offset="55%" stopColor="rgba(17,17,20,0.94)" />
-                  <stop offset="100%" stopColor="rgba(12,12,15,0.98)" />
+                  <stop offset="100%" stopColor="rgba(10,10,12,0.98)" />
                 </linearGradient>
                 <linearGradient id="strokeGlow" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
-                  <stop offset="50%" stopColor="rgba(255,255,255,0.18)" />
+                  <stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                   <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
                 </linearGradient>
-                <radialGradient id="centerLight" cx="50%" cy="40%" r="45%">
-                  <stop offset="0%" stopColor="rgba(255,255,255,0.15)" />
-                  <stop offset="45%" stopColor="rgba(255,255,255,0.05)" />
-                  <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-                </radialGradient>
               </defs>
 
-              {/* Geometria de Arco Convexo Forte */}
+              {/* Arco Achatado e Amplo: Curva suave margeando os nomes */}
               <path
-                d="M0,140 C42,110 95,92 145,84 C185,78 205,78 245,84 C295,92 348,110 390,140 L390,170 L0,170 Z"
+                d="M0,142 C100,128 150,124 195,124 C240,124 290,128 390,142 V160 H0 Z"
                 fill="url(#shellFill)"
               />
 
-              {/* Brilho Interno Central */}
-              <ellipse cx="195" cy="112" rx="160" ry="54" fill="url(#centerLight)" />
-
-              {/* Linha Superior Acompanhando o Arco */}
+              {/* Linha de Horizonte Baixa (Rente aos nomes) */}
               <path
-                d="M0,140 C42,110 95,92 145,84 C185,78 205,78 245,84 C295,92 348,110 390,140"
+                d="M0,142 C100,128 150,124 195,124 C240,124 290,128 390,142"
                 fill="none"
                 stroke="url(#strokeGlow)"
-                strokeWidth="1.5"
+                strokeWidth="1.2"
               />
             </svg>
 
-            {/* Halo Projetado (Segue o Item Ativo) */}
+            {/* Halo de Seleção (Mais baixo e suave) */}
             <motion.div
               style={{
                 position: 'absolute',
-                top: '68px',
-                width: '100px',
-                height: '80px',
-                marginLeft: '-50px',
+                top: '85px',
+                width: '120px',
+                height: '70px',
+                marginLeft: '-60px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(160,200,255,0.28), rgba(160,200,255,0.06) 50%, transparent 72%)',
-                filter: 'blur(12px)',
+                background: 'radial-gradient(circle, rgba(160,200,255,0.22), rgba(160,200,255,0.04) 50%, transparent 72%)',
+                filter: 'blur(15px)',
                 zIndex: 2,
                 pointerEvents: 'none'
               }}
               animate={{ left: (['orders', 'menu', 'search', 'finance', 'orders-history'].indexOf(activeTab) * 20 + 10) + '%' }}
-              transition={{ type: "spring", stiffness: 220, damping: 24 }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
             />
 
-            {/* Container de Ícones */}
+            {/* Container de Ícones (Baixados para o novo arco) */}
             <div style={{
               position: 'absolute',
-              top: '52px',
+              top: '82px',
               left: 0,
               right: 0,
               padding: '0 24px',
@@ -1189,11 +1181,11 @@ const AdminDashboard = () => {
               }}>
                 <LayoutGroup>
                   {[
-                    { id: 'orders', icon: Home, offset: 12 },
-                    { id: 'menu', icon: ShoppingBag, offset: 4 },
-                    { id: 'search', icon: Search, offset: -2 },
-                    { id: 'finance', icon: DollarSign, offset: 4 },
-                    { id: 'orders-history', icon: ClipboardList, offset: 12 }
+                    { id: 'orders', icon: Home, offset: 8 },
+                    { id: 'menu', icon: ShoppingBag, offset: 2 },
+                    { id: 'search', icon: Search, offset: 0 },
+                    { id: 'finance', icon: DollarSign, offset: 2 },
+                    { id: 'orders-history', icon: ClipboardList, offset: 8 }
                   ].map((item, index) => {
                     const isActive = activeTab === item.id;
                     return (
@@ -1275,10 +1267,10 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Texto Central Imersivo */}
+            {/* Texto de Identificação (Abaixo da Linha do Arco) */}
             <div style={{
               position: 'absolute',
-              bottom: '10px',
+              bottom: '15px',
               left: 0,
               right: 0,
               display: 'flex',
@@ -1288,15 +1280,16 @@ const AdminDashboard = () => {
               <AnimatePresence mode="wait">
                 <motion.span
                   key={activeTab}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 500,
-                    color: 'rgba(255,255,255,0.92)',
-                    letterSpacing: '0.5px'
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    letterSpacing: '0.8px',
+                    textTransform: 'uppercase'
                   }}
                 >
                   {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
