@@ -1079,7 +1079,7 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (ARCO CONVEXO SIMÉTRICO) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (ARCO CONVEXO COM DIVISOR INTERNO) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
@@ -1099,28 +1099,29 @@ const AdminDashboard = () => {
             style={{
               width: '100%',
               maxWidth: '500px',
-              height: '110px',
-              background: 'rgba(10, 10, 12, 0.92)',
+              height: '115px',
+              background: 'rgba(10, 10, 12, 0.94)',
               backdropFilter: 'blur(35px) saturate(220%)',
               borderTop: '1.5px solid rgba(255, 255, 255, 0.15)',
               position: 'relative',
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              // Curvatura de Arco Convexo (∩) GEOMETRIA PERFEITA
-              borderRadius: '70% 70% 0 0 / 45% 45% 0 0',
-              boxShadow: '0 -20px 50px rgba(0,0,0,0.8)',
+              // Curvatura de Domo Principal
+              borderRadius: '80% 80% 0 0 / 50% 50% 0 0',
+              boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
               overflow: 'hidden'
             }}
           >
-            {/* Linha de Ícones Acompanhando a Crista do Arco */}
+            {/* Linha de Ícones (Andar Superior) */}
             <div style={{ 
               display: 'flex', 
               width: '100%', 
-              height: '75px', 
+              height: '65px', 
               padding: '0 30px',
               alignItems: 'flex-start',
-              paddingTop: '38px' 
+              paddingTop: '35px',
+              zIndex: 2
             }}>
               <LayoutGroup>
                 {[
@@ -1146,21 +1147,20 @@ const AdminDashboard = () => {
                       justifyContent: 'center',
                       position: 'relative',
                       cursor: 'pointer',
-                      transform: `translateY(${item.offset}px)`, // Ícones sobem no centro de forma simétrica
+                      transform: `translateY(${item.offset}px)`,
                       WebkitTapHighlightColor: 'transparent',
                       transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
                     }}
                   >
                     <motion.div
                       animate={{ 
-                        scale: 1, // REMOVIDO AMPLIAMENTO
                         filter: activeTab === item.id ? 'brightness(1.5) drop-shadow(0 0 10px rgba(255,255,255,0.4))' : 'brightness(1)'
                       }}
                       style={{ position: 'relative', zIndex: 10 }}
                     >
                       <item.icon 
-                        size={24} 
-                        color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.35)'}
+                        size={22} 
+                        color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.3)'}
                         strokeWidth={activeTab === item.id ? 2.5 : 1.5}
                       />
                     </motion.div>
@@ -1171,11 +1171,11 @@ const AdminDashboard = () => {
                         style={{
                           position: 'absolute',
                           bottom: '-12px',
-                          width: '45px',
-                          height: '5px',
+                          width: '38px',
+                          height: '4px',
                           background: '#ffffff',
-                          borderRadius: '3px 3px 0 0',
-                          boxShadow: '0 0 20px 2px rgba(255,255,255,0.6)',
+                          borderRadius: '2px',
+                          boxShadow: '0 0 15px rgba(255,255,255,0.5)',
                           zIndex: 5
                         }}
                       />
@@ -1185,28 +1185,43 @@ const AdminDashboard = () => {
               </LayoutGroup>
             </div>
 
-            {/* Texto de Status INTERNO ao Domo */}
+            {/* DIVISOR EM ARCO (A Linha Vermelha de separação) */}
+            <div style={{
+              position: 'absolute',
+              top: '72px',
+              left: '0',
+              right: '0',
+              height: '30px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
+              // Um leve brilho na linha para dar profundidade
+              boxShadow: '0 -2px 10px rgba(255,255,255,0.02) inset',
+              pointerEvents: 'none'
+            }} />
+
+            {/* Texto de Status (Andar Inferior) */}
             <div style={{
               flex: 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingBottom: '10px'
+              paddingBottom: '8px',
+              zIndex: 1
             }}>
               <AnimatePresence mode="wait">
                 <motion.span
                   key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  exit={{ opacity: 0, y: -5 }}
                   style={{
                     fontSize: '11px',
                     fontWeight: 800,
                     color: '#ffffff',
                     textTransform: 'uppercase',
-                    letterSpacing: '1.8px',
+                    letterSpacing: '2px',
                     fontFamily: "'Inter', sans-serif",
-                    textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                    marginTop: '15px'
                   }}
                 >
                   {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
