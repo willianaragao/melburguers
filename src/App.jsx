@@ -222,7 +222,9 @@ const App = () => {
   );
 
   return (
-    <div style={{ background: theme.background, minHeight: '100vh', fontFamily: "'Inter', sans-serif", paddingBottom: '120px' }}>
+    <div style={{ background: theme.background, minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '500px', background: theme.surface, minHeight: '100vh', position: 'relative', boxShadow: '0 0 80px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, fontFamily: "'Inter', sans-serif", paddingBottom: '120px' }}>
       
       {/* 1. HERO / HEADER */}
       <div style={{ position: 'relative', height: '280px', background: '#000' }}>
@@ -794,6 +796,8 @@ const App = () => {
         )}
       </AnimatePresence>
 
+        </div>
+      </div>
     </div>
   );
 };
