@@ -3,7 +3,7 @@ import {
   Plus, Clock, Star, ArrowRight, Home, 
   BadgeCheck, MapPin, Search, Heart, Share2,
   ChevronDown, CheckCircle2, ChevronLeft,
-  ShoppingCart, Trash2, Info
+  ShoppingCart, Trash2, Info, UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -37,6 +37,8 @@ const App = () => {
   const [scrolled, setScrolled] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState('cart');
+  const [changeNeeded, setChangeNeeded] = useState('');
 
   // === CARREGAMENTO INICIAL ===
   useEffect(() => {
@@ -152,8 +154,8 @@ const App = () => {
   // === CHECKOUT FINAL ===
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    if (!address.street || !address.number || !address.neighborhood) {
-      alert("Por favor, preencha o endereço completo!");
+    if (!address.street || !address.number || !address.neighborhood || !address.customerName || !address.customerPhone) {
+      alert("Por favor, preencha todos os seus dados e o endereço completo!");
       return;
     }
 
@@ -163,21 +165,25 @@ const App = () => {
       await supabase.from('pedidos').insert([{
         order_id: orderId, items: cart, subtotal: cartSubtotal,
         delivery_fee: deliveryFee, total: cartTotal, address: address,
-        payment_method: paymentMethod, status: 'pendente'
+        payment_method: paymentMethod, change_needed: changeNeeded, status: 'pendente'
       }]);
 
       confetti({
         particleCount: 200,
-        spread: 80,
+        spread: 90,
         origin: { y: 0.6 },
-        colors: [theme.primary, theme.green, '#000']
+        zIndex: 4000,
+        colors: [theme.primary, '#2D1B14', theme.green]
       });
 
       setIsOrderSuccess(true);
       setIsCartOpen(false);
       
-      const message = `*NOVO PEDIDO MELBURGUERS #${orderId}*\n\nItems: ${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\nTotal: R$ ${cartTotal.toFixed(2)}`;
-      window.open(`https://wa.me/5522996153138?text=${encodeURIComponent(message)}`, '_blank');
+      const message = `*NOVO PEDIDO MELBURGUERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2)}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number} - ${address.neighborhood}`;
+      
+      setTimeout(() => {
+        window.open(`https://wa.me/5522996153138?text=${encodeURIComponent(message)}`, '_blank');
+      }, 4000);
       
     } catch (err) {
       alert("Erro ao enviar pedido para o restaurante.");
@@ -455,75 +461,314 @@ const App = () => {
                   <button onClick={() => setIsCartOpen(false)} style={{ background: '#f5f5f7', border: 'none', padding: '10px', borderRadius: '50%' }}><ChevronDown size={24}/></button>
                </div>
 
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginBottom: '35px' }}>
-                  {cart.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fcfcfd', padding: '14px', borderRadius: '16px' }}>
-                       <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 900, color: theme.primary }}>1x</span>
-                          <span style={{ fontSize: '15px', fontWeight: 700 }}>{item.name}</span>
-                       </div>
-                       <button onClick={() => removeFromCart(i)} style={{ background: 'none', border: 'none', color: theme.red }}><Trash2 size={18}/></button>
-                    </div>
-                  ))}
-               </div>
-
-               <div style={{ background: '#f8f8fa', padding: '16px', borderRadius: '16px', border: '1px solid #e2e2e7', position: 'relative', marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                     <MapPin size={16} color={theme.primary} />
-                     <span style={{ fontSize: '13px', fontWeight: 700 }}>Endereço de Entrega</span>
-                  </div>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      style={{ width: '100%', background: 'white', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '12px', fontSize: '14px', outline: 'none' }}
-                      placeholder="Comece a digitar sua rua..."
-                      value={address.street}
-                      onChange={e => setAddress({...address, street: e.target.value})}
-                    />
-                    {addressSuggestions.length > 0 && (
-                      <div style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: 'white', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3000, overflow: 'hidden' }}>
-                         {addressSuggestions.map((f, i) => (
-                           <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px 16px', fontSize: '13px', borderBottom: '1px solid #f4f4f5', cursor: 'pointer' }}>
-                              <div style={{ fontWeight: 700 }}>{f.properties.street || f.properties.name}</div>
-                              <div style={{ fontSize: '11px', color: theme.textMuted }}>{f.properties.district || 'Cabo Frio'}</div>
+               {/* ETAPA 1: CARRINHO */}
+               {checkoutStep === 'cart' && (
+                 <>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '35px' }}>
+                      {cart.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center', background: '#fcfcfd', padding: '12px', borderRadius: '18px', border: '1px solid #f0f0f5' }}>
+                           <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'cover' }} />
+                           <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: '15px', fontWeight: 700, color: theme.textZinc }}>{item.name}</div>
+                              <div style={{ fontSize: '13px', fontWeight: 800, color: theme.green, marginTop: '2px' }}>R$ {item.price.toFixed(2)}</div>
                            </div>
-                         ))}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                     <input style={{ flex: 1, border: '1px solid #eaeaef', padding: '12px', borderRadius: '10px', fontSize: '13px' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
-                     <input style={{ flex: 2, border: '1px solid #eaeaef', padding: '12px', borderRadius: '10px', fontSize: '13px', background: '#fcfcfd' }} placeholder="Bairro" value={address.neighborhood} readOnly />
-                  </div>
-               </div>
+                           <button onClick={() => removeFromCart(i)} style={{ background: '#fff0f0', border: 'none', padding: '8px', borderRadius: '10px', color: theme.red }}><Trash2 size={18}/></button>
+                        </div>
+                      ))}
+                   </div>
+                   <button 
+                     onClick={() => setCheckoutStep('address')}
+                      style={{ width: '100%', height: '62px', background: theme.textZinc, color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900, fontSize: '15px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
+                   >
+                     CONTINUAR PARA ENTREGA
+                   </button>
+                 </>
+               )}
 
-               <div style={{ padding: '20px 4px', borderTop: '2px solid #f4f4f5' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '22px', fontWeight: 950, color: theme.textZinc }}>
-                     <span>Total</span>
-                     <span>R$ {cartTotal.toFixed(2)}</span>
-                  </div>
-               </div>
+               {/* ETAPA 2: ENDEREÇO E IDENTIFICAÇÃO */}
+               {checkoutStep === 'address' && (
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ background: '#f8f8fa', padding: '20px', borderRadius: '24px', border: '1px solid #e2e2e7' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                          <UserPlus size={18} color={theme.primary} />
+                          <span style={{ fontSize: '14px', fontWeight: 700 }}>Seus Dados</span>
+                       </div>
+                       <input 
+                         style={{ width: '100%', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '14px', fontSize: '14px', marginBottom: '12px', outline: 'none' }}
+                         placeholder="Seu Nome Completo"
+                         value={address.customerName}
+                         onChange={e => setAddress({...address, customerName: e.target.value})}
+                       />
+                       <input 
+                         style={{ width: '100%', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none' }}
+                         placeholder="WhatsApp (Ex: 22 99999-9999)"
+                         value={address.customerPhone}
+                         onChange={e => setAddress({...address, customerPhone: e.target.value})}
+                       />
+                    </div>
 
-               <button 
-                 onClick={handleCheckout}
-                 style={{ width: '100%', height: '66px', background: theme.primary, color: 'white', border: 'none', borderRadius: '22px', marginTop: '30px', fontSize: '17px', fontWeight: 900 }}
-               >
-                 FINALIZAR PEDIDO
-               </button>
+                    <div style={{ background: '#f8f8fa', padding: '20px', borderRadius: '24px', border: '1px solid #e2e2e7' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                          <MapPin size={18} color={theme.primary} />
+                          <span style={{ fontSize: '14px', fontWeight: 700 }}>Endereço de Entrega</span>
+                       </div>
+                       <div style={{ position: 'relative' }}>
+                         <input 
+                           style={{ width: '100%', background: 'white', border: '1px solid #e2e2e7', padding: '14px', borderRadius: '14px', fontSize: '14px', outline: 'none' }}
+                           placeholder="Nome da rua..."
+                           value={address.street}
+                           onChange={e => setAddress({...address, street: e.target.value})}
+                         />
+                         {addressSuggestions.length > 0 && (
+                           <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, background: 'white', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3500, overflow: 'hidden' }}>
+                              {addressSuggestions.map((f, i) => (
+                                <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px 16px', fontSize: '13px', borderBottom: '1px solid #f4f4f5', cursor: 'pointer' }}>
+                                   <div style={{ fontWeight: 700 }}>{f.properties.street || f.properties.name}</div>
+                                   <div style={{ fontSize: '11px', color: theme.textMuted }}>{f.properties.district || 'Cabo Frio'}</div>
+                                </div>
+                              ))}
+                           </div>
+                         )}
+                       </div>
+                       <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                          <input style={{ flex: 1, border: '1px solid #eaeaef', padding: '12px', borderRadius: '12px', fontSize: '14px' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
+                          <input style={{ flex: 2, border: '1px solid #eaeaef', padding: '12px', borderRadius: '12px', fontSize: '14px', background: '#fcfcfd' }} placeholder="Bairro" value={address.neighborhood} readOnly />
+                       </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => {
+                        if (!address.customerName.trim()) return alert("Por favor, informe seu nome.");
+                        if (!address.customerPhone.trim()) return alert("Por favor, informe seu WhatsApp.");
+                        if (!address.street.trim()) return alert("Por favor, informe a rua.");
+                        if (!address.number.trim()) return alert("Por favor, informe o número da residência.");
+                        if (!address.neighborhood.trim()) return alert("Por favor, o bairro é obrigatório.");
+                        setCheckoutStep('payment');
+                      }}
+                      style={{ 
+                        width: '100%', height: '62px', background: theme.textZinc, color: 'white', border: 'none', 
+                        borderRadius: '20px', fontWeight: 900, fontSize: '15px', cursor: 'pointer',
+                        boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      IR PARA PAGAMENTO
+                    </button>
+                    <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600 }}>Voltar ao carrinho</button>
+                 </div>
+               )}
+
+               {/* ETAPA 3: PAGAMENTO */}
+               {checkoutStep === 'payment' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    
+                    <div style={{ background: '#f8f8fa', padding: '20px', borderRadius: '24px', border: '1px solid #e2e2e7' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                           <ShoppingCart size={18} color={theme.primary} />
+                           <span style={{ fontSize: '14px', fontWeight: 700 }}>Selecione o Pagamento</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                           {['PIX', 'Cartão', 'Dinheiro'].map(method => (
+                             <button
+                               key={method}
+                               onClick={() => setPaymentMethod(method)}
+                               style={{
+                                 flex: 1, padding: '16px 5px', borderRadius: '16px', fontSize: '13px', fontWeight: 900,
+                                 border: `2px solid ${paymentMethod === method ? theme.primary : '#e2e2e7'}`,
+                                 background: paymentMethod === method ? 'white' : 'transparent',
+                                 color: paymentMethod === method ? theme.primary : theme.textMuted,
+                                 transition: 'all 0.2s', cursor: 'pointer'
+                               }}
+                             >
+                               {method}
+                             </button>
+                           ))}
+                        </div>
+                    </div>
+                    <AnimatePresence mode="wait">
+                      {paymentMethod === 'PIX' && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          style={{ 
+                            padding: '24px', 
+                            background: '#f0fdf4', 
+                            borderRadius: '20px', 
+                            border: '2px dashed #22c55e', 
+                            textAlign: 'center'
+                          }}
+                        >
+                          <div style={{ color: '#166534', fontWeight: 800, fontSize: '12px', marginBottom: '8px', letterSpacing: '1px' }}>NOSSA CHAVE PIX</div>
+                          <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d', marginBottom: '16px' }}>64.745.137/0001-58</div>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText("64745137000158");
+                              alert("Chave PIX Copiada! 💸");
+                            }}
+                            style={{ 
+                              width: '100%', padding: '14px', background: 'white', border: '1.5px solid #22c55e', 
+                              borderRadius: '14px', color: '#166534', fontWeight: 900, fontSize: '12px', cursor: 'pointer'
+                            }}
+                          >
+                            COPIAR CHAVE PIX
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    
+                    <AnimatePresence mode="wait">
+                      {paymentMethod === 'Dinheiro' && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          style={{ background: '#f8f8fa', padding: '20px', borderRadius: '20px', border: '1px solid #e2e2e7' }}
+                        >
+                          <label style={{ fontSize: '13px', fontWeight: 800, display: 'block', marginBottom: '10px', color: theme.textZinc }}>Troco para quanto?</label>
+                          <input 
+                            type="text" 
+                            inputMode="decimal"
+                            placeholder="Ex: 50,00" 
+                            value={changeNeeded}
+                            onChange={(e) => setChangeNeeded(e.target.value)}
+                            style={{ 
+                              width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid #e2e2e7', 
+                              fontSize: '14px', outline: 'none', background: 'white' 
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <div style={{ padding: '24px 4px', borderTop: '1px solid #e2e2e7', marginTop: '10px' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ color: theme.textMuted, fontWeight: 700, fontSize: '14px' }}>Produtos</span>
+                          <span style={{ fontWeight: 800, fontSize: '14px' }}>R$ {cartSubtotal.toFixed(2)}</span>
+                       </div>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}>
+                          <span style={{ color: theme.textMuted, fontWeight: 700, fontSize: '14px' }}>Entrega</span>
+                          <span style={{ fontWeight: 800, fontSize: '14px', color: theme.green }}>{deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2)}`}</span>
+                       </div>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '24px', fontWeight: 950, color: theme.textZinc }}>
+                          <span>Total</span>
+                          <span>R$ {cartTotal.toFixed(2)}</span>
+                       </div>
+                    </div>
+
+                    <button 
+                      onClick={() => {
+                        if (!paymentMethod) return alert("Por favor, selecione uma forma de pagamento.");
+                        handleCheckout();
+                      }}
+                      style={{ 
+                        width: '100%', height: '70px', background: theme.textZinc, color: 'white', border: 'none',
+                        borderRadius: '24px', fontSize: '17px', fontWeight: 900, cursor: 'pointer',
+                        boxShadow: '0 15px 35px rgba(0,0,0,0.2)'
+                      }}
+                    >
+                      FINALIZAR E ENVIAR WHATSAPP
+                    </button>
+                    <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600, marginTop: '20px' }}>Voltar ao endereço</button>
+                 </div>
+               )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 8. TELA DE SUCESSO */}
+      {/* 8. TELA DE SUCESSO (DEPLOY GITHUB) */}
       <AnimatePresence>
         {isOrderSuccess && (
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: '#ffffff',
+              zIndex: 3000,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '30px',
+              textAlign: 'center'
+            }}
           >
-             <CheckCircle2 size={70} color={theme.green} style={{ marginBottom: '32px' }} />
-             <h1 style={{ fontSize: '28px', fontWeight: 950, color: theme.textZinc, marginBottom: '16px' }}>Pedido em Preparo!</h1>
-             <button onClick={() => { setIsOrderSuccess(false); setCart([]); }} style={{ background: theme.textZinc, color: 'white', border: 'none', padding: '18px 45px', borderRadius: '20px', fontWeight: 800 }}>VOLTAR AO INÍCIO</button>
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", damping: 15 }}
+            >
+              <div style={{ 
+                width: '100px', 
+                height: '100px', 
+                background: '#f0fdf4', 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                margin: '0 auto 25px',
+                color: '#22c55e'
+              }}>
+                <CheckCircle2 size={60} />
+              </div>
+              <h1 style={{ color: '#2D1B14', fontSize: '2rem', fontWeight: '800', marginBottom: '15px' }}>
+                Pedido Realizado!
+              </h1>
+              <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '30px', maxWidth: '300px' }}>
+                Parabéns! Seu pedido foi enviado para nossa cozinha. Estamos abrindo o WhatsApp para você confirmar...
+              </p>
+              
+              <button 
+                className="checkout-btn"
+                onClick={() => {
+                  const message = `*NOVO PEDIDO MELBURGUERS*...`; // Mensagem simplificada pro fallback
+                  window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent(message)}`;
+                }}
+                style={{
+                  width: '100%',
+                  padding: '18px',
+                  borderRadius: '16px',
+                  background: '#25D366',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: '700',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  boxShadow: '0 10px 20px rgba(37, 211, 102, 0.2)'
+                }}
+              >
+                Ir para o WhatsApp manualmente
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setIsOrderSuccess(false);
+                  setCart([]);
+                  setCheckoutStep('cart');
+                  setAddress({ ...address, street: '', number: '', neighborhood: '', complement: '' });
+                }}
+                style={{
+                  marginTop: '20px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Voltar ao Cardápio
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

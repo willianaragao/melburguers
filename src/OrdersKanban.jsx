@@ -238,7 +238,23 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '14px' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '10px', color: '#71717a', marginBottom: '2px' }}>Total</span>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>R$ {order.total?.toFixed(2)}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>R$ {order.total?.toFixed(2)}</span>
+            {order.payment_method && (
+              <span style={{ 
+                fontSize: '9px', 
+                fontWeight: 700, 
+                padding: '2px 6px', 
+                borderRadius: '4px', 
+                background: order.payment_method === 'PIX' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)',
+                color: order.payment_method === 'PIX' ? '#22c55e' : '#a1a1aa',
+                border: `1px solid ${order.payment_method === 'PIX' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.1)'}`,
+                textTransform: 'uppercase'
+              }}>
+                {order.payment_method}
+              </span>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '6px' }}>
           <DeleteButton order={order} updateStatus={updateStatus} />
@@ -251,6 +267,25 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
           </button>
         </div>
       </div>
+
+      {/* Alerta de Troco */}
+      {order.payment_method === 'Dinheiro' && (order.change_needed || order.troco) && (
+        <div style={{ 
+          background: 'rgba(245, 158, 11, 0.1)', 
+          border: '1px solid rgba(245, 158, 11, 0.2)',
+          borderRadius: '8px',
+          padding: '10px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
+          <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 700 }}>
+            TROCO PARA R$ {order.change_needed || order.troco}
+          </span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '8px' }}>
         {waLink && (
@@ -480,9 +515,13 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }
         <div style={{ display: 'flex', gap: '20px', height: '100%' }}>
           {COLUMNS.map(column => {
             const columnOrders = localOrders.filter(o => {
-               // Compatibilidade com status antigos
-               if (column.id === 'pendente') return o.status === 'pendente' || o.status === 'pago';
-               return o.status === column.id;
+               const s = String(o.status || '').toLowerCase().trim();
+               const colId = column.id.toLowerCase();
+               
+               // Fila Geral aceita pendente, pago ou vazio
+               if (colId === 'pendente') return s === 'pendente' || s === 'pago' || s === '';
+               
+               return s === colId;
             });
 
             return (

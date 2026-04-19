@@ -21,6 +21,8 @@ const AdminDashboard = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   const [orders, setOrders] = useState([]);
+  const [dbError, setDbError] = useState(null);
+  const [lastSync, setLastSync] = useState(new Date());
   const [isPrinting, setIsPrinting] = useState(false);
   const [isPrinterReady, setIsPrinterReady] = useState(false);
   const [isAutoPrint, setIsAutoPrint] = useState(false);
@@ -87,6 +89,7 @@ const AdminDashboard = () => {
       }));
       
       setOrders(combinedData);
+      setLastSync(new Date());
     } catch (err) {
       console.error("Erro ao buscar pedidos do Supabase:", err);
     }
@@ -121,49 +124,39 @@ const AdminDashboard = () => {
       syncMenuFromCloud();
       fetchFinanceData();
 
-      // Realtime do Supabase - Assina todas as tabelas com proteção de duplicidade
-      const channelPedidos = supabase
-        .channel('pedidos_realtime')
-        .on('postgres_changes', { event: 'INSERT', table: 'pedidos' }, (payload) => {
-          const newOrder = { ...payload.new, id: payload.new.order_id || payload.new.id };
-          setOrders(current => {
-            if (current.some(o => o.id === newOrder.id)) return current;
-            return [newOrder, ...current];
-          });
+      // 1. REALTIME (Sincronização Instantânea)
+      const channel = supabase
+        .channel('public:pedidos')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, (payload) => {
+          console.log("⚡ Mudança detectada no banco:", payload.eventType);
+          fetchOrders();
         })
         .subscribe();
 
+      // 2. POLLING (Sincronização de Segurança a cada 10 segundos)
+      const polling = setInterval(() => {
+        fetchOrders();
+      }, 10000);
+
       const channelExcluidos = supabase
         .channel('excluidos_realtime')
-        .on('postgres_changes', { event: 'INSERT', table: 'pedidos_excluidos' }, (payload) => {
-          const newOrder = { ...payload.new, id: payload.new.order_id || payload.new.id };
-          setOrders(current => {
-            if (current.some(o => o.id === newOrder.id)) return current;
-            return [newOrder, ...current];
-          });
+        .on('postgres_changes', { event: 'INSERT', table: 'pedidos_excluidos' }, () => {
+          fetchOrders();
         })
         .subscribe();
 
       const channelFinance = supabase
         .channel('finance_realtime')
-        .on('postgres_changes', { event: '*', table: 'finance' }, (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setFinanceTransactions(current => {
-              if (current.some(t => t.id === payload.new.id)) return current;
-              return [payload.new, ...current];
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            setFinanceTransactions(current => current.map(t => t.id === payload.new.id ? payload.new : t));
-          } else if (payload.eventType === 'DELETE') {
-            setFinanceTransactions(current => current.filter(t => t.id !== payload.old.id));
-          }
+        .on('postgres_changes', { event: '*', table: 'finance' }, () => {
+          fetchFinanceData();
         })
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channelPedidos);
+        supabase.removeChannel(channel);
         supabase.removeChannel(channelExcluidos);
         supabase.removeChannel(channelFinance);
+        clearInterval(polling);
       };
     }
   }, [isAuthenticated]);
@@ -487,9 +480,9 @@ const AdminDashboard = () => {
     if (dateFilter === 'today') {
       const orderDate = new Date(o.created_at || o.timestamp);
       const today = new Date();
-      return orderDate.getDate() === today.getDate() && 
-             orderDate.getMonth() === today.getMonth() && 
-             orderDate.getFullYear() === today.getFullYear();
+      // Verificação mais resiliente (ignora horas e compara datas puras)
+      const isSameDay = orderDate.toLocaleDateString() === today.toLocaleDateString();
+      return isSameDay;
     }
     return true;
   });
@@ -513,9 +506,7 @@ const AdminDashboard = () => {
   const filteredOrders = orders.filter(order => {
     const orderDate = new Date(order.created_at || order.timestamp);
     const today = new Date();
-    const isToday = orderDate.getDate() === today.getDate() && 
-                    orderDate.getMonth() === today.getMonth() && 
-                    orderDate.getFullYear() === today.getFullYear();
+    const isToday = orderDate.toLocaleDateString() === today.toLocaleDateString();
     
     // Se estiver na aba de Concluídos, só mostra concluídos
     if (statusFilter === 'concluded') return order.status === 'concluido';
@@ -746,6 +737,24 @@ const AdminDashboard = () => {
         {activeTab !== 'finance' && (
           <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', gap: '20px' }}>
             <div>
+              {/* PAINEL DE DIAGNÓSTICO ULTRA-VISÍVEL */}
+              <div style={{ marginBottom: '20px', padding: '12px 16px', background: dbError ? '#7f1d1d' : '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: dbError ? '#fca5a5' : '#38bdf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    {dbError ? '⚠️ ERRO DE CONEXÃO' : '✅ STATUS DA CONEXÃO'}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 600, marginTop: '2px' }}>
+                    {dbError ? dbError : `${orders.length} pedidos encontrados | Primeiro status: {orders[0]?.status || 'N/A'} | Sincronizado`}
+                  </div>
+                </div>
+                <button 
+                  onClick={() => { localStorage.clear(); window.location.reload(); }}
+                  style={{ padding: '8px 14px', background: '#f8fafc', color: '#0f172a', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                >
+                  REINICIAR SISTEMA
+                </button>
+              </div>
+
               <h1 style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                 {activeTab === 'orders' ? 'Painel de Operações' : 'Editor de Cardápio'}
               </h1>
@@ -762,9 +771,12 @@ const AdminDashboard = () => {
                 <Bell size={14} />
                 Teste de som
               </button>
-              <div style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }}></div>
-                 <span style={{ fontSize: '12px', fontWeight: 500, color: '#a1a1aa' }}>Realtime</span>
+              <div style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }}></div>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#fff' }}>Sincronizado</span>
+                 </div>
+                 <span style={{ fontSize: '9px', color: '#71717a' }}>Atualizado às {lastSync.toLocaleTimeString()}</span>
               </div>
             </div>
           </header>
