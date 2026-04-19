@@ -1079,7 +1079,7 @@ const AdminDashboard = () => {
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (RECONSTRUÇÃO FIEL) */}
+      {/* PlayStation-Inspired Premium Bottom Navigation (HORIZONTE CURVO - RECONSTRUÇÃO TOTAL) */}
       {isMobile && (
         <div style={{
           position: 'fixed',
@@ -1090,114 +1090,128 @@ const AdminDashboard = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          paddingBottom: '12px',
+          paddingBottom: '8px',
           pointerEvents: 'none'
         }}>
           <motion.nav 
-            initial={{ y: 50, opacity: 0 }}
+            initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             style={{
-              width: '94%',
-              maxWidth: '440px',
-              height: '68px',
-              background: 'rgba(12, 12, 14, 0.85)',
-              backdropFilter: 'blur(30px) saturate(160%)',
-              border: '1px solid rgba(255, 255, 255, 0.04)',
-              borderTop: '1.5px solid rgba(255, 255, 255, 0.15)',
-              borderRadius: '24px 24px 28px 28px',
-              display: 'flex',
-              padding: '0 10px',
-              boxShadow: '0 30px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.03) inset',
+              width: '100%',
+              maxWidth: '500px',
+              height: '100px',
+              background: 'rgba(10, 10, 12, 0.88)',
+              backdropFilter: 'blur(35px) saturate(200%)',
+              borderTop: '1.2px solid rgba(255, 255, 255, 0.18)',
               position: 'relative',
               pointerEvents: 'auto',
-              // Curva côncava orgânica suave
-              clipPath: 'path("M0 24C0 10.7452 10.7452 0 24 0C110.151 4.5 329.849 4.5 416 0C429.255 0 440 10.7452 440 24V44C440 57.2548 429.255 68 416 68H24C10.7452 68 0 57.2548 0 44V24Z")',
+              display: 'flex',
+              flexDirection: 'column',
+              // Curvatura profunda de horizonte (Concave Top)
+              clipPath: 'path("M0 0 C 100 25, 400 25, 500 0 V 100 H 0 Z")',
+              boxShadow: '0 -15px 40px rgba(0,0,0,0.6)',
             }}
           >
-            <LayoutGroup>
-              {[
-                { id: 'orders', icon: Home, label: 'Geral' },
-                { id: 'menu', icon: ShoppingBag, label: 'Cardápio' },
-                { id: 'search', icon: Search, label: 'Explorar' },
-                { id: 'finance', icon: DollarSign, label: 'Financeiro' },
-                { id: 'orders-history', icon: ClipboardList, label: 'Histórico' }
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                     if (['orders', 'menu', 'finance'].includes(item.id)) {
-                        setActiveTab(item.id);
-                     }
-                  }}
+            {/* Linha de Ícones Acompanhando o Arco */}
+            <div style={{ 
+              display: 'flex', 
+              width: '100%', 
+              height: '65px', 
+              padding: '0 25px',
+              alignItems: 'flex-start',
+              paddingTop: '15px' 
+            }}>
+              <LayoutGroup>
+                {[
+                  { id: 'orders', icon: Home, offset: 5 },
+                  { id: 'menu', icon: ShoppingBag, offset: 12 },
+                  { id: 'search', icon: Search, offset: 15 },
+                  { id: 'finance', icon: DollarSign, offset: 12 },
+                  { id: 'orders-history', icon: ClipboardList, offset: 5 }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                       if (['orders', 'menu', 'finance'].includes(item.id)) {
+                          setActiveTab(item.id);
+                       }
+                    }}
+                    style={{
+                      flex: 1,
+                      background: 'none',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      cursor: 'pointer',
+                      transform: `translateY(${item.offset}px)`, // Ícones seguem o arco
+                      WebkitTapHighlightColor: 'transparent',
+                      transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                    }}
+                  >
+                    <motion.div
+                      animate={{ 
+                        scale: activeTab === item.id ? 1.25 : 1,
+                        filter: activeTab === item.id ? 'brightness(1.5)' : 'brightness(1)'
+                      }}
+                      style={{ position: 'relative', zIndex: 10 }}
+                    >
+                      <item.icon 
+                        size={activeTab === item.id ? 26 : 22} 
+                        color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.4)'}
+                        strokeWidth={activeTab === item.id ? 2.5 : 1.5}
+                      />
+                    </motion.div>
+
+                    {activeTab === item.id && (
+                      <motion.div
+                        layoutId="psn-white-active-indicator"
+                        style={{
+                          position: 'absolute',
+                          bottom: '-12px',
+                          width: '35px',
+                          height: '4px',
+                          background: '#ffffff',
+                          borderRadius: '2px',
+                          boxShadow: '0 0 15px rgba(255,255,255,0.6)',
+                          zIndex: 5
+                        }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </LayoutGroup>
+            </div>
+
+            {/* Texto de Status INTERNO ao Arco */}
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingBottom: '10px'
+            }}>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={activeTab}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 0.9, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.1 }}
                   style={{
-                    flex: 1,
-                    background: 'none',
-                    border: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    WebkitTapHighlightColor: 'transparent'
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    textTransform: 'none',
+                    letterSpacing: '0.3px',
+                    fontFamily: "'Inter', sans-serif"
                   }}
                 >
-                  <motion.div
-                    animate={{ 
-                      scale: activeTab === item.id ? 1.2 : 1,
-                      y: activeTab === item.id ? -3 : 0
-                    }}
-                    style={{ position: 'relative', zIndex: 10 }}
-                  >
-                    <item.icon 
-                      size={24} 
-                      color={activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.35)'}
-                      strokeWidth={activeTab === item.id ? 2.2 : 1.5}
-                    />
-                  </motion.div>
-
-                  {/* High-Intensity White Light Indicator (PSN Style) */}
-                  {activeTab === item.id && (
-                    <motion.div
-                      layoutId="psn-white-light"
-                      style={{
-                        position: 'absolute',
-                        bottom: '0',
-                        width: '24px',
-                        height: '3px',
-                        background: '#ffffff',
-                        borderRadius: '4px 4px 0 0',
-                        boxShadow: '0 -2px 10px 2px rgba(255,255,255,0.4)',
-                        zIndex: 5
-                      }}
-                    />
-                  )}
-                </button>
-              ))}
-            </LayoutGroup>
+                  {activeTab === 'orders' ? 'Gerenciar Pedidos' : activeTab === 'menu' ? 'Editor de Cardápio' : activeTab === 'search' ? 'Buscar Transações' : activeTab === 'finance' ? 'Financeiro' : 'Histórico Completo'}
+                </motion.span>
+              </AnimatePresence>
+            </div>
           </motion.nav>
-
-          {/* Rótulo Externo Centralizado (Fora da barra, como na foto) */}
-          <div style={{ height: '24px', marginTop: '10px' }}>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={activeTab}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: '#ffffff',
-                  textTransform: 'capitalize',
-                  letterSpacing: '0.4px'
-                }}
-              >
-                {activeTab === 'orders' ? 'Início' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
-              </motion.span>
-            </AnimatePresence>
-          </div>
         </div>
       )}
     </div>
