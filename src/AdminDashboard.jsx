@@ -1107,8 +1107,8 @@ const AdminDashboard = () => {
               pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              // Geometria de Colina Convexa (∩) - IGUAL AO DESENHO
-              borderRadius: '80% 80% 0 0 / 50% 50% 0 0',
+              // Geometria de Horizonte Contínuo (∩) - Linha suave e infinita
+              clipPath: 'ellipse(120% 100% at 50% 100%)',
               boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
               overflow: 'hidden'
             }}
