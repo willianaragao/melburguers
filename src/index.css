@@ -34,6 +34,18 @@ body {
   color: var(--text);
   overflow-x: hidden;
   line-height: 1.5;
+  touch-action: manipulation; /* Disable double-tap-to-zoom */
+  -webkit-text-size-adjust: 100%; /* Prevent automatic text resizing on iOS */
+}
+
+/* Force 16px font size on mobile inputs to prevent automatic zoom */
+@media screen and (max-width: 768px) {
+  input, 
+  select, 
+  textarea,
+  .address-input {
+    font-size: 16px !important;
+  }
 }
 
 /* Animations */

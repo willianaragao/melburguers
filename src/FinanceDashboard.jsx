@@ -44,6 +44,13 @@ export const FinanceDashboard = ({
   handlePrinterConnect,
   isPrinterReady
 }) => {
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [activeTab, setActiveTab] = useState('entradas');
   const [newTransaction, setNewTransaction] = useState({ description: '', amount: '', categoryId: '' });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -125,57 +132,66 @@ export const FinanceDashboard = ({
     <div style={{ padding: '0', display: 'flex', flexDirection: 'column', gap: '32px', background: 'transparent', fontFamily: "'Inter', sans-serif" }}>
       
       {/* 1. HEADER REFINADO */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '8px 0' }}>
+      <header style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: isMobile ? 'center' : 'flex-end', 
+        padding: isMobile ? '12px 0' : '8px 0',
+        flexDirection: isMobile ? 'row' : 'row',
+        gap: '15px'
+      }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600, letterSpacing: '-0.5px', color: theme.textPrimary }}>
-            Inteligência Financeira
+          <h1 style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: 600, letterSpacing: '-0.5px', color: theme.textPrimary }}>
+            Financeiro
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: theme.greenSober, boxShadow: `0 0 10px ${theme.greenSober}` }} />
-            <span style={{ fontSize: '11px', fontWeight: 500, color: theme.textMuted, letterSpacing: '0.2px' }}>
-              Sincronizado • Atualizado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-            </span>
-          </div>
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: theme.greenSober, boxShadow: `0 0 10px ${theme.greenSober}` }} />
+              <span style={{ fontSize: '11px', fontWeight: 500, color: theme.textMuted, letterSpacing: '0.2px' }}>
+                Sincronizado • Atualizado em {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+              </span>
+            </div>
+          )}
         </div>
         
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={playNotificationSound} style={{ 
-            background: 'transparent', border: `1px solid ${theme.borderSubtle}`, padding: '0 12px', height: '34px',
-            borderRadius: '6px', color: theme.textMuted, fontWeight: 500, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.15s'
-          }} onMouseEnter={e => {e.currentTarget.style.background = theme.hoverBg; e.currentTarget.style.borderColor = theme.borderMuted;}} onMouseLeave={e => {e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = theme.borderSubtle;}}>
-            <Bell size={13} /> Som
+            background: theme.bgSurface, border: `1px solid ${theme.borderSubtle}`, width: isMobile ? '40px' : 'auto', padding: isMobile ? '0' : '0 12px', height: '40px',
+            borderRadius: '12px', color: theme.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer'
+          }}>
+            <Bell size={16} /> {!isMobile && 'Som'}
           </button>
           <button onClick={handlePrinterConnect} style={{ 
-             background: 'transparent', border: `1px solid ${theme.borderSubtle}`, padding: '0 12px', height: '34px',
-             borderRadius: '6px', color: isPrinterReady ? theme.greenSober : theme.textMuted, fontWeight: 500, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.15s'
-          }} onMouseEnter={e => {e.currentTarget.style.background = theme.hoverBg; e.currentTarget.style.borderColor = theme.borderMuted;}} onMouseLeave={e => {e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = theme.borderSubtle;}}>
-            <Printer size={13} /> {isPrinterReady ? 'Impressora Pronta' : 'Impressora'}
+             background: theme.bgSurface, border: `1px solid ${theme.borderSubtle}`, width: isMobile ? '40px' : 'auto', padding: isMobile ? '0' : '0 12px', height: '40px',
+             borderRadius: '12px', color: isPrinterReady ? theme.greenSober : theme.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer'
+          }}>
+            <Printer size={16} /> {!isMobile && (isPrinterReady ? 'Pronta' : 'Imprimir')}
           </button>
         </div>
       </header>
 
       {/* 2. CARDS DE RESUMO (SaaS STYLE) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '24px' }}>
         {[
           { label: 'LUCRO LÍQUIDO', value: netProfit, icon: DollarSign, color: theme.textPrimary, clickable: false },
-          { label: 'TOTAL DE ENTRADAS', value: totalIn, icon: ArrowUpRight, color: theme.greenSober, clickable: true },
-          { label: 'TOTAL DE SAÍDAS', value: totalOut, icon: ArrowDownRight, color: theme.redSober, clickable: true }
+          { label: 'ENTRADAS', value: totalIn, icon: ArrowUpRight, color: theme.greenSober, clickable: true },
+          { label: 'SAÍDAS', value: totalOut, icon: ArrowDownRight, color: theme.redSober, clickable: true }
         ].map((card, i) => (
           <motion.div 
             key={i}
             onClick={card.clickable ? () => (card.label.includes('ENTRADAS') ? setShowIncomesPanel(true) : setShowExpensesPanel(true)) : undefined}
-            whileHover={card.clickable ? { y: -4, borderColor: theme.borderMuted } : {}}
+            whileHover={!isMobile && card.clickable ? { y: -4, borderColor: theme.borderMuted } : {}}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
             style={{ 
               background: theme.bgSurface, 
               border: `1px solid ${theme.borderSubtle}`, 
-              borderRadius: '12px', 
-              padding: '24px',
+              borderRadius: '16px', 
+              padding: isMobile ? '20px' : '24px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px',
+              gap: isMobile ? '10px' : '16px',
               position: 'relative',
               overflow: 'hidden',
               cursor: card.clickable ? 'pointer' : 'default'
@@ -185,10 +201,10 @@ export const FinanceDashboard = ({
               <span style={{ fontSize: '10px', fontWeight: 600, color: theme.textMuted, letterSpacing: '1px' }}>{card.label}</span>
               <card.icon size={16} color={card.color} style={{ opacity: 0.6 }} />
             </div>
-            <div style={{ fontSize: '28px', fontWeight: 600, color: card.color, letterSpacing: '-0.5px' }}>
+            <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: 700, color: card.color, letterSpacing: '-0.5px' }}>
               R$ {card.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
-            {card.clickable && (
+            {card.clickable && !isMobile && (
               <div style={{ position: 'absolute', bottom: '12px', right: '12px', fontSize: '9px', color: theme.textFaint, fontWeight: 700 }}>GERENCIAR →</div>
             )}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '1px', background: `linear-gradient(90deg, transparent, ${card.color}44, transparent)` }} />
@@ -197,7 +213,7 @@ export const FinanceDashboard = ({
       </div>
 
       {/* Grid Principal */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.8fr 1fr', gap: '24px' }}>
         
         {/* 3. BLOCO OPERACIONAL */}
         <div style={{ background: theme.bgSurface, border: `1px solid ${theme.borderSubtle}`, borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -240,31 +256,34 @@ export const FinanceDashboard = ({
                 {activeTab !== 'pedidos' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                     
-                    <div style={{ background: theme.bgInput, border: `1px solid ${theme.borderSubtle}`, borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ background: theme.bgInput, border: `1px solid ${theme.borderSubtle}`, borderRadius: '16px', padding: isMobile ? '20px' : '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ display: 'flex', gap: '12px', flexDirection: isMobile ? 'column' : 'row' }}>
                         <div style={{ flex: 2 }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: theme.textFaint, marginBottom: '4px', display: 'block' }}>DESCRIÇÃO</span>
                           <input 
-                            style={{ width: '100%', height: '44px', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: theme.textPrimary, outline: 'none', fontSize: '14px' }}
-                            placeholder="Descrição da movimentação..." 
+                            style={{ width: '100%', height: '44px', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: theme.textPrimary, outline: 'none', fontSize: '16px' }}
+                            placeholder="Ex: Aluguel, Carne, etc..." 
                             value={newTransaction.description}
                             onChange={e => setNewTransaction({...newTransaction, description: e.target.value})}
                           />
                         </div>
                         <div style={{ flex: 1 }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: theme.textFaint, marginBottom: '4px', display: 'block' }}>VALOR (R$)</span>
                           <input 
                             type="number"
-                            style={{ width: '100%', height: '44px', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: theme.textPrimary, fontWeight: 500, outline: 'none', fontSize: '14px' }}
-                            placeholder="Valor R$" 
+                            style={{ width: '100%', height: '44px', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: theme.textPrimary, fontWeight: 600, outline: 'none', fontSize: '16px' }}
+                            placeholder="0,00" 
                             value={newTransaction.amount}
                             onChange={e => setNewTransaction({...newTransaction, amount: e.target.value})}
                           />
                         </div>
                         <div style={{ flex: 1, position: 'relative' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: theme.textFaint, marginBottom: '4px', display: 'block' }}>CATEGORIA</span>
                           <div 
                             onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                            style={{ width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: newTransaction.categoryId ? theme.textPrimary : theme.textFaint, outline: 'none', fontSize: '13px', cursor: 'pointer', paddingRight: '4px' }}
+                            style={{ width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', borderBottom: `1px solid ${theme.borderMuted}`, color: newTransaction.categoryId ? theme.textPrimary : theme.textFaint, outline: 'none', fontSize: '14px', cursor: 'pointer', paddingRight: '4px' }}
                           >
-                            <span>{categories.find(c => c.id === newTransaction.categoryId)?.name || 'Categorias'}</span>
+                            <span>{categories.find(c => c.id === newTransaction.categoryId)?.name || 'Selecionar...'}</span>
                             <ChevronDown size={14} color={theme.textFaint} />
                           </div>
                           {isCategoryDropdownOpen && (
@@ -276,7 +295,7 @@ export const FinanceDashboard = ({
                                 }}
                                 style={{ padding: '12px 16px', fontSize: '13px', color: theme.textFaint, cursor: 'pointer', borderBottom: `1px solid ${theme.borderSubtle}`, background: theme.bgInput }}
                               >
-                                Limpar Seleção
+                                Sem categoria
                               </div>
                               {categories.map(c => (
                                 <div 
@@ -297,19 +316,18 @@ export const FinanceDashboard = ({
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button 
-                          onClick={() => handleAdd(activeTab === 'entradas' ? 'entry' : 'exit')}
-                          style={{ 
-                            padding: '0 24px', height: '38px', 
-                            background: activeTab === 'entradas' ? theme.greenSober : theme.textPrimary, 
-                            color: activeTab === 'entradas' ? 'white' : theme.bgApp, 
-                            border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                          }}
-                        >
-                          {activeTab === 'entradas' ? 'Lançar Receita' : 'Lançar Despesa'}
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => handleAdd(activeTab === 'entradas' ? 'entry' : 'exit')}
+                        style={{ 
+                          width: isMobile ? '100%' : 'auto', alignSelf: isMobile ? 'center' : 'flex-end',
+                          padding: '0 32px', height: '48px', 
+                          background: activeTab === 'entradas' ? theme.greenSober : theme.textPrimary, 
+                          color: activeTab === 'entradas' ? 'white' : theme.bgApp, 
+                          border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        {activeTab === 'entradas' ? 'Confirmar Receita' : 'Confirmar Saída'}
+                      </button>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -427,38 +445,58 @@ export const FinanceDashboard = ({
       </div>
 
       {/* 5. FLUXO DE CAIXA CONSOLIDADO */}
-      <div style={{ background: theme.bgSurface, border: `1px solid ${theme.borderSubtle}`, borderRadius: '16px', padding: '24px' }}>
+      <div style={{ background: theme.bgSurface, border: `1px solid ${theme.borderSubtle}`, borderRadius: '16px', padding: isMobile ? '20px' : '24px' }}>
          <div style={{ marginBottom: '24px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: theme.textMuted, letterSpacing: '0.5px' }}>FLUXO DE CAIXA CONSOLIDADO</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: theme.textMuted, letterSpacing: '0.5px' }}>HISTÓRICO RECENTE</span>
          </div>
-         <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-               <thead>
-                  <tr style={{ borderBottom: `1px solid ${theme.borderSubtle}` }}>
-                     <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600 }}>CÓDIGO</th>
-                     <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600 }}>MOVIMENTAÇÃO</th>
-                     <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600 }}>CATEGORIA</th>
-                     <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600, textAlign: 'right' }}>VALOR BRUTO</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  {cashFlow.map((item, idx) => (
-                     <tr key={idx} style={{ borderBottom: idx === cashFlow.length - 1 ? 'none' : `1px solid ${theme.borderSubtle}` }}>
-                        <td style={{ padding: '16px 0', fontSize: '12px', color: theme.textFaint }}>#{item.id.slice(-4)}</td>
-                        <td style={{ padding: '16px 0', fontSize: '13px', color: theme.textPrimary, fontWeight: 500 }}>{item.desc}</td>
-                        <td style={{ padding: '16px 0' }}>
-                           <span style={{ padding: '3px 8px', background: theme.bgInput, borderRadius: '4px', fontSize: '10px', color: theme.textMuted, border: `1px solid ${theme.borderSubtle}` }}>
-                              {item.category}
-                           </span>
-                        </td>
-                        <td style={{ padding: '16px 0', textAlign: 'right', fontSize: '13px', fontWeight: 700, color: item.type === 'entry' ? theme.greenSober : theme.textPrimary }}>
-                           {item.type === 'entry' ? '+' : '-'} R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                     </tr>
-                  ))}
-               </tbody>
-            </table>
-         </div>
+         {isMobile ? (
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+             {cashFlow.slice(0, 15).map((item, idx) => (
+               <div key={idx} style={{ background: theme.bgInput, borderRadius: '12px', padding: '16px', border: `1px solid ${theme.borderSubtle}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: theme.textPrimary }}>{item.desc}</span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '10px', color: theme.textFaint }}>#{item.id.slice(-4)}</span>
+                      <span style={{ width: '4px', height: '4px', background: theme.textFaint, borderRadius: '50%' }} />
+                      <span style={{ fontSize: '10px', color: theme.textMuted }}>{item.category}</span>
+                    </div>
+                 </div>
+                 <span style={{ fontSize: '14px', fontWeight: 700, color: item.type === 'entry' ? theme.greenSober : theme.textPrimary }}>
+                   {item.type === 'entry' ? '+' : '-'} R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                 </span>
+               </div>
+             ))}
+           </div>
+         ) : (
+           <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                 <thead>
+                    <tr style={{ borderBottom: `1px solid ${theme.borderSubtle}` }}>
+                       <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600 }}>CÓDIGO</th>
+                       <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600 }}>MOVIMENTAÇÃO</th>
+                       <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600 }}>CATEGORIA</th>
+                       <th style={{ padding: '0 0 12px 0', fontSize: '11px', color: theme.textFaint, fontWeight: 600, textAlign: 'right' }}>VALOR BRUTO</th>
+                    </tr>
+                 </thead>
+                 <tbody>
+                    {cashFlow.map((item, idx) => (
+                       <tr key={idx} style={{ borderBottom: idx === cashFlow.length - 1 ? 'none' : `1px solid ${theme.borderSubtle}` }}>
+                          <td style={{ padding: '16px 0', fontSize: '12px', color: theme.textFaint }}>#{item.id.slice(-4)}</td>
+                          <td style={{ padding: '16px 0', fontSize: '13px', color: theme.textPrimary, fontWeight: 500 }}>{item.desc}</td>
+                          <td style={{ padding: '16px 0' }}>
+                             <span style={{ padding: '3px 8px', background: theme.bgInput, borderRadius: '4px', fontSize: '10px', color: theme.textMuted, border: `1px solid ${theme.borderSubtle}` }}>
+                                {item.category}
+                             </span>
+                          </td>
+                          <td style={{ padding: '16px 0', textAlign: 'right', fontSize: '13px', fontWeight: 700, color: item.type === 'entry' ? theme.greenSober : theme.textPrimary }}>
+                             {item.type === 'entry' ? '+' : '-'} R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                       </tr>
+                    ))}
+                 </tbody>
+              </table>
+           </div>
+         )}
       </div>
 
       {/* DRAWER DE GESTÃO - UNIFICADO PARA ENTRADAS E SAÍDAS (BETTER UX) */}

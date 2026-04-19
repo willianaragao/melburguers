@@ -752,76 +752,129 @@ const AdminDashboard = () => {
         flexDirection: 'column'
       }}>
         {activeTab !== 'finance' && (
-          <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', gap: '20px' }}>
+          <header style={{ 
+            marginBottom: isMobile ? '24px' : '40px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: isMobile ? 'center' : 'flex-end', 
+            flexDirection: isMobile ? 'row' : 'row', 
+            gap: '20px' 
+          }}>
             <div>
-              <h1 style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.5px', marginBottom: '4px' }}>
-                {activeTab === 'orders' ? 'Painel de Operações' : 'Editor de Cardápio'}
+              <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+                {activeTab === 'orders' ? 'Operações' : 'Cardápio'}
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#71717a', fontSize: '13px', fontWeight: 400 }}>
-                {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })} • Workspace ativo
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '12px', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
-              <button 
-                onClick={() => { localStorage.clear(); window.location.reload(); }}
-                style={{ padding: '8px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#71717a', cursor: 'pointer', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
-              >
-                Reiniciar
-              </button>
-              <button 
-                onClick={playNotificationSound}
-                style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s' }}
-              >
-                <Bell size={14} />
-                Teste de som
-              </button>
-              <div style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+              {isMobile ? (
                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }}></div>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#fff' }}>Sincronizado</span>
+                    <span style={{ fontSize: '11px', color: '#71717a' }}>Online • {lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                  </div>
-                 <span style={{ fontSize: '9px', color: '#71717a' }}>Atualizado às {lastSync.toLocaleTimeString()}</span>
-              </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#71717a', fontSize: '13px', fontWeight: 400 }}>
+                  {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })} • Workspace ativo
+                </div>
+              )}
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {isMobile ? (
+                <button 
+                  onClick={playNotificationSound}
+                  style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <Bell size={18} />
+                </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => { localStorage.clear(); window.location.reload(); }}
+                    style={{ padding: '8px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#71717a', cursor: 'pointer', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
+                  >
+                    Reiniciar
+                  </button>
+                  <button 
+                    onClick={playNotificationSound}
+                    style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s' }}
+                  >
+                    <Bell size={14} />
+                    Teste de som
+                  </button>
+                  <div style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }}></div>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#fff' }}>Sincronizado</span>
+                     </div>
+                     <span style={{ fontSize: '9px', color: '#71717a' }}>Atualizado às {lastSync.toLocaleTimeString()}</span>
+                  </div>
+                </>
+              )}
             </div>
           </header>
         )}
 
         {activeTab === 'orders' && (
           <>
-            <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row', gap: '15px' }}>
-              <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', width: isMobile ? '100%' : 'auto', paddingBottom: isMobile ? '10px' : '0', scrollbarWidth: 'none' }}>
+            <div style={{ 
+              marginBottom: '30px', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              flexDirection: isMobile ? 'column' : 'row', 
+              gap: '15px' 
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: '8px', 
+                overflowX: 'auto', 
+                width: isMobile ? 'calc(100% + 40px)' : 'auto', 
+                margin: isMobile ? '0 -20px' : '0', 
+                padding: isMobile ? '4px 20px 12px' : '0', 
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}>
                 <button 
                   onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
-                  style={{ padding: '6px 14px', borderRadius: '8px', background: dateFilter === 'today' ? 'rgba(255,255,255,0.08)' : 'transparent', color: dateFilter === 'today' ? '#ffffff' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
+                  style={{ 
+                    padding: isMobile ? '10px 18px' : '6px 14px', 
+                    borderRadius: '12px', 
+                    background: dateFilter === 'today' ? 'rgba(236, 148, 36, 0.15)' : 'rgba(255,255,255,0.03)', 
+                    color: dateFilter === 'today' ? '#EC9424' : '#71717a', 
+                    fontSize: '12px', 
+                    fontWeight: 700, 
+                    border: dateFilter === 'today' ? '1px solid rgba(236,148,36,0.3)' : '1px solid rgba(255,255,255,0.04)', 
+                    whiteSpace: 'nowrap', 
+                    cursor: 'pointer', 
+                    transition: 'all 0.2s' 
+                  }}
                 >
-                  Hoje
+                  {dateFilter === 'today' ? 'Pedidos de Hoje' : 'Todos os Pedidos'}
                 </button>
-                <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.06)', margin: 'auto 0' }}></div>
-                <button 
-                  onClick={() => setStatusFilter('all')}
-                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent', color: statusFilter === 'all' ? '#ffffff' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  Fila Geral
-                </button>
-                <button 
-                  onClick={() => setStatusFilter('pending')}
-                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'pending' ? 'rgba(255,255,255,0.08)' : 'transparent', color: statusFilter === 'pending' ? '#ffffff' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  Em Aberto
-                </button>
-                <button 
-                  onClick={() => setStatusFilter('concluded')}
-                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'concluded' ? 'rgba(45,212,191,0.1)' : 'transparent', color: statusFilter === 'concluded' ? '#2dd4bf' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  Concluídos
-                </button>
-                <button 
-                  onClick={() => setStatusFilter('deleted')}
-                  style={{ padding: '6px 14px', borderRadius: '8px', background: statusFilter === 'deleted' ? 'rgba(244,63,94,0.1)' : 'transparent', color: statusFilter === 'deleted' ? '#f43f5e' : '#71717a', fontSize: '12px', fontWeight: 500, border: '1px solid rgba(255,255,255,0.04)', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  Excluídos
-                </button>
+                <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.06)', margin: 'auto 8px', flexShrink: 0 }}></div>
+                {[
+                  { id: 'all', label: 'Fila Geral' },
+                  { id: 'pending', label: 'Em Aberto' },
+                  { id: 'concluded', label: 'Concluídos', color: '#2dd4bf' },
+                  { id: 'deleted', label: 'Excluídos', color: '#f43f5e' }
+                ].map((f) => (
+                  <button 
+                    key={f.id}
+                    onClick={() => setStatusFilter(f.id)}
+                    style={{ 
+                      padding: isMobile ? '10px 18px' : '6px 14px', 
+                      borderRadius: '12px', 
+                      background: statusFilter === f.id ? (f.color ? `${f.color}22` : 'rgba(255,255,255,0.08)') : 'rgba(255,255,255,0.03)', 
+                      color: statusFilter === f.id ? (f.color || '#ffffff') : '#71717a', 
+                      fontSize: '12px', 
+                      fontWeight: 700, 
+                      border: statusFilter === f.id ? `1px solid ${f.color || 'rgba(255,255,255,0.1)'}` : '1px solid rgba(255,255,255,0.04)', 
+                      whiteSpace: 'nowrap', 
+                      cursor: 'pointer', 
+                      transition: 'all 0.2s' 
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
               
               <button 
@@ -912,12 +965,12 @@ const AdminDashboard = () => {
                               />
                               <button 
                                 onClick={() => document.getElementById('file-upload').click()}
-                                style={{ padding: '12px 20px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+                                style={{ width: isMobile ? '100%' : 'auto', padding: '12px 20px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
                               >
-                                SELECIONAR ARQUIVO
+                                {isMobile ? 'ESCOLHER FOTO' : 'SELECIONAR ARQUIVO'}
                               </button>
                               <div style={{ marginTop: '10px', color: '#64748b', fontSize: '11px', lineHeight: '1.4' }}>
-                                Clique na imagem ou no botão para subir uma foto do seu computador.
+                                {isMobile ? 'Toque na imagem ou no botão para trocar a foto.' : 'Clique na imagem ou no botão para subir uma foto do seu computador.'}
                               </div>
                             </div>
                           </div>
@@ -928,7 +981,7 @@ const AdminDashboard = () => {
                             placeholder="Ex: X-Burguer Especial" 
                             value={editingItem.name} 
                             onChange={e => setEditingItem({...editingItem, name: e.target.value})} 
-                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none' }} 
+                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', fontSize: isMobile ? '16px' : '14px' }} 
                           />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -938,7 +991,7 @@ const AdminDashboard = () => {
                             type="number" 
                             value={editingItem.price} 
                             onChange={e => setEditingItem({...editingItem, price: e.target.value})} 
-                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none' }} 
+                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', fontSize: isMobile ? '16px' : '14px' }} 
                           />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -947,7 +1000,7 @@ const AdminDashboard = () => {
                             placeholder="Ex: Pão brioche, blend 150g, queijo cheddar, alface e tomate" 
                             value={editingItem.description} 
                             onChange={e => setEditingItem({...editingItem, description: e.target.value})} 
-                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', minHeight: '100px', resize: 'vertical', fontFamily: 'inherit' }} 
+                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', minHeight: '100px', resize: 'vertical', fontFamily: 'inherit', fontSize: isMobile ? '16px' : '14px' }} 
                           />
                         </div>
                         <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>

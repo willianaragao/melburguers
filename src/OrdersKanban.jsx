@@ -20,6 +20,16 @@ import { CSS } from '@dnd-kit/utilities';
 import { MessageSquare, Printer, Clock, Trash2, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return isMobile;
+};
+
 const DeleteButton = ({ order, updateStatus }) => {
   const [isHovered, setIsHovered] = useState(false);
   return (
@@ -424,6 +434,7 @@ const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
 
 // === COMPONENTE PRINCIPAL KANBAN ===
 export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }) => {
+  const isMobile = useIsMobile();
   const [activeOrder, setActiveOrder] = useState(null);
 
   const sensors = useSensors(
@@ -511,6 +522,43 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }
     );
   }
 
+  // VIEW MOBILE: Lista vertical otimizada
+  if (isMobile) {
+    const filteredByStatus = statusFilter === 'all' 
+      ? localOrders.filter(o => o.status !== 'excluido')
+      : localOrders.filter(o => {
+          const s = String(o.status || '').toLowerCase().trim();
+          const f = statusFilter.toLowerCase();
+          if (f === 'pending') return s === 'pendente' || s === 'pago' || s === '';
+          return s === f;
+        });
+
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '12px', 
+        padding: '0 0 100px 0',
+        width: '100%' 
+      }}>
+        {filteredByStatus.length === 0 ? (
+          <div style={{ color: '#71717a', fontSize: '14px', textAlign: 'center', width: '100%', padding: '60px 20px' }}>
+            Nenhum pedido encontrado nesta categoria.
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            {filteredByStatus.map(order => (
+              <motion.div key={order.id} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
+                <OrderCard order={order} handlePrint={handlePrint} updateStatus={updateStatus} isDragging={false} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
+      </div>
+    );
+  }
+
+  // VIEW DESKTOP: Quadro Kanban Original
   return (
     <div 
       className="kanban-board-scroll"
@@ -556,15 +604,11 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter }
             const columnOrders = localOrders.filter(o => {
                const s = String(o.status || '').toLowerCase().trim();
                const colId = column.id.toLowerCase();
-               
-               // Fila Geral aceita pendente, pago ou vazio
                if (colId === 'pendente') return s === 'pendente' || s === 'pago' || s === '';
-               
                return s === colId;
             });
 
             return (
-               // Para deixar a coluna inteira "droppable" mesmo vazia, envolvemos no SortableContext id
                <div key={column.id} id={column.id}>
                   <KanbanColumn 
                     column={column} 
