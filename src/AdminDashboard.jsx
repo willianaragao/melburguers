@@ -71,27 +71,44 @@ const AdminDashboard = () => {
     setAppMenuData(getMenuData());
   }, []);
 
-  const fetchOrders = async () => {
+    const fetchOrders = async () => {
     if (!isAuthenticated) return;
+    console.log("🔍 Iniciando busca de pedidos...");
+    
     try {
-      const [pedidosRes, excluidosRes] = await Promise.all([
-        supabase.from('pedidos').select('*').order('created_at', { ascending: false }),
-        supabase.from('pedidos_excluidos').select('*').order('created_at', { ascending: false })
-      ]);
+      setDbError(null);
       
-      const combinedData = [
-        ...(pedidosRes.data || []),
-        ...(excluidosRes.data || [])
+      // Busca isolada para evitar que erro em uma tabela trave tudo
+      const { data: activeData, error: activeError } = await supabase
+        .from('pedidos')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (activeError) {
+        console.error("Erro na tabela pedidos:", activeError);
+        setDbError("Erro na tabela pedidos: " + activeError.message);
+      }
+
+      const { data: deletedData, error: deletedError } = await supabase
+        .from('pedidos_excluidos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const combined = [
+        ...(activeData || []),
+        ...(deletedData || [])
       ].map(o => ({
         ...o,
-        original_db_id: o.id, // ID real do banco (UUID ou Serial)
-        id: o.order_id || o.id // ID visual para o sistema
+        original_db_id: o.id,
+        id: o.order_id || o.id
       }));
-      
-      setOrders(combinedData);
+
+      setOrders(combined);
       setLastSync(new Date());
+      console.log("✅ Busca concluída:", combined.length, "pedidos.");
     } catch (err) {
-      console.error("Erro ao buscar pedidos do Supabase:", err);
+      console.error("CRITICAL SYNC ERROR:", err);
+      setDbError("Erro crítico de sincronização.");
     }
   };
 
@@ -124,19 +141,19 @@ const AdminDashboard = () => {
       syncMenuFromCloud();
       fetchFinanceData();
 
-      // 1. REALTIME (Sincronização Instantânea)
+            // 1. ESCUTA GLOBAL (Nuke Option - Qualquer mudança no schema public)
       const channel = supabase
-        .channel('public:pedidos')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, (payload) => {
-          console.log("⚡ Mudança detectada no banco:", payload.eventType);
+        .channel('global-sync')
+        .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+          console.log("⚡ MUDANÇA GLOBAL DETECTADA:", payload.table, payload.eventType);
           fetchOrders();
         })
         .subscribe();
 
-      // 2. POLLING (Sincronização de Segurança a cada 10 segundos)
+      // 2. POLLING DE ALTA FREQUÊNCIA (7 segundos)
       const polling = setInterval(() => {
         fetchOrders();
-      }, 10000);
+      }, 7000);
 
       const channelExcluidos = supabase
         .channel('excluidos_realtime')
@@ -737,24 +754,6 @@ const AdminDashboard = () => {
         {activeTab !== 'finance' && (
           <header style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', flexDirection: isMobile ? 'column' : 'row', gap: '20px' }}>
             <div>
-              {/* PAINEL DE DIAGNÓSTICO ULTRA-VISÍVEL */}
-              <div style={{ marginBottom: '20px', padding: '12px 16px', background: dbError ? '#7f1d1d' : '#1e293b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: dbError ? '#fca5a5' : '#38bdf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    {dbError ? '⚠️ ERRO DE CONEXÃO' : '✅ STATUS DA CONEXÃO'}
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 600, marginTop: '2px' }}>
-                    {dbError ? dbError : `${orders.length} pedidos encontrados | Primeiro status: {orders[0]?.status || 'N/A'} | Sincronizado`}
-                  </div>
-                </div>
-                <button 
-                  onClick={() => { localStorage.clear(); window.location.reload(); }}
-                  style={{ padding: '8px 14px', background: '#f8fafc', color: '#0f172a', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  REINICIAR SISTEMA
-                </button>
-              </div>
-
               <h1 style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                 {activeTab === 'orders' ? 'Painel de Operações' : 'Editor de Cardápio'}
               </h1>
@@ -764,6 +763,12 @@ const AdminDashboard = () => {
             </div>
             
             <div style={{ display: 'flex', gap: '12px', width: isMobile ? '100%' : 'auto', alignItems: 'center' }}>
+              <button 
+                onClick={() => { localStorage.clear(); window.location.reload(); }}
+                style={{ padding: '8px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#71717a', cursor: 'pointer', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
+              >
+                Reiniciar
+              </button>
               <button 
                 onClick={playNotificationSound}
                 style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s' }}

@@ -162,11 +162,29 @@ const App = () => {
     const orderId = Math.random().toString(36).substr(2, 5).toUpperCase();
     
     try {
-      await supabase.from('pedidos').insert([{
-        order_id: orderId, items: cart, subtotal: cartSubtotal,
-        delivery_fee: deliveryFee, total: cartTotal, address: address,
-        payment_method: paymentMethod, change_needed: changeNeeded, status: 'pendente'
-      }]);
+      console.log('📤 Iniciando envio do pedido:', orderId);
+      
+      const { error: insertError } = await supabase
+        .from('pedidos')
+        .insert([{
+          order_id: orderId, 
+          items: cart, 
+          subtotal: cartSubtotal,
+          delivery_fee: deliveryFee, 
+          total: cartTotal, 
+          address: address,
+          payment_method: paymentMethod === 'Dinheiro' && changeNeeded 
+            ? `Dinheiro (Troco para R$ ${changeNeeded})` 
+            : paymentMethod, 
+          status: 'pendente'
+        }]);
+
+      if (insertError) {
+        console.error('❌ Erro Supabase:', insertError);
+        throw insertError;
+      }
+
+      console.log('✅ Pedido salvo no banco com sucesso!');
 
       confetti({
         particleCount: 200,
@@ -181,12 +199,15 @@ const App = () => {
       
       const message = `*NOVO PEDIDO MELBURGUERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2)}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number} - ${address.neighborhood}`;
       
+      // Enviamos pro WhatsApp via location.href para evitar bloqueios de pop-up
       setTimeout(() => {
-        window.open(`https://wa.me/5522996153138?text=${encodeURIComponent(message)}`, '_blank');
-      }, 4000);
+        window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent(message)}`;
+      }, 3500);
       
     } catch (err) {
-      alert("Erro ao enviar pedido para o restaurante.");
+      console.error('Erro fatal no checkout:', err);
+      const errorMsg = err.message || "Erro desconhecido";
+      alert(`ERRO NO BANCO DE DADOS: ${errorMsg}\\n\\nPor favor, tire um print desta tela e me envie!`);
     }
   };
 

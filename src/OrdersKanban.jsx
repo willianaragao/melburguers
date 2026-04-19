@@ -269,20 +269,24 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging }) => {
       </div>
 
       {/* Alerta de Troco */}
-      {order.payment_method === 'Dinheiro' && (order.change_needed || order.troco) && (
+      {(order.change_needed || order.troco || (order.payment_method && order.payment_method.includes('Troco'))) && (
         <div style={{ 
-          background: 'rgba(245, 158, 11, 0.1)', 
+          marginTop: '15px', 
+          padding: '12px', 
+          background: 'rgba(245, 158, 11, 0.08)', 
+          borderRadius: '12px',
           border: '1px solid rgba(245, 158, 11, 0.2)',
-          borderRadius: '8px',
-          padding: '10px',
-          marginBottom: '16px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '10px'
         }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
-          <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 700 }}>
-            TROCO PARA R$ {order.change_needed || order.troco}
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 10px #f59e0b' }} />
+          <span style={{ fontSize: '11px', fontWeight: 800, color: '#f59e0b', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            TROCO PARA R$ {
+              order.change_needed || 
+              order.troco || 
+              (order.payment_method && order.payment_method.split('R$ ')[1]?.replace(')', ''))
+            }
           </span>
         </div>
       )}
