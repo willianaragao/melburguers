@@ -1098,16 +1098,14 @@ const AdminDashboard = () => {
               width: '100%',
               height: '115px',
               position: 'relative',
-              pointerEvents: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              // Dock preso ao fundo: arredondamos apenas o topo
-              borderRadius: '35px 35px 0 0',
-              boxShadow: '0 -15px 50px rgba(0,0,0,0.8)'
+              background: 'none',
+              border: 'none',
+              boxShadow: 'none',
+              zIndex: 1000,
+              pointerEvents: 'none'
             }}
           >
-            {/* Casco Principal SVG - Recalibrado para 115px */}
+            <div style={{ position: 'relative', width: '100%', height: '100%', pointerEvents: 'auto' }}>
             <svg
               style={{
                 position: 'absolute',
@@ -1122,9 +1120,9 @@ const AdminDashboard = () => {
             >
               <defs>
                 <linearGradient id="shellFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(24,24,28,0.96)" />
-                  <stop offset="55%" stopColor="rgba(17,17,20,0.94)" />
-                  <stop offset="100%" stopColor="rgba(10,10,12,0.98)" />
+                  <stop offset="0%" stopColor="rgba(15,15,18,0.99)" /> 
+                  <stop offset="55%" stopColor="rgba(10,10,12,0.99)" />
+                  <stop offset="100%" stopColor="rgba(5,5,7,1)" />
                 </linearGradient>
                 <linearGradient id="strokeGlow" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
@@ -1133,31 +1131,38 @@ const AdminDashboard = () => {
                 </linearGradient>
               </defs>
 
-              {/* ARCO INFERIOR (Base - Recalibrado) */}
+              {/* PREENCHIMENTO DA CÁPSULA (Sincronizado com as escalas + 2px de Overlap para evitar frestas) */}
+              <path
+                d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z"
+                fill="#050507"
+              />
+
+              {/* RODAPÉ DO MENU (Abaixo da Luz - Cinza Chumbo) */}
               <path
                 d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102 V115 H0 Z"
-                fill="url(#shellFill)"
+                fill="#121215"
               />
+
+              {/* Linha do Horizonte Inferior (TRANSPARENTE) */}
               <path
                 d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
-                fill="rgba(5,5,10,0.92)"
-                stroke="rgba(255,255,255,0.08)"
-                strokeWidth="1.5"
+                fill="none"
+                stroke="none"
               />
               
-              {/* Segmento de Luz Azul (Ilumina o arco existente) */}
+              {/* Segmento de Luz Branca com Super Aura Azul */}
               <motion.path
                 d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
                 fill="none"
-                stroke="#00f3ff"
+                stroke="#ffffff"
                 strokeWidth="2.5"
                 strokeLinecap="round"
-                style={{ filter: 'drop-shadow(0 0 10px rgba(0,243,255,0.9))' }}
+                style={{ 
+                  filter: 'drop-shadow(0 0 8px #00f3ff) drop-shadow(0 0 16px rgba(0,243,255,0.6))'
+                }}
                 initial={false}
                 animate={{
                   strokeDasharray: "44 350",
-                  // Cálculo do offset para percorrer o trajeto de 390px
-                  // Ajustado para centralizar sob cada ícone
                   strokeDashoffset: `${[
                     -26,   // Pedidos (Refinado)
                     -99,   // Cardápio (Refinado)
@@ -1183,16 +1188,11 @@ const AdminDashboard = () => {
               viewBox="0 0 390 115"
               preserveAspectRatio="none"
             >
-              <path
-                d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28 V0 H0 Z"
-                fill="rgba(0, 0, 0, 0.48)"
-                style={{ backdropFilter: 'blur(3px)' }}
-              />
+              {/* Apenas a Linha do Arco (Sem Preenchimento) */}
               <path
                 d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28"
                 fill="none"
-                stroke="rgba(255, 255, 255, 0.12)"
-                strokeWidth="1"
+                stroke="none"
               />
             </svg>
 
@@ -1325,6 +1325,7 @@ const AdminDashboard = () => {
                   {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
                 </motion.span>
               </AnimatePresence>
+            </div>
             </div>
           </motion.nav>
         </div>
