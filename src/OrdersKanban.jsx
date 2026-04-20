@@ -106,7 +106,7 @@ const DeleteButton = ({ order, updateStatus }) => {
 const ActionButton = ({ order, updateStatus }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  if (order.status === 'concluido' || order.status === 'excluido') return null;
+  if (order.status === 'excluido') return null;
 
   let btnText = '';
   let nextStatus = '';
@@ -466,8 +466,7 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
       ? localOrders.filter(o => o.status !== 'excluido')
       : localOrders.filter(o => o.status === statusFilter || 
           (statusFilter === 'pending' && (o.status === 'pendente' || o.status === 'pago' || !o.status)) ||
-          (statusFilter === 'preparo' && o.status === 'preparo') || 
-          (statusFilter === 'concluido' && o.status === 'concluido')
+          (statusFilter === 'preparo' && o.status === 'preparo')
         );
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
