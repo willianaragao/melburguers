@@ -171,31 +171,8 @@ const SearchIcon = ({ size = 24, className, style, isActive }) => (
   </svg>
 );
 
-const SettingsIcon = ({ size = 24, className, style, isActive }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    style={{
-      ...style,
-      filter: isActive ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' : 'opacity(0.6)',
-      transition: 'all 0.3s ease'
-    }}
-  >
-    <g 
-      stroke={isActive ? "#00f3ff" : "white"} 
-      strokeWidth={isActive ? "2.3" : "2"} 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.51 1H7a2 2 0 01-2-2 2 2 0 01-2-2v-.09A1.65 1.65 0 004.6 15a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33 1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.51-1H17a2 2 0 012 2 2 2 0 012 2v.09a1.65 1.65 0 00-1.51 1 1.65 1.65 0 00-1 1.51"/>
-    </g>
-  </svg>
-);
+
+/* SettingsIcon was here, removed duplicate */
 
 const MenuSkeleton = () => (
   <div style={{ 
@@ -531,12 +508,12 @@ const AdminDashboard = () => {
         .order('created_at', { ascending: false });
 
       const combined = [
-        ...(activeData || []),
-        ...(deletedData || [])
+        ...(activeData || []).map(o => ({ ...o, _isDeleted: false })),
+        ...(deletedData || []).map(o => ({ ...o, _isDeleted: true }))
       ].map(o => ({
         ...o,
         original_db_id: o.id,
-        id: o.order_id || o.id
+        id: o._isDeleted ? `del-${o.order_id || o.id}` : `act-${o.order_id || o.id}`
       }));
 
       setOrders(combined);
