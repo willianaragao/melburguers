@@ -207,6 +207,38 @@ const App = () => {
     setTimeout(() => setIsSearchingAddress(false), 400);
   };
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) return alert("Geolocalização não suportada no seu navegador.");
+    
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const response = await fetch(`https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`);
+        const data = await response.json();
+        
+        if (data.features && data.features.length > 0) {
+          const p = data.features[0].properties;
+          const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
+          const streetName = p.street || p.name || "Rua não identificada";
+          const fee = getCalculatedFee(distance, streetName);
+          
+          setDeliveryFee(fee);
+          setAddress({
+            ...address,
+            street: streetName,
+            neighborhood: p.district || p.suburb || p.locality || 'Bairro não identificado',
+            zipCode: p.postcode || '',
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao obter endereço:", err);
+        alert("Erro ao identificar sua localização.");
+      }
+    }, () => {
+      alert("Permissão de localização negada.");
+    });
+  };
+
   // === CÁLCULO DE TOTAIS ===
   const categories = useMemo(() => {
     if (appMenuData && appMenuData.menu) return Object.keys(appMenuData.menu);
@@ -430,7 +462,29 @@ const App = () => {
                      <input style={{ width: '100%', background: 'var(--card-bg)', border: '1px solid var(--border)', padding: '14px', borderRadius: '14px', color: 'var(--text)' }} placeholder="WhatsApp" value={address.customerPhone} onChange={e => setAddress({...address, customerPhone: e.target.value})} />
                   </div>
                   <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}><MapPin size={18} color="#EC9424" /><span style={{ fontSize: '14px', fontWeight: 700 }}>Endereço</span></div>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                         <MapPin size={18} color="#EC9424" />
+                         <span style={{ fontSize: '14px', fontWeight: 700 }}>Endereço</span>
+                       </div>
+                       <button 
+                         onClick={handleUseCurrentLocation}
+                         style={{ 
+                           background: isDarkMode ? 'rgba(236,148,36,0.1)' : 'rgba(236,148,36,0.05)', 
+                           backdropFilter: 'blur(10px)',
+                           border: `1px solid ${isDarkMode ? 'rgba(236,148,36,0.2)' : 'rgba(236,148,36,0.15)'}`, 
+                           padding: '8px 14px', borderRadius: '12px', 
+                           color: '#EC9424', fontSize: '10px', fontWeight: 900, 
+                           display: 'flex', alignItems: 'center', gap: '6px',
+                           letterSpacing: '0.05em',
+                           boxShadow: '0 2px 10px rgba(236,148,36,0.08)',
+                           transition: 'all 0.3s ease'
+                         }}
+                       >
+                         <MapPin size={12} fill="#EC9424" strokeWidth={3} />
+                         LOCALIZAÇÃO ATUAL
+                       </button>
+                     </div>
                      <div style={{ position: 'relative' }}>
                        <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '14px', borderRadius: '14px' }} placeholder="Nome da rua..." value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
                        {addressSuggestions.length > 0 && <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, background: 'var(--card-bg)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3500, overflow: 'hidden' }}>
