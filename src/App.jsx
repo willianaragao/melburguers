@@ -346,7 +346,7 @@ const App = () => {
           </div>
           <div className="profile-title-area">
             <div className="username-row">
-              <h2>melburgerrs</h2>
+              <h2>melburguers</h2>
               <BadgeCheck size={20} fill="#0095f6" color="white" />
               <MoreHorizontal size={20} style={{ marginLeft: 'auto', color: '#8e8e8e' }} />
             </div>
