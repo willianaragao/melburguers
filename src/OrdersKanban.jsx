@@ -30,6 +30,54 @@ const useIsMobile = () => {
   return isMobile;
 };
 
+const MinimalistTimer = ({ createdAt }) => {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000 * 30); // Atualiza a cada 30s
+    return () => clearInterval(timer);
+  }, []);
+
+  const createdTime = new Date(createdAt);
+  const elapsedMinutes = (now - createdTime) / 60000;
+  const limit = 40;
+  const isDelayed = elapsedMinutes >= limit;
+  
+  const displayMinutes = isDelayed 
+    ? Math.floor(elapsedMinutes - limit) 
+    : Math.floor(limit - elapsedMinutes);
+
+  const color = isDelayed ? '#ef4444' : '#22c55e';
+  const progress = isDelayed 
+    ? (elapsedMinutes % limit) / limit 
+    : (limit - elapsedMinutes) / limit;
+
+  const size = 30;
+  const stroke = 2.4;
+  const radius = (size - stroke) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress * circumference);
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth={stroke} />
+        <circle
+          cx={size/2} cy={size/2} r={radius}
+          fill="none" stroke={color} strokeWidth={stroke}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.8s ease, stroke 0.5s ease' }}
+        />
+      </svg>
+      <div style={{ position: 'absolute', fontSize: '8px', fontWeight: 900, color: color, textAlign: 'center', fontFamily: 'monospace' }}>
+        {displayMinutes}m
+      </div>
+    </div>
+  );
+};
+
 const DeleteButton = ({ order, updateStatus }) => {
   const [isHovered, setIsHovered] = useState(false);
   return (
@@ -241,7 +289,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
               </svg>
             </a>
           )}
-          <div style={{ fontSize: '10px', color: '#71717a', fontWeight: 500 }}>{timeElapsed}m</div>
+           <MinimalistTimer createdAt={order.created_at || order.timestamp} />
           {(isCompact || isGrid) && (
             <div style={{ color: '#EC9424' }}>
               {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

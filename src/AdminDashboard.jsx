@@ -938,7 +938,7 @@ const AdminDashboard = () => {
       order_id: formattedId,
       items: posCart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
       total: subtotal,
-      status: 'preparo',
+      status: 'pendente',
       payment_method: posCustomer.payment,
       address: {
         customerName: posCustomer.name,
