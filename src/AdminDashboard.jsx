@@ -13,21 +13,58 @@ import { FinanceDashboard } from './FinanceDashboard';
 import { OrdersKanban } from './OrdersKanban';
 
 const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
-  <img 
-    src="/foto%20icones/financeiro.svg" 
-    alt="Financeiro"
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 512 512" 
+    xmlns="http://www.w3.org/2000/svg"
     style={{ 
       ...style, 
-      width: size, 
-      height: size, 
-      objectFit: 'contain',
+      display: 'inline-block',
+      verticalAlign: 'middle',
       filter: isActive 
-        ? 'brightness(1.5) drop-shadow(0 0 5px rgba(255,255,255,0.4))' 
-        : 'brightness(1) opacity(0.6)',
+        ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' 
+        : 'opacity(0.6)',
       transition: 'all 0.3s ease'
     }}
     className={className}
-  />
+  >
+    <rect width="512" height="512" fill="none"/>
+    {/* topo do saco */}
+    <path
+      d="M180 92 L256 58 L332 92 L296 178 L216 178 Z"
+      fill={isActive ? "#00f3ff" : "white"}
+    />
+    {/* laterais do topo */}
+    <path
+      d="M170 108 C140 120, 126 146, 142 170 L204 236 L230 176 Z"
+      fill={isActive ? "#00f3ff" : "white"}
+    />
+    <path
+      d="M342 108 C372 120, 386 146, 370 170 L308 236 L282 176 Z"
+      fill={isActive ? "#00f3ff" : "white"}
+    />
+    {/* amarração */}
+    <rect x="190" y="176" width="132" height="18" rx="9" fill="black"/>
+    {/* corpo do saco */}
+    <path
+      d="M198 192 C112 244, 52 338, 52 420 C52 478, 92 506, 162 506 H350 C420 506, 460 478, 460 420 C460 338, 400 244, 314 192 Z"
+      fill={isActive ? "#00f3ff" : "white"}
+    />
+    {/* símbolo de dinheiro */}
+    <text
+      x="256"
+      y="374"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      font-size="170"
+      font-family="Arial, Helvetica, sans-serif"
+      font-weight="700"
+      fill="black"
+    >
+      $
+    </text>
+  </svg>
 );
 
 const AdminDashboard = () => {
@@ -331,19 +368,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const MoneyBagIcon = ({ size = 24, className }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="currentColor" 
-    className={className}
-    style={{ display: 'inline-block', verticalAlign: 'middle' }}
-  >
-    <path d="M12,4c-1.1,0-2,.9-2,2c0,.37,.1,.71,.27,1c-1.39,.26-2.61,1.06-3.4,2.2c-1.1,1.6-1.1,3.8,0,5.4s3.3,2.4,5.13,2.4,4.03-.8,5.13-2.4s1.1-3.8,0-5.4c-.79-1.14-2.01-1.94-3.4-2.2c.17-.29,.27-.63,.27-1c0-1.1-.9-2-2-2Zm0,6c1.1,0,2,.9,2,2s-.9,2-2,2-2-.9-2-2,.9-2,2-2Zm0,1c-.55,0-1,.45-1,1s.45,1,1,1,1-.45,1-1-.45-1-1-1Zm-1,5v1h2v-1h.5c.28,0,.5-.22,.5-.5s-.22-.5-.5-.5h-1c-.28,0-.5-.22-.5-.5s.22-.5,.5-.5h.5v-1h.5v1h.5c.28,0,.5,.22,.5,.5s-.22-.5-.5-.5h-1c-.28,0-.5-.22-.5-.5s-.22-.5,.5-.5h2v-1h-2v1h-.5c-.28,0,.5,.22,.5,.5s-.22-.5,.5-.5h1c.28,0,.5,.22,.5,.5s-.22-.5-.5,.5h-.5v1h-.5Z" />
-    <path d="M12,1c-.6,0-1.2,.2-1.7,.6c-.3,.2-.5,.5-.6,.9c-.2,.6,0,1.2,.4,1.6c.5,.4,1.1,.6,1.9,.6s1.4-.2,1.9-.6c.4-.4,.6-1,.4-1.6c-.1-.4-.3-.7-.6-.9c-.5-.4-1.1-.6-1.7-.6Z" opacity="0.3" />
-  </svg>
-);
 
   useEffect(() => {
     if (orders.length > 0 && isAuthenticated) {
