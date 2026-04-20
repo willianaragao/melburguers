@@ -997,6 +997,59 @@ const AdminDashboard = () => {
           </>
         )}
 
+        {activeTab === 'search' && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{ display: 'flex', flexDirection: 'column', height: isMobile ? 'calc(100vh - 180px)' : 'calc(100vh - 80px)', gap: '0' }}
+          >
+            {/* Barra de endereço premium */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              background: '#111113', borderRadius: '16px 16px 0 0',
+              padding: '10px 16px',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: 'none'
+            }}>
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
+                background: '#0a0a0b', borderRadius: '10px', padding: '8px 14px',
+                border: '1px solid rgba(255,255,255,0.06)'
+              }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', letterSpacing: '0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {window.location.origin}/
+                </span>
+              </div>
+              <button
+                onClick={() => window.open(window.location.origin + '/', '_blank')}
+                title="Abrir em nova aba"
+                style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* iFrame do cardápio digital */}
+            <iframe
+              src={window.location.origin + '/'}
+              title="Cardápio Digital"
+              style={{
+                flex: 1, width: '100%', border: 'none',
+                borderRadius: '0 0 16px 16px',
+                background: '#0a0a0b',
+                outline: 'none',
+                display: 'block'
+              }}
+            />
+          </motion.div>
+        )}
+
         {activeTab === 'menu' && appMenuData && (
           <div style={{ background: '#161618', borderRadius: '32px', padding: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
             {editingItem ? (
