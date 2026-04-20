@@ -3,7 +3,7 @@ import {
   ShoppingBag, Printer, Bell, CheckCircle, Clock, 
   RefreshCcw, ChevronRight, LayoutDashboard, Settings, Edit, Plus, Trash2, Save, X, Image as ImageIcon, Camera, Upload,
   DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare,
-  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown, GripVertical
+  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown, GripVertical, ShoppingCart
 } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { 
@@ -1421,7 +1421,7 @@ const AdminDashboard = () => {
                           {item.image ? <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
                         </div>
                         <div style={{ fontWeight: 700, fontSize: '13px', color: 'white', height: '36px', overflow: 'hidden' }}>{item.name}</div>
-                        <div style={{ color: '#22c55e', fontWeight: 900, fontSize: '15px' }}>R$ {item.price.toFixed(2).replace('.', ',')}</div>
+                        <div style={{ color: '#22c55e', fontWeight: 900, fontSize: '15px' }}>R$ {Number(item.price || 0).toFixed(2).replace('.', ',')}</div>
                       </motion.div>
                     ))}
                   </div>
@@ -1445,7 +1445,7 @@ const AdminDashboard = () => {
                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '12px' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>{item.name}</div>
-                            <div style={{ fontSize: '11px', color: '#22c55e' }}>R$ {(item.price * item.quantity).toFixed(2)}</div>
+                            <div style={{ fontSize: '11px', color: '#22c55e' }}>R$ {(Number(item.price || 0) * item.quantity).toFixed(2)}</div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0a0a0b', padding: '4px', borderRadius: '8px' }}>
                             <button onClick={() => handleUpdateCartQtyPos(item.id, -1)} style={{ border: 'none', background: 'none', color: 'white', cursor: 'pointer' }}><X size={12} /></button>
