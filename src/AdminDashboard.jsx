@@ -1327,11 +1327,6 @@ const AdminDashboard = () => {
                 <path d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />
               </svg>
 
-              <motion.div
-                style={{ position: 'absolute', top: '25px', width: '110px', height: '60px', marginLeft: '-55px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(160,200,255,0.22), transparent 72%)', filter: 'blur(15px)', zIndex: 2 }}
-                animate={{ left: (['orders-history', 'menu', 'search', 'finance', 'orders'].indexOf(activeTab) * 20 + 10) + '%' }}
-                transition={{ type: "spring", stiffness: 200, damping: 25 }}
-              />
 
               <div style={{ position: 'absolute', top: '42px', left: 0, right: 0, padding: '0 24px', zIndex: 5 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
