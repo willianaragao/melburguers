@@ -490,7 +490,8 @@ const App = () => {
                         {addressSuggestions.length > 0 && (
                           <div style={{ 
                             position: 'absolute', 
-                            top: '100%', 
+                            top: '58px', 
+                            bottom: 'auto',
                             left: 0, 
                             right: 0, 
                             background: 'var(--card-bg)', 
