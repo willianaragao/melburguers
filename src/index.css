@@ -229,6 +229,18 @@ body {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+.categoria-pill:active {
+  transform: scale(0.96);
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 .categoria-pill.active {
   background: linear-gradient(180deg, #f7ab21 0%, #e5920f 100%);
   color: #ffffff;
