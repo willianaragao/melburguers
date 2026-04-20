@@ -229,7 +229,9 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
   const isGrid = viewMode === 'grid';
   const isCompact = viewMode === 'compact';
   
+  if (!order) return null;
   const orderTime = new Date(order.created_at || order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const displayId = String(order.id || '').slice(-4);
 
   const getStatusLabel = (s) => {
     switch(s) {
@@ -286,7 +288,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>
-              #{order.id.toString().slice(-4)} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
+              #{displayId} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
             </h3>
           </div>
           <div style={{ fontSize: '12px', color: '#71717a', fontWeight: 600, marginBottom: '8px' }}>

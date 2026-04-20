@@ -974,6 +974,8 @@ const AdminDashboard = () => {
     if (order.status === 'excluido') return false;
     if (dateFilter === 'today' && !isToday) return false;
     if (statusFilter === 'pending' && order.status !== 'pendente' && order.status !== 'pago') return false;
+    if (statusFilter === 'preparo' && order.status !== 'preparo') return false;
+    if (statusFilter === 'all' && order.status === 'concluido') return false;
     
     return true;
   }).sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp));
