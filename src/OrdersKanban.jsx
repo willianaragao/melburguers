@@ -7,7 +7,8 @@ import {
   PointerSensor, 
   useSensor, 
   useSensors,
-  defaultDropAnimationSideEffects
+  defaultDropAnimationSideEffects,
+  useDroppable
 } from '@dnd-kit/core';
 import { 
   SortableContext, 
@@ -406,7 +407,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
   );
 };
 
-import { useDroppable } from '@dnd-kit/core';
+
 
 const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
   const { setNodeRef } = useDroppable({
