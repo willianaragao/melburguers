@@ -1299,25 +1299,36 @@ const AdminDashboard = () => {
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 5000 }}>
           <motion.nav style={{ height: '115px', position: 'relative' }}>
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '166%', transform: 'translateY(-66px)' }} viewBox="0 0 390 115" preserveAspectRatio="none">
-                <path d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z" fill="rgba(5, 5, 7, 0.94)" style={{ backdropFilter: 'blur(8px)' }} />
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '166%', transform: 'translateY(-66px)', overflow: 'visible' }} viewBox="0 0 390 115" preserveAspectRatio="none">
+                <defs>
+                  <filter id="neonGlow" x="-100%" y="-400%" width="300%" height="900%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0  0.8 1 1 0 0  0.8 1 1 0 0  0 0 0 1.5 0" in="blur" result="coloredBlur" />
+                    <feMerge>
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* 1. Arco preto — fundo */}
                 <path d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102 V115 H0 Z" fill="#121215" />
+
+                {/* 2. Arco cinza — meio */}
+                <path d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z" fill="rgba(5, 5, 7, 0.97)" />
+
+                {/* 3. Barra neon — na frente de tudo */}
                 <motion.path
                   d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
                   fill="none"
-                  stroke="#ffffff"
+                  stroke="#00f3ff"
                   strokeWidth="2.5"
                   strokeLinecap="round"
-                  style={{ filter: 'drop-shadow(0 0 8px #00f3ff)' }}
+                  filter="url(#neonGlow)"
                   animate={{
                     strokeDasharray: "44 350",
-                    strokeDashoffset: `${[
-                      -26,   // Histórico
-                      -99,   // Cardápio
-                      -173,  // Busca
-                      -246,  // Financeiro
-                      -320   // Pedidos
-                    ][['orders-history', 'menu', 'search', 'finance', 'orders'].indexOf(activeTab)]}px`
+                    strokeDashoffset: `${[-26, -99, -173, -246, -320][['orders-history', 'menu', 'search', 'finance', 'orders'].indexOf(activeTab)]}px`
                   }}
                   transition={{ type: "spring", stiffness: 220, damping: 26 }}
                 />
@@ -1347,7 +1358,7 @@ const AdminDashboard = () => {
                           animate={{ y: item.offset }}
                         >
                           <motion.div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} animate={{ opacity: isActive ? 1 : 0.6 }}>
-                            <item.icon size={item.size} isActive={isActive} color="#ffffff" style={{ transform: item.id === 'search' ? 'translateY(7px)' : 'none' }} />
+                            <item.icon size={item.size} isActive={isActive} color="#ffffff" style={{ transform: item.id === 'search' ? 'translateY(7px)' : item.id === 'orders' ? 'translate(4px, 4px)' : item.id === 'orders-history' ? 'translate(-3px, 4px)' : item.id === 'menu' ? 'translateY(2px)' : 'none' }} />
                           </motion.div>
                         </motion.button>
                       );
