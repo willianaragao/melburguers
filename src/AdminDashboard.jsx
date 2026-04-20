@@ -924,8 +924,18 @@ const AdminDashboard = () => {
     if (!posCustomer.name) return alert("Pelo menos o nome do cliente é obrigatório!");
 
     const subtotal = posCart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const { count } = await supabase
+      .from('pedidos')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', todayStr);
+
+    const nextNumber = (count || 0) + 1;
+    const formattedId = `#${nextNumber.toString().padStart(4, '0')}`;
+
     const orderData = {
-      order_id: `ADM-${Date.now().toString().slice(-6)}`,
+      order_id: formattedId,
       items: posCart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
       total: subtotal,
       status: 'preparo',

@@ -279,7 +279,14 @@ const App = () => {
       return;
     }
 
-    const orderId = Math.random().toString(36).substr(2, 5).toUpperCase();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const { count } = await supabase
+      .from('pedidos')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', todayStr);
+
+    const nextNumber = (count || 0) + 1;
+    const orderId = `#${nextNumber.toString().padStart(4, '0')}`;
     
     try {
       const { error: insertError } = await supabase
