@@ -485,12 +485,45 @@ const App = () => {
                          LOCALIZAÇÃO ATUAL
                        </button>
                      </div>
-                     <div style={{ position: 'relative' }}>
-                       <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '14px', borderRadius: '14px' }} placeholder="Nome da rua..." value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
-                       {addressSuggestions.length > 0 && <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, background: 'var(--card-bg)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3500, overflow: 'hidden' }}>
-                          {addressSuggestions.map((f, i) => <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px', fontSize: '13px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>{f.properties.street || f.properties.name}</div>)}
-                       </div>}
-                     </div>
+                      <div style={{ position: 'relative' }}>
+                        <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '14px', borderRadius: '14px' }} placeholder="Nome da rua..." value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
+                        {addressSuggestions.length > 0 && (
+                          <div style={{ 
+                            position: 'absolute', 
+                            top: '100%', 
+                            left: 0, 
+                            right: 0, 
+                            background: 'var(--card-bg)', 
+                            borderRadius: '16px', 
+                            boxShadow: '0 12px 40px rgba(0,0,0,0.15)', 
+                            zIndex: 3500, 
+                            marginTop: '8px',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            border: '1px solid var(--border)',
+                            overflow: 'hidden'
+                          }} className="hide-scrollbar">
+                            {addressSuggestions.map((f, i) => (
+                              <div 
+                                key={i} 
+                                onClick={() => handleSelectSuggestion(f)} 
+                                style={{ 
+                                  padding: '14px 18px', 
+                                  fontSize: '13px', 
+                                  borderBottom: i === addressSuggestions.length - 1 ? 'none' : '1px solid var(--border)', 
+                                  cursor: 'pointer',
+                                  color: 'var(--text)',
+                                  transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.target.style.background = 'rgba(236,148,36,0.05)'}
+                                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                              >
+                                {f.properties.street || f.properties.name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                      <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                         <input style={{ flex: 1, border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
                         <input style={{ flex: 2, border: '1px solid var(--border)', background: isDarkMode ? '#121215' : '#fcfcfd', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Bairro" value={address.neighborhood} readOnly />
