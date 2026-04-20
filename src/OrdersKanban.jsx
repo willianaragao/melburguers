@@ -464,7 +464,11 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   if (isMobile) {
     const filtered = statusFilter === 'all' 
       ? localOrders.filter(o => o.status !== 'excluido')
-      : localOrders.filter(o => o.status === statusFilter || (statusFilter === 'pending' && (o.status === 'pendente' || o.status === 'pago' || !o.status)) || (statusFilter === 'preparo' && o.status === 'preparo'));
+      : localOrders.filter(o => o.status === statusFilter || 
+          (statusFilter === 'pending' && (o.status === 'pendente' || o.status === 'pago' || !o.status)) ||
+          (statusFilter === 'preparo' && o.status === 'preparo') || 
+          (statusFilter === 'concluido' && o.status === 'concluido')
+        );
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
         {filtered.map(order => <OrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={updateStatus} viewMode={viewMode} />)}

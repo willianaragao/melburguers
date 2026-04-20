@@ -969,7 +969,7 @@ const AdminDashboard = () => {
     const today = new Date();
     const isToday = orderDate.toLocaleDateString() === today.toLocaleDateString();
     
-    if (statusFilter === 'concluded') return order.status === 'concluido';
+    if (statusFilter === 'concluido') return order.status === 'concluido';
     if (statusFilter === 'deleted') return order.status === 'excluido';
     if (order.status === 'excluido') return false;
     if (dateFilter === 'today' && !isToday) return false;
@@ -1128,7 +1128,7 @@ const AdminDashboard = () => {
                 >
                   {dateFilter === 'today' ? 'Hoje' : 'Sempre'}
                 </button>
-                {['preparo', 'all', 'pending', 'concluded', 'deleted'].map(f => (
+                {['preparo', 'all', 'pending', 'concluido', 'deleted'].map(f => (
                   <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button 
                       onClick={() => {
@@ -1148,7 +1148,7 @@ const AdminDashboard = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      {f === 'preparo' ? 'Em Preparo' : f === 'all' ? 'Geral' : f === 'pending' ? 'Abertos' : f === 'concluded' ? 'Finais' : 'Lixo'}
+                      {f === 'preparo' ? 'Em Preparo' : f === 'all' ? 'Geral' : f === 'pending' ? 'Abertos' : f === 'concluido' ? 'Finais' : 'Lixo'}
                       {f === 'deleted' && (
                         <div 
                           onClick={(e) => {
