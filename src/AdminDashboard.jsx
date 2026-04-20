@@ -277,7 +277,15 @@ const SortableMenuItem = ({ item, cat, handleEditItem }) => {
             <div style={{ color: '#22c55e', fontSize: '16px', fontWeight: 900 }}>
               R$ {item.price ? item.price.toFixed(2) : '0.00'}
             </div>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EC9424' }}>
+            <div style={{ 
+              width: '32px', height: '32px', borderRadius: '10px', 
+              background: 'rgba(255,255,255,0.05)', 
+              border: '1px solid rgba(255,255,255,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              color: 'white',
+              boxShadow: '0 0 10px rgba(255,255,255,0.05)',
+              transition: 'all 0.3s ease'
+            }}>
               <Edit size={14} />
             </div>
           </div>
@@ -1367,7 +1375,26 @@ const AdminDashboard = () => {
                             <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: 0 }}>{cat}</h3>
                             <span style={{ fontSize: '11px', color: '#52525b', fontWeight: 700 }}>{appMenuData.menu[cat].length} PRODUTOS</span>
                           </div>
-                          <motion.button whileHover={{ scale: 1.05 }} onClick={() => { setEditingCategory(cat); setEditingItem({name:'', price:'', description:'', image:''}) }} style={{ padding: '10px 16px', background: 'rgba(236,148,36,0.1)', color: '#EC9424', borderRadius: '10px', border: '1px solid rgba(236,148,36,0.2)' }}><Plus size={14} /> NOVO</motion.button>
+                          <motion.button 
+                            whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }} 
+                            onClick={() => { setEditingCategory(cat); setEditingItem({name:'', price:'', description:'', image:''}) }} 
+                            style={{ 
+                              padding: '10px 16px', 
+                              background: 'rgba(255,255,255,0.03)', 
+                              color: 'white', 
+                              borderRadius: '12px', 
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              fontSize: '12px',
+                              fontWeight: 800,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 0 15px rgba(255,255,255,0.03)',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Plus size={14} /> NOVO
+                          </motion.button>
                         </div>
                         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={(e) => handleDragEndMenu(e, cat)}>
                           <SortableContext items={appMenuData.menu[cat].map(i => i.id)} strategy={rectSortingStrategy}>
@@ -1387,7 +1414,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {activeTab === 'pos' && appMenuData && (
+        {activeTab === 'pos' && appMenuData && appMenuData.menu && (
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '32px', height: '100%' }}>
             {/* Lado Esquerdo: Menu de Seleção */}
             <div style={{ flex: 1, overflowY: 'auto', paddingRight: '12px' }}>
@@ -1396,11 +1423,11 @@ const AdminDashboard = () => {
                 <div style={{ padding: '6px 12px', background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}>MODO PDV</div>
               </div>
 
-              {Object.keys(appMenuData.menu).map(cat => (
+              {Object.keys(appMenuData.menu || {}).map(cat => (
                 <div key={cat} style={{ marginBottom: '32px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'rgba(255,255,255,0.6)', marginBottom: '16px', borderLeft: '3px solid #EC9424', paddingLeft: '12px' }}>{cat}</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-                    {appMenuData.menu[cat].map(item => (
+                    {(appMenuData.menu[cat] || []).map(item => (
                       <motion.div
                         key={item.id}
                         whileHover={{ scale: 1.02 }}
@@ -1441,11 +1468,11 @@ const AdminDashboard = () => {
                 ) : (
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
-                      {posCart.map(item => (
+                      {(posCart || []).map(item => (
                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '12px' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>{item.name}</div>
-                            <div style={{ fontSize: '11px', color: '#22c55e' }}>R$ {(Number(item.price || 0) * item.quantity).toFixed(2)}</div>
+                            <div style={{ fontSize: '11px', color: '#22c55e' }}>R$ {(Number(item.price || 0) * item.quantity).toFixed(2).replace('.', ',')}</div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0a0a0b', padding: '4px', borderRadius: '8px' }}>
                             <button onClick={() => handleUpdateCartQtyPos(item.id, -1)} style={{ border: 'none', background: 'none', color: 'white', cursor: 'pointer' }}><X size={12} /></button>
