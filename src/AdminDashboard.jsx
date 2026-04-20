@@ -34,6 +34,53 @@ const HistoryIcon = ({ size = 24, className, style, isActive }) => (
   </svg>
 );
 
+const MenuIcon = ({ size = 30, className, style, isActive }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 64 64" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={{
+      ...style,
+      filter: isActive ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' : 'opacity(0.6)',
+      transition: 'all 0.3s ease'
+    }}
+  >
+    {/* Batata ao fundo */}
+    <path
+      d="M40 16H54L52.2 43C52.1 44.7 50.7 46 49 46H45C43.3 46 41.9 44.7 41.8 43L40 16Z"
+      fill={isActive ? "#00f3ff" : "white"}
+    />
+    <path d="M41.5 16L40.8 9.5C40.7 8.8 41.3 8.2 42 8.4L45 9.4V16H41.5Z" fill={isActive ? "#00f3ff" : "white"}/>
+    <path d="M46 16V7.5C46 6.9 46.7 6.5 47.2 6.9L49 8.2V16H46Z" fill={isActive ? "#00f3ff" : "white"}/>
+    <path d="M50 16L50.8 8.8C50.9 8.1 51.7 7.8 52.2 8.3L54 10V16H50Z" fill={isActive ? "#00f3ff" : "white"}/>
+
+    {/* Burger */}
+    <path
+      d="M10 26C10 18.8 16.8 14 25 14C33.2 14 40 18.8 40 26V27H10V26Z"
+      fill={isActive ? "#00f3ff" : "white"}
+    />
+    {/* sementes */}
+    <ellipse cx="19" cy="19.5" rx="1.1" ry="0.7" fill="#050506"/>
+    <ellipse cx="24.5" cy="17.8" rx="1.1" ry="0.7" fill="#050506"/>
+    <ellipse cx="30" cy="19.5" rx="1.1" ry="0.7" fill="#050506"/>
+
+    {/* recheio 1 */}
+    <rect x="11.5" y="29" width="27" height="2.8" rx="1.4" fill={isActive ? "#00f3ff" : "white"}/>
+    {/* queijo escorrendo */}
+    <path
+      d="M13 32H37C37.6 32 38 32.4 38 33V34.4C38 35 37.6 35.4 37 35.4 C35.6 35.4 35 36 35 37.2C35 38.8 33.9 40 32.3 40C30.7 40 29.6 38.8 29.6 37.2 C29.6 36 28.9 35.4 27.8 35.4C26.7 35.4 26 36 26 37.2C26 38.8 24.9 40 23.3 40 C21.7 40 20.6 38.8 20.6 37.2C20.6 36 19.9 35.4 18.8 35.4C17.7 35.4 17 36 17 37.2 C17 38.8 15.9 40 14.3 40C12.7 40 11.6 38.8 11.6 37.2V33.4C11.6 32.6 12.2 32 13 32Z"
+      fill={isActive ? "#00f3ff" : "white"}
+    />
+    {/* recheio 2 */}
+    <rect x="12" y="37.5" width="26" height="2.6" rx="1.3" fill={isActive ? "#00f3ff" : "white"}/>
+    {/* pão inferior */}
+    <rect x="10" y="42" width="30" height="7" rx="3.5" fill={isActive ? "#00f3ff" : "white"}/>
+  </svg>
+);
+
 const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
   <svg 
     width={size} 
@@ -610,7 +657,7 @@ const AdminDashboard = () => {
           <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {[
               { id: 'orders', icon: LayoutDashboard, label: 'Operações' },
-              { id: 'menu', icon: ShoppingBag, label: 'Cardápio' },
+              { id: 'menu', icon: MenuIcon, label: 'Cardápio' },
               { id: 'finance', icon: DollarSign, label: 'Financeiro' },
             ].map((item) => {
               const isActive = activeTab === item.id;
@@ -793,11 +840,11 @@ const AdminDashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <LayoutGroup>
                     {[
-                      { id: 'orders-history', icon: HistoryIcon, offset: 8 },
-                      { id: 'menu', icon: ShoppingBag, offset: 0 },
-                      { id: 'search', icon: Search, offset: -12 },
-                      { id: 'finance', icon: MoneyBagIcon, offset: 0 },
-                      { id: 'orders', icon: Home, offset: 8 }
+                      { id: 'orders-history', icon: HistoryIcon, size: 24, offset: 8 },
+                      { id: 'menu', icon: MenuIcon, size: 30, offset: 0 },
+                      { id: 'search', icon: Search, size: 24, offset: -12 },
+                      { id: 'finance', icon: MoneyBagIcon, size: 24, offset: 0 },
+                      { id: 'orders', icon: Home, size: 24, offset: 8 }
                     ].map((item) => {
                       const isActive = activeTab === item.id;
                       return (
@@ -808,7 +855,7 @@ const AdminDashboard = () => {
                           animate={{ y: item.offset }}
                         >
                           <motion.div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} animate={{ opacity: isActive ? 1 : 0.6 }}>
-                            <item.icon size={24} isActive={isActive} color="#ffffff" style={{ transform: item.id === 'search' ? 'translateY(7px)' : 'none' }} />
+                            <item.icon size={item.size} isActive={isActive} color="#ffffff" style={{ transform: item.id === 'search' ? 'translateY(7px)' : 'none' }} />
                           </motion.div>
                         </motion.button>
                       );
