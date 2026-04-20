@@ -1,44 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
-  Plus, Clock, Star, ArrowRight, Home, 
-  BadgeCheck, MapPin, Search, Heart, Share2,
-  ChevronDown, CheckCircle2, ChevronLeft,
-  ShoppingCart, Trash2, Info, UserPlus,
-  Moon, Sun, Truck
+  Plus, Clock, ArrowRight, MapPin, Sun, Moon,
+  BadgeCheck, ShoppingBag, Truck, ShoppingCart,
+  Trash2, ChevronDown, CheckCircle2, MoreHorizontal, UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { supabase } from './utils/supabase';
 import { getMenuData } from './utils/menuStore';
-
-// === CONFIGURAÇÃO DE TEMAS (PALETA MELBURGUERS PREMIUM) ===
-const lightTheme = {
-  primary: '#EC9424',        
-  background: '#F8F8FA',    
-  surface: '#FFFFFF',       
-  textZinc: '#18181B',      
-  textMuted: '#71717A',     
-  green: '#22c55e',         
-  red: '#f43f5e',           
-  accent: '#FDF2E9',        
-  border: '#E2E2E7',
-  cardBg: '#FFFFFF',
-  isDark: false
-};
-
-const darkTheme = {
-  primary: '#EC9424',       
-  background: '#0C0C0E',    
-  surface: '#121215',       
-  textZinc: '#F8F8FA',      
-  textMuted: '#94949E',     
-  green: '#4ade80',         
-  red: '#fb7185',           
-  accent: 'rgba(236, 148, 36, 0.15)',        
-  border: '#2A2A2E',
-  cardBg: '#18181B',
-  isDark: true
-};
 
 const App = () => {
   const [appMenuData, setAppMenuData] = useState(getMenuData());
@@ -52,14 +21,11 @@ const App = () => {
     street: '', number: '', neighborhood: '', complement: '', zipCode: '', customerName: '', customerPhone: '',
   });
   const [isMenuLoading, setIsMenuLoading] = useState(true);
-  const [scrolled, setScrolled] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [changeNeeded, setChangeNeeded] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const theme = isDarkMode ? darkTheme : lightTheme;
 
   // === CARREGAMENTO INICIAL ===
   useEffect(() => {
@@ -133,13 +99,6 @@ const App = () => {
     setTimeout(() => setIsSearchingAddress(false), 400);
   };
 
-  // === EFEITO DE ROLAGEM PARA O HEADER ===
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 100);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   // === CÁLCULO DE TOTAIS ===
   const categories = useMemo(() => {
     if (appMenuData && appMenuData.menu) return Object.keys(appMenuData.menu);
@@ -183,80 +142,47 @@ const App = () => {
     const orderId = Math.random().toString(36).substr(2, 5).toUpperCase();
     
     try {
-      console.log('📤 Iniciando envio do pedido:', orderId);
-      
       const { error: insertError } = await supabase
         .from('pedidos')
         .insert([{
-          order_id: orderId, 
-          items: cart, 
-          subtotal: cartSubtotal,
-          delivery_fee: deliveryFee, 
-          total: cartTotal, 
-          address: address,
-          payment_method: paymentMethod === 'Dinheiro' && changeNeeded 
-            ? `Dinheiro (Troco para R$ ${changeNeeded})` 
-            : paymentMethod, 
+          order_id: orderId, items: cart, subtotal: cartSubtotal,
+          delivery_fee: deliveryFee, total: cartTotal, address: address,
+          payment_method: paymentMethod === 'Dinheiro' && changeNeeded ? `Dinheiro (Troco para R$ ${changeNeeded})` : paymentMethod, 
           status: 'pendente'
         }]);
 
-      if (insertError) {
-        console.error('❌ Erro Supabase:', insertError);
-        throw insertError;
-      }
-
-      console.log('✅ Pedido salvo no banco com sucesso!');
+      if (insertError) throw insertError;
 
       confetti({
-        particleCount: 200,
-        spread: 90,
-        origin: { y: 0.6 },
-        zIndex: 4000,
-        colors: [theme.primary, '#2D1B14', theme.green]
+        particleCount: 200, spread: 90, origin: { y: 0.6 },
+        colors: ['#EC9424', '#2D1B14', '#22c55e']
       });
 
       setIsOrderSuccess(true);
       setIsCartOpen(false);
       
-      const message = `*NOVO PEDIDO MELBURGUERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2)}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number} - ${address.neighborhood}`;
+      const message = `*NOVO PEDIDO MELBURGUERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2).replace('.', ',')}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number} - ${address.neighborhood}`;
       
-      // Enviamos pro WhatsApp via location.href para evitar bloqueios de pop-up
       setTimeout(() => {
         window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent(message)}`;
       }, 3500);
       
     } catch (err) {
-      console.error('Erro fatal no checkout:', err);
-      const errorMsg = err.message || "Erro desconhecido";
-      alert(`ERRO NO BANCO DE DADOS: ${errorMsg}\n\nPor favor, tire um print desta tela e me envie!`);
+      alert(`ERRO AO ENVIAR PEDIDO: ${err.message}`);
     }
   };
 
   if (isMenuLoading) return (
-    <div style={{ background: theme.background, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <motion.div 
-        animate={{ rotate: 360 }} 
-        transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }} 
-        style={{ width: 40, height: 40, border: `3px solid ${theme.primary}22`, borderTopColor: theme.primary, borderRadius: '50%' }} 
-      />
+    <div style={{ background: '#FFFFFF', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }} style={{ width: 40, height: 40, border: '3px solid #EC942422', borderTopColor: '#EC9424', borderRadius: '50%' }} />
     </div>
   );
 
   return (
-    <div style={{ background: theme.background, minHeight: '100vh', display: 'flex', justifyContent: 'center', transition: 'background 0.3s ease' }}>
-      <div style={{ width: '100%', maxWidth: '500px', background: theme.surface, minHeight: '100vh', position: 'relative', boxShadow: isDarkMode ? '0 0 80px rgba(0,0,0,0.4)' : '0 0 80px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', transition: 'background 0.3s ease' }}>
-        <div style={{ flex: 1, fontFamily: "'Inter', sans-serif", paddingBottom: '120px' }}>
-      
-      {/* 1. BANNER TOP (ESTILO ORIGINAL) */}
-      <div style={{ width: '100%', height: '220px', overflow: 'hidden', background: '#000' }}>
-        <img 
-          src="/images/MEL Burgers iluminado e convidativo.png" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} 
-          alt="Banner Principal" 
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%)' }} />
-        
-        {/* BOTÃO DARK MODE TOGGLE (Flutuante no topo) */}
+    <div className="app-container" style={{ background: isDarkMode ? '#0C0C0E' : '#FFFFFF', transition: 'background 0.3s' }}>
+      {/* 1. Banner */}
+      <div className="banner-top" style={{ position: 'relative' }}>
+        <img src="/images/MEL Burgers iluminado e convidativo.png" alt="Mel Burgers Banner" />
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
           style={{ 
@@ -271,464 +197,175 @@ const App = () => {
         </button>
       </div>
 
-      {/* 2. INSTAGRAM STYLE HEADER (CÓDIGO ORIGINAL GIT 6cab2c6) */}
-      <header style={{ 
-        padding: '0 20px 24px', background: theme.surface, position: 'relative', 
-        zIndex: 110, marginTop: '-30px', borderRadius: '28px 28px 0 0',
-        boxShadow: isDarkMode ? '0 -10px 40px rgba(0,0,0,0.5)' : '0 -10px 20px rgba(0,0,0,0.05)'
-      }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', marginBottom: '20px' }}>
-          {/* LOGO CIRCULAR FLUTUANTE */}
-          <div style={{ 
-            position: 'relative', width: '130px', height: '130px', flexShrink: 0, 
-            marginTop: '-75px', zIndex: 150, background: 'white', borderRadius: '50%',
-            padding: '5px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)'
-          }}>
-            <img 
-              src="/images/logo.png" 
-              alt="Logo" 
-              style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
-            />
-            {/* Overlay de Mel Dripping */}
-            <div style={{ 
-              position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', 
-              backgroundImage: "url('/images/honey-frame.png')", backgroundSize: '100% 100%' 
-            }} />
-          </div>
-          
-          <div style={{ flex: 1, paddingBottom: '5px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: 800, color: theme.textZinc, textTransform: 'uppercase' }}>melburguers</h2>
-              <BadgeCheck size={20} fill="#0095f6" color="white" />
+      <header className="insta-header">
+        <div className="profile-top">
+          <div className="avatar-wrapper">
+            <div className="avatar-inner">
+              <img src="/images/logo.png" alt="Mel Burgers Logo" />
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Mel Burger's 🍯</div>
-            <div style={{ fontSize: '13px', color: theme.textMuted }}>Restaurante</div>
+          </div>
+          <div className="profile-title-area">
+            <div className="username-row">
+              <h2>melburgerrs</h2>
+              <BadgeCheck size={20} fill="#0095f6" color="white" />
+              <MoreHorizontal size={20} style={{ marginLeft: 'auto', color: '#8e8e8e' }} />
+            </div>
           </div>
         </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '14px', color: theme.textZinc, lineHeight: '1.6', fontWeight: 500 }}>
-            Mel Burgers 🍯 <br />
+        <div className="bio-area">
+          <div className="bio-text">
             Sabor que conquista na primeira mordida ✨ <br />
-            <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> 
+            <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
             Somente Delivery <br />
-            <MapPin size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> 
+            <MapPin size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
             Tamoios • Cabo Frio 🌴 <br />
-            <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> 
+            <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
             Seg a Seg • 19h às 01h
           </div>
         </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {/* BOTÃO SEGUIR ORIGINAL */}
-          <button style={{ 
-            flex: 1, height: '42px', background: '#0095f6', color: 'white', 
-            border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '14px',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            Seguir
-          </button>
-          {/* BOTÃO CARRINHO RÁPIDO */}
-          <button 
-            onClick={() => setIsCartOpen(true)}
-            style={{ 
-              width: '46px', flex: '0 0 46px', background: isDarkMode ? '#2A2A2E' : '#efefef', 
-              border: 'none', borderRadius: '8px', display: 'flex', alignItems: 'center', 
-              justifyContent: 'center', cursor: 'pointer', color: theme.textZinc 
-            }}
-          >
+        <div className="header-actions">
+          <a href="https://www.instagram.com/melburgerrs/" target="_blank" rel="noopener noreferrer" className="action-btn btn-primary" style={{ textDecoration: 'none' }}>Seguir</a>
+          <button className="action-btn btn-secondary btn-icon" onClick={() => setIsCartOpen(true)}>
             <ShoppingCart size={20} />
           </button>
         </div>
       </header>
 
-      {/* 3. CATEGORIAS (ESTILO HONEY RETRO) */}
-      <div style={{ 
-        position: 'sticky', top: 0, zIndex: 120, 
-        background: scrolled ? (isDarkMode ? 'rgba(12,12,14,0.95)' : 'rgba(255,255,255,0.98)') : theme.surface, 
-        backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        padding: '10px 0',
-        borderBottom: scrolled ? `1px solid ${theme.border}` : 'none',
-        transition: 'all 0.3s'
-      }}>
-        <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', padding: '15px 20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-           <style>
-             {`
-               .category-btn-honey {
-                  position: relative;
-                  min-width: 110px;
-                  height: 44px;
-                  border-radius: 22px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  cursor: pointer;
-                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                  border: 1.5px solid #EC9424 !important;
-                  font-size: 14px;
-                  font-weight: 800;
-                  text-transform: capitalize;
-               }
-               .honey-drip {
-                  position: absolute;
-                  top: -14px; 
-                  left: -2px;
-                  right: -2px;
-                  height: 32px; 
-                  background-image: url('/images/honey-frame.png');
-                  background-size: 100% 100%;
-                  background-repeat: no-repeat;
-                  z-index: 100;
-                  pointer-events: none;
-               }
-             `}
-           </style>
-           {categories.map(cat => (
-             <button 
-               key={cat} 
-               onClick={() => scrollToCategory(cat)}
-               className="category-btn-honey"
-               style={{ 
-                 background: activeCategory === cat ? '#EC9424' : 'transparent', 
-                 color: activeCategory === cat ? 'white' : '#EC9424',
-                 boxShadow: activeCategory === cat ? '0 8px 20px rgba(236,148,36,0.25)' : 'none',
-                 transform: activeCategory === cat ? 'scale(1.05)' : 'scale(1)'
-               }}
-             >
-               <div className="honey-drip"></div>
-               <span style={{ position: 'relative', zIndex: 110 }}>{cat}</span>
-             </button>
-           ))}
-        </div>
-      </div>
-
-      {/* 4. OFERTAS */}
-      <div style={{ padding: '32px 20px 0' }}>
-         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-            <h2 style={{ fontSize: '19px', fontWeight: 900, color: theme.textZinc, letterSpacing: '-0.3px' }}>Famosos do Melburguers</h2>
-            <ArrowRight size={20} color={theme.primary} />
-         </div>
-         <div style={{ display: 'flex', gap: '18px', overflowX: 'auto', paddingBottom: '16px', scrollbarWidth: 'none' }}>
-            {appMenuData.menu[categories[0]]?.slice(0, 4).map((item, i) => (
-              <motion.div 
-                key={i}
-                whileTap={{ scale: 0.96 }}
-                style={{ flex: '0 0 170px', borderRadius: '24px', overflow: 'hidden', position: 'relative' }}
-              >
-                 <div style={{ height: '170px', width: '100%', borderRadius: '24px', overflow: 'hidden', position: 'relative' }}>
-                    <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <motion.div 
-                       whileTap={{ scale: 1.2 }}
-                       onClick={() => addToCart(item)}
-                       style={{ position: 'absolute', bottom: '12px', right: '12px', background: theme.surface, borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 15px rgba(0,0,0,0.2)' }} 
-                    >
-                       <Plus size={22} color={theme.primary} strokeWidth={3} />
-                    </motion.div>
-                 </div>
-                 <div style={{ padding: '10px 4px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: theme.textZinc }}>{item.name}</div>
-                    <div style={{ color: theme.green, fontWeight: 900, fontSize: '15px', marginTop: '4px' }}>R$ {item.price.toFixed(2)}</div>
-                 </div>
-              </motion.div>
-            ))}
-         </div>
-      </div>
-
-      {/* 5. LISTAGEM DE PRODUTOS */}
-      <div style={{ maxWidth: '640px', margin: '40px auto 0', padding: '0 20px' }}>
-         {categories.map(cat => (
-           <section id={`category-${cat}`} key={cat} style={{ marginBottom: '48px' }}>
-              <h2 style={{ fontSize: '19px', fontWeight: 900, color: theme.textZinc, marginBottom: '24px', borderLeft: `5px solid ${theme.primary}`, paddingLeft: '14px' }}>{cat}</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                 {appMenuData.menu[cat].map((item, i) => (
-                   <motion.div 
-                     key={i}
-                     initial={{ opacity: 0, y: 15 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true }}
-                     style={{ 
-                       background: theme.cardBg, borderRadius: '24px', padding: '18px', 
-                       display: 'flex', gap: '20px', alignItems: 'center',
-                       border: isDarkMode ? `1px solid ${theme.border}` : '1px solid rgba(0,0,0,0.02)', 
-                       boxShadow: isDarkMode ? '0 10px 30px rgba(0,0,0,0.3)' : '0 6px 20px rgba(0,0,0,0.02)',
-                       transition: 'all 0.3s'
-                     }}
-                   >
-                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 800, color: theme.textZinc, marginBottom: '4px' }}>{item.name}</span>
-                        <div style={{ fontSize: '12.5px', color: theme.textMuted, lineHeight: '1.5', marginBottom: '16px' }}>{item.description}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                           <span style={{ fontSize: '16px', fontWeight: 900, color: theme.green }}>R$ {item.price.toFixed(2)}</span>
-                           <motion.button 
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => addToCart(item)}
-                              style={{ background: theme.accent, border: 'none', width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                           >
-                              <Plus size={22} color={theme.primary} strokeWidth={3} />
-                           </motion.button>
-                        </div>
-                     </div>
-                     <div style={{ width: '110px', height: '110px', borderRadius: '20px', overflow: 'hidden' }}>
-                        <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                     </div>
-                   </motion.div>
-                 ))}
-              </div>
-           </section>
-         ))}
-      </div>
-
-      {/* 6. CARRINHO FLUTUANTE ULTRA-PREMIUM */}
-      <AnimatePresence>
-        {cart.length > 0 && !isCartOpen && (
-          <motion.div 
-            initial={{ y: 100, opacity: 0 }} 
-            animate={{ y: 0, opacity: 1 }} 
-            exit={{ y: 100, opacity: 0 }}
-            style={{ 
-              position: 'fixed', 
-              bottom: '32px', 
-              left: '20px', 
-              right: '20px', 
-              zIndex: 1000, 
-              display: 'flex', 
-              justifyContent: 'center' 
-            }}
+      <nav className="category-nav">
+        {categories.map(cat => (
+          <button 
+            key={cat} 
+            className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
+            onClick={() => scrollToCategory(cat)}
           >
-             <motion.button 
-               whileHover={{ backgroundColor: isDarkMode ? '#252529' : '#16161D' }}
-               whileTap={{ scale: 0.97 }}
-               onClick={() => setIsCartOpen(true)}
-               style={{ 
-                  background: isDarkMode ? '#1A1A1E' : '#0B0B0F', 
-                  color: 'rgba(255,255,255,0.95)', 
-                  border: isDarkMode ? `1px solid ${theme.primary}44` : '1px solid rgba(255,255,255,0.08)', 
-                  height: '64px', 
-                  width: '100%', 
-                  maxWidth: '480px', 
-                  borderRadius: '100px',
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  padding: '0 28px', 
-                  boxShadow: isDarkMode ? '0 20px 60px rgba(0,0,0,0.6)' : '0 25px 50px -12px rgba(0,0,0,0.5)',
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(10px)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s'
-               }}
-             >
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)' }} />
-                
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', width: '36px', height: '36px', borderRadius: '50%', marginRight: '16px' }}>
-                   <ShoppingCart size={18} strokeWidth={1.5} />
-                </div>
-                
-                <div style={{ flex: 1, textAlign: 'center', fontWeight: 500, fontSize: '12px', letterSpacing: '1.2px', textTransform: 'uppercase', opacity: 0.9 }}>
-                   Ver Carrinho
-                </div>
-                
-                <div style={{ fontWeight: 600, fontSize: '15px', paddingLeft: '16px', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
-                   R$ {cartSubtotal.toFixed(2)}
-                </div>
-             </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="honey-drip"></div>
+            <span style={{ position: 'relative', zIndex: 11 }}>{cat}</span>
+          </button>
+        ))}
+      </nav>
 
-      {/* 7. MODAL DE FINALIZAÇÃO */}
+      <main className="menu-section">
+        {categories.map(cat => (
+          <section id={`category-${cat}`} key={cat} style={{ marginBottom: '48px' }}>
+            <h2 className="section-title">{cat}</h2>
+            <div className="items-grid">
+              {appMenuData.menu[cat].map((item, i) => (
+                <motion.div key={i} className="menu-card" initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                  <div className="card-info">
+                    <div className="card-header"><h3>{item.name}</h3><p>{item.description}</p></div>
+                    <div className="card-footer">
+                      <span className="price-tag">R$ {item.price.toFixed(2).replace('.', ',')}</span>
+                      <button className="add-btn" onClick={() => addToCart(item)}><Plus size={22} strokeWidth={3} /></button>
+                    </div>
+                  </div>
+                  <div className="card-img"><img src={item.image} alt={item.name} /></div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </main>
+
+      {/* 5. Floating Cart */}
+      {cart.length > 0 && !isCartOpen && (
+        <div style={{ position: 'fixed', bottom: '30px', left: 0, right: 0, zIndex: 1000, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+          <motion.div 
+            className="cart-floating"
+            style={{ pointerEvents: 'auto', position: 'relative', left: 'auto', transform: 'none', width: '95%', maxWidth: '460px' }}
+            initial={{ y: 100, opacity: 0 }} 
+            animate={{ y: 0, opacity: 1 }}
+            onClick={() => setIsCartOpen(true)}
+          >
+            <div className="cart-count">{cart.length}</div>
+            <div className="cart-view-text">Ver Carrinho</div>
+            <div style={{ fontWeight: 800 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</div>
+          </motion.div>
+        </div>
+      )}
+
       <AnimatePresence>
         {isCartOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-            onClick={() => setIsCartOpen(false)}
-          >
-            <motion.div 
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              style={{ width: '100%', maxWidth: '540px', background: theme.surface, borderRadius: '35px 35px 0 0', padding: '35px 24px', maxHeight: '92vh', overflowY: 'auto', transition: 'background 0.3s ease' }}
-              onClick={e => e.stopPropagation()}
-            >
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-                  <h2 style={{ fontSize: '22px', fontWeight: 900, color: theme.textZinc }}>Seu Carrinho</h2>
-                  <button onClick={() => setIsCartOpen(false)} style={{ background: theme.isDark ? '#2A2A2E' : '#f5f5f7', border: 'none', padding: '10px', borderRadius: '50%', color: theme.textZinc }}><ChevronDown size={24}/></button>
-               </div>
+          <motion.div className="cart-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCartOpen(false)}>
+            <motion.div className="cart-modal-content" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                <h2 style={{ fontSize: '22px', fontWeight: 900 }}>Seu Carrinho</h2>
+                <button onClick={() => setIsCartOpen(false)} style={{ background: isDarkMode ? '#2A2A2E' : '#f5f5f7', color: 'var(--text)', border: 'none', padding: '10px', borderRadius: '50%' }}><ChevronDown size={24}/></button>
+              </div>
 
-               {checkoutStep === 'cart' && (
-                 <>
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '35px' }}>
-                      {cart.map((item, i) => (
-                        <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center', background: theme.cardBg, padding: '12px', borderRadius: '18px', border: `1px solid ${theme.border}` }}>
-                           <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'cover' }} />
-                           <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '15px', fontWeight: 700, color: theme.textZinc }}>{item.name}</div>
-                              <div style={{ fontSize: '13px', fontWeight: 800, color: theme.green, marginTop: '2px' }}>R$ {item.price.toFixed(2)}</div>
-                           </div>
-                           <button onClick={() => removeFromCart(i)} style={{ background: theme.isDark ? 'rgba(244,63,94,0.1)' : '#fff0f0', border: 'none', padding: '8px', borderRadius: '10px', color: theme.red, cursor: 'pointer' }}><Trash2 size={18}/></button>
+              {checkoutStep === 'cart' && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '35px' }}>
+                    {cart.map((item, i) => (
+                      <div key={i} className="cart-item" style={{ display: 'flex', gap: '14px', alignItems: 'center', padding: '12px', borderRadius: '18px' }}>
+                        <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'cover' }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '15px', fontWeight: 700 }}>{item.name}</div>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#22c55e', marginTop: '2px' }}>R$ {item.price.toFixed(2).replace('.', ',')}</div>
                         </div>
-                      ))}
-                   </div>
-                   <button 
-                     onClick={() => setCheckoutStep('address')}
-                      style={{ width: '100%', height: '62px', background: theme.primary, color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900, fontSize: '15px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
-                   >
-                     CONTINUAR PARA ENTREGA
-                   </button>
-                 </>
-               )}
+                        <button onClick={() => removeFromCart(i)} style={{ background: '#fff0f0', border: 'none', padding: '8px', borderRadius: '10px', color: '#f43f5e' }}><Trash2 size={18}/></button>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => setCheckoutStep('address')} style={{ width: '100%', height: '62px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900 }}>CONTINUAR PARA ENTREGA</button>
+                </>
+              )}
 
-               {checkoutStep === 'address' && (
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '24px', border: `1px solid ${theme.border}` }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                          <UserPlus size={18} color={theme.primary} />
-                          <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Seus Dados</span>
-                       </div>
-                       <input 
-                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '16px', marginBottom: '12px', outline: 'none', color: theme.textZinc }}
-                         placeholder="Seu Nome Completo"
-                         value={address.customerName}
-                         onChange={e => setAddress({...address, customerName: e.target.value})}
-                       />
-                       <input 
-                         style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '16px', outline: 'none', color: theme.textZinc }}
-                         placeholder="WhatsApp (Ex: 22 99999-9999)"
-                         value={address.customerPhone}
-                         onChange={e => setAddress({...address, customerPhone: e.target.value})}
-                       />
-                    </div>
+              {checkoutStep === 'address' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}><UserPlus size={18} color="#EC9424" /><span style={{ fontSize: '14px', fontWeight: 700 }}>Seus Dados</span></div>
+                     <input style={{ width: '100%', background: 'var(--card-bg)', border: '1px solid var(--border)', padding: '14px', borderRadius: '14px', color: 'var(--text)', marginBottom: '12px' }} placeholder="Seu Nome Completo" value={address.customerName} onChange={e => setAddress({...address, customerName: e.target.value})} />
+                     <input style={{ width: '100%', background: 'var(--card-bg)', border: '1px solid var(--border)', padding: '14px', borderRadius: '14px', color: 'var(--text)' }} placeholder="WhatsApp" value={address.customerPhone} onChange={e => setAddress({...address, customerPhone: e.target.value})} />
+                  </div>
+                  <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}><MapPin size={18} color="#EC9424" /><span style={{ fontSize: '14px', fontWeight: 700 }}>Endereço</span></div>
+                     <div style={{ position: 'relative' }}>
+                       <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '14px', borderRadius: '14px' }} placeholder="Nome da rua..." value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
+                       {addressSuggestions.length > 0 && <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, background: 'var(--card-bg)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3500, overflow: 'hidden' }}>
+                          {addressSuggestions.map((f, i) => <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px', fontSize: '13px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>{f.properties.street || f.properties.name}</div>)}
+                       </div>}
+                     </div>
+                     <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                        <input style={{ flex: 1, border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
+                        <input style={{ flex: 2, border: '1px solid var(--border)', background: isDarkMode ? '#121215' : '#fcfcfd', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Bairro" value={address.neighborhood} readOnly />
+                     </div>
+                  </div>
+                  <button onClick={() => { if(!address.customerName || !address.customerPhone || !address.street || !address.number) return alert("Preencha tudo!"); setCheckoutStep('payment'); }} style={{ width: '100%', height: '62px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900 }}>IR PARA PAGAMENTO</button>
+                  <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: '#71717A', fontSize: '13px' }}>Voltar ao carrinho</button>
+                </div>
+              )}
 
-                    <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '24px', border: `1px solid ${theme.border}` }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                          <MapPin size={18} color={theme.primary} />
-                          <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Endereço de Entrega</span>
-                       </div>
-                       <div style={{ position: 'relative' }}>
-                         <input 
-                           style={{ width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '14px', borderRadius: '14px', fontSize: '16px', outline: 'none', color: theme.textZinc }}
-                           placeholder="Nome da rua..."
-                           value={address.street}
-                           onChange={e => setAddress({...address, street: e.target.value})}
-                         />
-                         {addressSuggestions.length > 0 && (
-                           <div style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, background: theme.surface, borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', zIndex: 3500, overflow: 'hidden' }}>
-                              {addressSuggestions.map((f, i) => (
-                                <div key={i} onClick={() => handleSelectSuggestion(f)} style={{ padding: '14px 16px', fontSize: '13px', borderBottom: `1px solid ${theme.border}`, cursor: 'pointer', color: theme.textZinc }}>
-                                   <div style={{ fontWeight: 700 }}>{f.properties.street || f.properties.name}</div>
-                                   <div style={{ fontSize: '11px', color: theme.textMuted }}>{f.properties.district || 'Cabo Frio'}</div>
-                                </div>
-                              ))}
-                           </div>
-                         )}
-                       </div>
-                       <div style={{ display: 'flex', gap: '10px', marginTop: '12px', width: '100%' }}>
-                          <input style={{ flex: 1, minWidth: 0, width: '100%', background: theme.isDark ? '#2A2A2E' : 'white', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
-                          <input style={{ flex: 2, minWidth: 0, width: '100%', background: theme.isDark ? '#2A2A2E' : '#fcfcfd', border: `1px solid ${theme.border}`, padding: '12px', borderRadius: '12px', fontSize: '16px', color: theme.textZinc }} placeholder="Bairro" value={address.neighborhood} readOnly />
-                       </div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => {
-                        if (!address.customerName.trim()) return alert("Por favor, informe seu nome.");
-                        if (!address.customerPhone.trim()) return alert("Por favor, informe seu WhatsApp.");
-                        if (!address.street.trim()) return alert("Por favor, informe a rua.");
-                        if (!address.number.trim()) return alert("Por favor, informe o número da residência.");
-                        if (!address.neighborhood.trim()) return alert("Por favor, o bairro é obrigatório.");
-                        setCheckoutStep('payment');
-                      }}
-                      style={{ 
-                        width: '100%', height: '62px', background: theme.primary, color: 'white', border: 'none', 
-                        borderRadius: '20px', fontWeight: 900, fontSize: '15px', cursor: 'pointer',
-                        boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
-                      }}
-                    >
-                      IR PARA PAGAMENTO
-                    </button>
-                    <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Voltar ao carrinho</button>
-                 </div>
-               )}
+              {checkoutStep === 'payment' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><ShoppingCart size={18} color="#EC9424" /><span style={{ fontSize: '14px', fontWeight: 700 }}>Pagamento</span></div>
+                     <div style={{ display: 'flex', gap: '10px' }}>
+                        {['PIX', 'Cartão', 'Dinheiro'].map(m => (
+                          <button key={m} onClick={() => setPaymentMethod(m)} style={{ flex: 1, padding: '16px 5px', borderRadius: '16px', border: `2px solid ${paymentMethod === m ? '#EC9424' : 'var(--border)'}`, background: 'var(--card-bg)', color: paymentMethod === m ? '#EC9424' : 'var(--text-light)', fontWeight: 800 }}>{m}</button>
+                        ))}
+                     </div>
+                  </div>
+                  
+                  {paymentMethod === 'PIX' && <div style={{ padding: '24px', background: isDarkMode ? 'rgba(34,197,94,0.1)' : '#f0fdf4', borderRadius: '20px', border: '2px dashed #22c55e', textAlign: 'center' }}>
+                     <div style={{ color: '#22c55e', fontWeight: 800, fontSize: '12px', marginBottom: '8px' }}>CHAVE PIX CNPJ</div>
+                     <div style={{ fontSize: '17px', fontWeight: 900, marginBottom: '16px' }}>64.745.137/0001-58</div>
+                     <button onClick={() => { navigator.clipboard.writeText("64745137000158"); alert("Copiado!"); }} style={{ width: '100%', padding: '14px', background: 'white', border: '1.5px solid #22c55e', borderRadius: '14px', color: '#22c55e', fontWeight: 900 }}>COPIAR CHAVE</button>
+                  </div>}
+                  
+                  {paymentMethod === 'Dinheiro' && <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)' }}>
+                     <label style={{ fontSize: '13px', fontWeight: 800, display: 'block', marginBottom: '10px' }}>Troco para quanto?</label>
+                     <input style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)' }} placeholder="Ex: 50,00" value={changeNeeded} onChange={e => setChangeNeeded(e.target.value)} />
+                  </div>}
 
-               {checkoutStep === 'payment' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '24px', border: `1px solid ${theme.border}` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                           <ShoppingCart size={18} color={theme.primary} />
-                           <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textZinc }}>Selecione o Pagamento</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                           {['PIX', 'Cartão', 'Dinheiro'].map(method => (
-                             <button
-                               key={method}
-                               onClick={() => setPaymentMethod(method)}
-                               style={{
-                                 flex: 1, padding: '16px 5px', borderRadius: '16px', fontSize: '13px', fontWeight: 900,
-                                 border: `2px solid ${paymentMethod === method ? theme.primary : theme.border}`,
-                                 background: paymentMethod === method ? (theme.isDark ? '#2A2A2E' : 'white') : 'transparent',
-                                 color: paymentMethod === method ? theme.primary : theme.textMuted,
-                                 transition: 'all 0.2s', cursor: 'pointer'
-                               }}
-                             >
-                               {method}
-                             </button>
-                           ))}
-                        </div>
-                    </div>
-                    
-                    {paymentMethod === 'PIX' && (
-                        <div style={{ padding: '24px', background: theme.isDark ? 'rgba(74,222,128,0.1)' : '#f0fdf4', borderRadius: '20px', border: `2px dashed ${theme.green}`, textAlign: 'center' }}>
-                          <div style={{ color: theme.green, fontWeight: 800, fontSize: '12px', marginBottom: '8px', letterSpacing: '1px' }}>NOSSA CHAVE PIX</div>
-                          <div style={{ fontSize: '17px', fontWeight: 900, color: theme.textZinc, marginBottom: '16px' }}>64.745.137/0001-58</div>
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard.writeText("64745137000158");
-                              alert("Chave PIX Copiada! 💸");
-                            }}
-                            style={{ width: '100%', padding: '14px', background: theme.surface, border: `1.5px solid ${theme.green}`, borderRadius: '14px', color: theme.green, fontWeight: 900, fontSize: '12px', cursor: 'pointer' }}
-                          >
-                            COPIAR CHAVE PIX
-                          </button>
-                        </div>
-                    )}
-                    
-                    {paymentMethod === 'Dinheiro' && (
-                        <div style={{ background: theme.cardBg, padding: '20px', borderRadius: '20px', border: `1px solid ${theme.border}` }}>
-                          <label style={{ fontSize: '13px', fontWeight: 800, display: 'block', marginBottom: '10px', color: theme.textZinc }}>Troco para quanto?</label>
-                          <input 
-                            type="text" inputMode="decimal" placeholder="Ex: 50,00" value={changeNeeded}
-                            onChange={(e) => setChangeNeeded(e.target.value)}
-                            style={{ width: '100%', padding: '14px', borderRadius: '14px', border: `1px solid ${theme.border}`, fontSize: '16px', outline: 'none', background: theme.isDark ? '#2A2A2E' : 'white', color: theme.textZinc }}
-                          />
-                        </div>
-                    )}
-
-                    <div style={{ padding: '24px 4px', borderTop: `1px solid ${theme.border}`, marginTop: '10px' }}>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                          <span style={{ color: theme.textMuted, fontWeight: 700, fontSize: '14px' }}>Produtos</span>
-                          <span style={{ fontWeight: 800, fontSize: '14px', color: theme.textZinc }}>R$ {cartSubtotal.toFixed(2)}</span>
-                       </div>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}>
-                          <span style={{ color: theme.textMuted, fontWeight: 700, fontSize: '14px' }}>Entrega</span>
-                          <span style={{ fontWeight: 800, fontSize: '14px', color: theme.green }}>{deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2)}`}</span>
-                       </div>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '24px', fontWeight: 950, color: theme.textZinc }}>
-                          <span>Total</span>
-                          <span>R$ {cartTotal.toFixed(2)}</span>
-                       </div>
-                    </div>
-
-                    <button 
-                      onClick={handleCheckout}
-                      style={{ 
-                        width: '100%', height: '70px', background: theme.primary, color: 'white', border: 'none',
-                        borderRadius: '24px', fontSize: '17px', fontWeight: 900, cursor: 'pointer',
-                        boxShadow: '0 15px 35px rgba(0,0,0,0.2)'
-                      }}
-                    >
-                      FINALIZAR E ENVIAR WHATSAPP
-                    </button>
-                    <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '13px', fontWeight: 600, marginTop: '20px', cursor: 'pointer' }}>Voltar ao endereço</button>
-                 </div>
-               )}
+                  <div style={{ padding: '24px 4px', borderTop: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#71717A' }}>Produtos</span><span style={{ fontWeight: 800 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}><span style={{ color: '#71717A' }}>Entrega</span><span style={{ fontWeight: 800, color: '#22c55e' }}>{deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '24px', fontWeight: 950 }}><span>Total</span><span>R$ {cartTotal.toFixed(2).replace('.', ',')}</span></div>
+                  </div>
+                  <button onClick={handleCheckout} style={{ width: '100%', height: '70px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '24px', fontWeight: 900 }}>FINALIZAR PEDIDO</button>
+                  <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: '#71717A', fontSize: '13px', marginTop: '10px' }}>Voltar ao endereço</button>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -736,41 +373,15 @@ const App = () => {
 
       <AnimatePresence>
         {isOrderSuccess && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: theme.surface, zIndex: 3000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px', textAlign: 'center' }}
-          >
-            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", damping: 15 }}>
-              <div style={{ width: '100px', height: '100px', background: theme.isDark ? 'rgba(74,222,128,0.1)' : '#f0fdf4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px', color: theme.green }}>
-                <CheckCircle2 size={60} />
-              </div>
-              <h1 style={{ color: theme.textZinc, fontSize: '2rem', fontWeight: '800', marginBottom: '15px' }}>Pedido Realizado!</h1>
-              <p style={{ color: theme.textMuted, fontSize: '1.1rem', marginBottom: '30px', maxWidth: '300px' }}>Parabéns! Seu pedido foi enviado para nossa cozinha. Estamos abrindo o WhatsApp para você confirmar...</p>
-              
-              <button 
-                onClick={() => window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent("*Paguei o pedido!*")}`}
-                style={{ width: '100%', padding: '18px', borderRadius: '16px', background: '#25D366', color: 'white', border: 'none', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(37, 211, 102, 0.2)', cursor: 'pointer', fontWeight: 700 }}
-              >
-                Ir para o WhatsApp manualmente
-              </button>
-              
-              <button 
-                onClick={() => {
-                  setIsOrderSuccess(false);
-                  setCart([]);
-                  setCheckoutStep('cart');
-                }}
-                style={{ marginTop: '20px', background: 'none', border: 'none', color: theme.textMuted, fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}
-              >
-                Voltar ao Cardápio
-              </button>
-            </motion.div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ position: 'fixed', inset: 0, background: 'var(--bg)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <CheckCircle2 size={80} color="#22c55e" style={{ margin: '0 auto 20px' }} />
+              <h1 style={{ fontWeight: 900, fontSize: '24px', color: 'var(--text)' }}>Pedido Enviado!</h1>
+              <p style={{ color: 'var(--text-light)' }}>Redirecionando para o WhatsApp...</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-        </div>
-      </div>
     </div>
   );
 };
