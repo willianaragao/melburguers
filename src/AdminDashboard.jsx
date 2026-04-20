@@ -12,6 +12,28 @@ import { supabase } from './utils/supabase';
 import { FinanceDashboard } from './FinanceDashboard';
 import { OrdersKanban } from './OrdersKanban';
 
+const HistoryIcon = ({ size = 24, className, style, isActive }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={{
+      ...style,
+      filter: isActive ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' : 'opacity(0.6)',
+      transition: 'all 0.3s ease'
+    }}
+  >
+    <rect x="6" y="4" width="12" height="16" rx="3" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.8"/>
+    <rect x="9" y="2.5" width="6" height="3" rx="1.2" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.8"/>
+    <line x1="8.5" y1="9" x2="15.5" y2="9" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
+    <line x1="8.5" y1="12" x2="15.5" y2="12" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
+    <line x1="8.5" y1="15" x2="13" y2="15" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
+  </svg>
+);
+
 const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
   <svg 
     width={size} 
@@ -131,19 +153,16 @@ const AdminDashboard = () => {
 
     const fetchOrders = async () => {
     if (!isAuthenticated) return;
-    console.log("🔍 Iniciando busca de pedidos...");
     
     try {
       setDbError(null);
       
-      // Busca isolada para evitar que erro em uma tabela trave tudo
       const { data: activeData, error: activeError } = await supabase
         .from('pedidos')
         .select('*')
         .order('created_at', { ascending: false });
         
       if (activeError) {
-        console.error("Erro na tabela pedidos:", activeError);
         setDbError("Erro na tabela pedidos: " + activeError.message);
       }
 
@@ -163,7 +182,6 @@ const AdminDashboard = () => {
 
       setOrders(combined);
       setLastSync(new Date());
-      console.log("✅ Busca concluída:", combined.length, "pedidos.");
     } catch (err) {
       console.error("CRITICAL SYNC ERROR:", err);
       setDbError("Erro crítico de sincronização.");
@@ -181,9 +199,8 @@ const AdminDashboard = () => {
       
       if (data) {
         setAppMenuData(data.data);
-        saveMenuData(data.data); // Back do localstorage
+        saveMenuData(data.data);
       } else if (error && error.code === 'PGRST116') {
-        // Tabela vazia, vamos subir o padrão
         const currentMenu = getMenuData();
         await supabase.from('menu_config').insert([{ id: 1, data: currentMenu }]);
         setAppMenuData(currentMenu);
@@ -199,16 +216,13 @@ const AdminDashboard = () => {
       syncMenuFromCloud();
       fetchFinanceData();
 
-            // 1. ESCUTA GLOBAL (Nuke Option - Qualquer mudança no schema public)
       const channel = supabase
         .channel('global-sync')
-        .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-          console.log("⚡ MUDANÇA GLOBAL DETECTADA:", payload.table, payload.eventType);
+        .on('postgres_changes', { event: '*', schema: 'public' }, () => {
           fetchOrders();
         })
         .subscribe();
 
-      // 2. POLLING DE ALTA FREQUÊNCIA (7 segundos)
       const polling = setInterval(() => {
         fetchOrders();
       }, 7000);
@@ -238,14 +252,12 @@ const AdminDashboard = () => {
 
   const fetchFinanceData = async () => {
     try {
-      // Buscar Transações
       const { data: transData } = await supabase
         .from('finance')
         .select('*')
         .order('created_at', { ascending: false });
       if (transData) setFinanceTransactions(transData);
 
-      // Buscar Categorias
       const { data: cats, error: catError } = await supabase
         .from('categorias')
         .select('*');
@@ -253,7 +265,6 @@ const AdminDashboard = () => {
       if (cats && cats.length > 0) {
         setFinanceCategories(cats);
       } else if (!catError) {
-        // Se a tabela existe mas está vazia, podemos subir os padrões
         const defaultCats = [
           { name: 'Suprimentos', color: '#3b82f6' },
           { name: 'Contas', color: '#ef4444' },
@@ -261,7 +272,6 @@ const AdminDashboard = () => {
           { name: 'Manutenção', color: '#f59e0b' },
           { name: 'iFood', color: '#ea1d2c' }
         ];
-        // Opcional: Auto-popular o banco na primeira vez
         const { data: newCats } = await supabase.from('categorias').insert(defaultCats).select();
         if (newCats) setFinanceCategories(newCats);
       }
@@ -281,7 +291,7 @@ const AdminDashboard = () => {
         description: newTrans.description, 
         amount: parseFloat(newTrans.amount), 
         type: newTrans.type,
-        category_id: newTrans.categoryId || null, // Tentando com o nome mais comum
+        category_id: newTrans.categoryId || null,
         created_at: new Date().toISOString()
       };
 
@@ -290,25 +300,15 @@ const AdminDashboard = () => {
         .insert([payload])
         .select();
 
-      if (error) {
-        // Se o erro for de coluna inexistente, damos o comando SQL exato
-        if (error.message.includes("category_id")) {
-          console.error("ERRO DE SCHEMA: A coluna 'category_id' não existe na tabela 'finance'.");
-          alert("ERRO NO BANCO: Você precisa adicionar a coluna 'category_id' na sua tabela 'finance' no Supabase.\n\nExecute este comando no SQL Editor:\nALTER TABLE finance ADD COLUMN category_id uuid;");
-          return;
-        }
-        throw error;
-      }
+      if (error) throw error;
       
       if (data) {
         setFinanceTransactions(current => {
-          // Evitar duplicidade via Realtime (se data[0].id já existe, não adiciona)
           if (current.some(t => t.id === data[0].id)) return current;
           return [data[0], ...current];
         });
       }
     } catch (err) {
-      console.error("Erro completo:", err);
       alert("Erro ao salvar: " + err.message);
     }
   };
@@ -337,7 +337,6 @@ const AdminDashboard = () => {
   };
 
   const handleAddCategory = async (newCat) => {
-    // 1. Verificar duplicidade localmente antes de enviar para o banco
     const exists = financeCategories.some(c => c.name.toLowerCase() === newCat.name.toLowerCase());
     if (exists) {
       alert("Esta categoria já existe!");
@@ -356,24 +355,21 @@ const AdminDashboard = () => {
       if (data) {
         setFinanceCategories(current => [...current, data[0]]);
       } else if (error) {
-        if (error.code === '23505') { // Erro de código único do Postgres
+        if (error.code === '23505') {
           alert("Esta categoria já existe no banco de dados!");
         } else {
           throw error;
         }
       }
     } catch (err) { 
-      console.error("Erro ao salvar categoria:", err);
       alert("Erro ao salvar categoria no banco. Verifique sua conexão.");
     }
   };
-
 
   useEffect(() => {
     if (orders.length > 0 && isAuthenticated) {
       const latestOrder = orders[0];
       if (latestOrder.id !== lastOrderId.current) {
-        // Toca o som apenas se não for o primeiro carregamento da página
         if (lastOrderId.current !== null) {
           playNotificationSound();
         }
@@ -423,7 +419,6 @@ const AdminDashboard = () => {
       if (printerRef.current) {
         await sendToPrinter(printerRef.current, printerData);
       } else {
-        // Se não houver conexão prévia, tenta conectar e imprimir na hora
         const success = await printOrder(printerData);
         if (!success) throw new Error("Falha na impressão");
       }
@@ -435,9 +430,6 @@ const AdminDashboard = () => {
   };
 
   const updateStatus = async (id, newStatus) => {
-    console.log(`Atualizando status de ${id} para ${newStatus}`);
-    
-    // Optimistic Update
     setOrders(current => current.map(o => 
       (o.order_id === id || String(o.id) === String(id)) ? { ...o, status: newStatus } : o
     ));
@@ -447,8 +439,6 @@ const AdminDashboard = () => {
         const orderToMove = orders.find(o => o.order_id === id || String(o.id) === String(id));
         if (orderToMove) {
           const dbId = orderToMove.original_db_id;
-          
-          // Prepara os dados para inserção (remove IDs antigos para evitar conflito de chave primária)
           const { id: oldId, created_at: oldDate, original_db_id: oldDbId, ...orderData } = orderToMove;
           
           const { error: insertError } = await supabase
@@ -456,17 +446,13 @@ const AdminDashboard = () => {
             .insert([{ ...orderData, status: 'excluido' }]);
           
           if (!insertError) {
-             const { error: deleteError } = await supabase.from('pedidos').delete().eq('id', dbId);
-             if (deleteError) console.error("Erro ao deletar da tabela original:", deleteError);
-          } else {
-            console.error("Erro ao inserir em excluidos:", insertError);
+             await supabase.from('pedidos').delete().eq('id', dbId);
           }
         }
       } else {
         const itemBeforeUpdate = orders.find(o => o.order_id === id || String(o.id) === String(id));
         
         if (itemBeforeUpdate && itemBeforeUpdate.status === 'excluido') {
-          // RESTAURAÇÃO
           const dbId = itemBeforeUpdate.original_db_id;
           const { id: oldId, created_at: oldDate, original_db_id: oldDbId, ...orderData } = itemBeforeUpdate;
 
@@ -478,7 +464,6 @@ const AdminDashboard = () => {
             await supabase.from('pedidos_excluidos').delete().eq('id', dbId);
           }
         } else {
-          // Atualização Normal
           const dbId = itemBeforeUpdate?.original_db_id;
           if (dbId) {
             await supabase.from('pedidos')
@@ -488,17 +473,13 @@ const AdminDashboard = () => {
         }
       }
     } catch (err) {
-      console.error("Erro ao processar transição de tabelas/status:", err);
-      fetchOrders(); // Recarrega em caso de erro para sincronizar
+      fetchOrders();
     }
   };
 
-  // Funções de Gestão de Cardápio
   const handleSaveMenu = async (newMenu) => {
     setAppMenuData(newMenu);
     saveMenuData(newMenu);
-    
-    // Sync para nuvem
     try {
       await supabase.from('menu_config').update({ data: newMenu }).eq('id', 1);
     } catch (err) {
@@ -508,7 +489,7 @@ const AdminDashboard = () => {
 
   const handleEditItem = (category, item) => {
     setEditingCategory(category);
-    setEditingItem({...item}); // Clone for editing
+    setEditingItem({...item});
   };
 
   const handleDeleteItem = (category, itemId) => {
@@ -524,76 +505,31 @@ const AdminDashboard = () => {
       alert("Nome e preço são obrigatórios!");
       return;
     }
-    
     const newMenu = {...appMenuData};
-    
-    // Convert price to number
     editingItem.price = parseFloat(editingItem.price);
     if(editingItem.original_price) {
         editingItem.original_price = parseFloat(editingItem.original_price);
     }
-
     if (!editingItem.id) {
-      // New Item
       editingItem.id = Date.now().toString();
       newMenu.menu[editingCategory].push(editingItem);
     } else {
-      // Update Item
       const index = newMenu.menu[editingCategory].findIndex(i => i.id === editingItem.id);
       newMenu.menu[editingCategory][index] = editingItem;
     }
-    
     handleSaveMenu(newMenu);
     setEditingItem(null);
     setEditingCategory(null);
   };
-
-
-  const filteredFinanceOrders = orders.filter(o => {
-    const isPaidOrDone = o.status === 'pago' || o.status === 'concluido';
-    if (!isPaidOrDone) return false;
-
-    if (dateFilter === 'today') {
-      const orderDate = new Date(o.created_at || o.timestamp);
-      const today = new Date();
-      // Verificação mais resiliente (ignora horas e compara datas puras)
-      const isSameDay = orderDate.toLocaleDateString() === today.toLocaleDateString();
-      return isSameDay;
-    }
-    return true;
-  });
-
-  const totalRevenue = filteredFinanceOrders.reduce((acc, order) => acc + (order.total || 0), 0);
-
-  const filteredExpenses = financeTransactions.filter(trans => {
-    if (dateFilter === 'today') {
-      const transDate = new Date(trans.created_at);
-      const today = new Date();
-      return transDate.getDate() === today.getDate() && 
-             transDate.getMonth() === today.getMonth() && 
-             transDate.getFullYear() === today.getFullYear();
-    }
-    return true;
-  });
-
-  const totalExpenses = filteredExpenses.reduce((acc, trans) => acc + (trans.amount || 0), 0);
-  const netProfit = totalRevenue - totalExpenses;
 
   const filteredOrders = orders.filter(order => {
     const orderDate = new Date(order.created_at || order.timestamp);
     const today = new Date();
     const isToday = orderDate.toLocaleDateString() === today.toLocaleDateString();
     
-    // Se estiver na aba de Concluídos, só mostra concluídos
     if (statusFilter === 'concluded') return order.status === 'concluido';
-    
-    // Se estiver na aba de Excluídos, só mostra excluídos
     if (statusFilter === 'deleted') return order.status === 'excluido';
-
-    // Se NÃO estiver na aba de Excluídos, esconde apenas excluídos (concluídos aparecem na Fila Geral agora)
     if (order.status === 'excluido') return false;
-
-    // Filtros adicionais de Data e Status
     if (dateFilter === 'today' && !isToday) return false;
     if (statusFilter === 'pending' && order.status !== 'pendente' && order.status !== 'pago') return false;
     
@@ -626,7 +562,7 @@ const AdminDashboard = () => {
   }
 
   return (
-      <div className="admin-layout" style={{ 
+    <div className="admin-layout" style={{ 
       display: 'flex', 
       flexDirection: isMobile ? 'column' : 'row',
       minHeight: '100vh', 
@@ -634,7 +570,6 @@ const AdminDashboard = () => {
       color: '#e2e8f0',
       fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif"
     }}>
-      {/* Sidebar UIMAX Premium (Desktop) */}
       {!isMobile && (
         <motion.aside 
           initial={false}
@@ -649,84 +584,40 @@ const AdminDashboard = () => {
             top: 0,
             height: '100vh',
             zIndex: 100,
-            borderRight: '1px solid rgba(255,255,255,0.04)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            borderRight: '1px solid rgba(255,255,255,0.04)'
           }}
         >
-          {/* Logo Section */}
           <div style={{ padding: '0 8px', marginBottom: '48px', display: 'flex', alignItems: 'center', justifyContent: isSidebarOpen ? 'space-between' : 'center' }}>
-            <AnimatePresence mode="wait">
-              {isSidebarOpen ? (
-                <motion.div 
-                  key="logo-full"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
-                >
-                  <div style={{ 
-                    width: '32px', height: '32px', borderRadius: '8px', 
-                    background: 'linear-gradient(135deg, #EC9424 0%, #d97706 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(236,148,36,0.2)'
-                  }}>
-                    <span style={{ fontWeight: 900, fontSize: '18px', color: 'white' }}>M</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: 600, fontSize: '14px', letterSpacing: '-0.3px', color: '#ffffff' }}>MELBURGERS</span>
-                    <span style={{ fontSize: '10px', color: '#52525b', fontWeight: 600, letterSpacing: '0.5px' }}>ADMIN PANEL</span>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="logo-short"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  style={{ 
-                    width: '32px', height: '32px', borderRadius: '8px', 
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}
-                >
-                  <span style={{ fontWeight: 800, fontSize: '14px', color: '#EC9424' }}>M</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
+            {isSidebarOpen ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #EC9424 0%, #d97706 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontWeight: 900, fontSize: '18px', color: 'white' }}>M</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>MELBURGERS</span>
+                  <span style={{ fontSize: '10px', color: '#52525b', fontWeight: 600 }}>ADMIN PANEL</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontWeight: 800, fontSize: '14px', color: '#EC9424' }}>M</span>
+              </div>
+            )}
             {isSidebarOpen && (
-              <button 
-                onClick={() => setIsSidebarOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer', padding: '4px' }}
-              >
-                <ChevronLeft size={16} />
-              </button>
+              <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer' }}><ChevronLeft size={16} /></button>
             )}
           </div>
-
-          {!isSidebarOpen && (
-             <button 
-               onClick={() => setIsSidebarOpen(true)}
-               style={{ margin: '0 auto 32px', background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer' }}
-             >
-               <Menu size={20} />
-             </button>
-          )}
-
-          {/* Navigation Items */}
           <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {[
               { id: 'orders', icon: LayoutDashboard, label: 'Operações' },
               { id: 'menu', icon: ShoppingBag, label: 'Cardápio' },
-              { id: 'finance', icon: DollarSign, label: 'Inteligência Financeira' },
+              { id: 'finance', icon: DollarSign, label: 'Financeiro' },
             ].map((item) => {
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                  onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'transparent')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -737,656 +628,208 @@ const AdminDashboard = () => {
                     background: isActive ? 'rgba(255,255,255,0.05)' : 'transparent',
                     color: isActive ? '#ffffff' : '#a1a1aa',
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                    position: 'relative'
+                    justifyContent: isSidebarOpen ? 'flex-start' : 'center'
                   }}
                 >
-                  {isActive && (
-                    <motion.div 
-                      layoutId="activeIndicator"
-                      style={{ position: 'absolute', left: '-16px', width: '3px', height: '16px', background: '#EC9424', borderRadius: '0 4px 4px 0' }}
-                    />
-                  )}
-                  <item.icon size={18} strokeWidth={isActive ? 2 : 1.5} color={isActive ? '#EC9424' : 'currentColor'} />
-                  {isSidebarOpen && <span style={{ fontWeight: isActive ? 500 : 400, fontSize: '13px' }}>{item.label}</span>}
+                  <item.icon size={18} color={isActive ? '#EC9424' : 'currentColor'} />
+                  {isSidebarOpen && <span style={{ fontSize: '13px' }}>{item.label}</span>}
                 </button>
               );
             })}
           </nav>
-
-          {/* Bottom Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '24px' }}>
-            <div style={{ 
-              display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', borderRadius: '8px',
-              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
-              justifyContent: isSidebarOpen ? 'flex-start' : 'center'
-            }}>
-               <div style={{ width: '28px', height: '28px', borderRadius: '50%', overflow: 'hidden', border: '1.5px solid rgba(255,255,255,0.1)', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src="/images/logo.png" alt="Willian" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-               </div>
-               {isSidebarOpen && (
-                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500, color: '#f8fafc', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>Willian Aragão</div>
-                    <div style={{ fontSize: '10px', color: '#52525b' }}>Admin Local</div>
-                 </div>
-               )}
-            </div>
-
-            <button
-              onClick={handleLogout}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'rgba(239, 68, 68, 0.05)',
-                color: '#ef4444',
-                cursor: 'pointer',
-                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                transition: 'all 0.2s',
-                fontWeight: 600,
-                fontSize: '13px'
-              }}
-            >
+          <div style={{ paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', border: 'none', cursor: 'pointer', justifyContent: isSidebarOpen ? 'flex-start' : 'center' }}>
               <LogOut size={16} />
-              {isSidebarOpen && <span>Sair do Canal</span>}
+              {isSidebarOpen && <span>Sair</span>}
             </button>
           </div>
         </motion.aside>
       )}
 
-      {/* Main Content Area */}
-      <main style={{ 
-        flex: 1, 
-        padding: isMobile ? '20px' : '40px 50px', 
-        paddingBottom: isMobile ? '100px' : '40px',
-        overflowY: (activeTab === 'orders' && !isMobile) ? 'hidden' : 'auto',
-        height: isMobile ? 'auto' : '100vh',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <main style={{ flex: 1, padding: isMobile ? '20px' : '40px 50px', paddingBottom: isMobile ? '120px' : '40px', overflowY: 'auto', height: '100vh' }}>
         {activeTab !== 'finance' && (
-          <header style={{ 
-            marginBottom: isMobile ? '24px' : '40px', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: isMobile ? 'center' : 'flex-end', 
-            flexDirection: isMobile ? 'row' : 'row', 
-            gap: '20px' 
-          }}>
+          <header style={{ marginBottom: isMobile ? '24px' : '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc', letterSpacing: '-0.5px', marginBottom: '4px' }}>
-                {activeTab === 'orders' ? 'Operações' : 'Cardápio'}
+              <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc' }}>
+                {activeTab === 'menu' ? 'Cardápio' : 'Operações'}
               </h1>
-              {isMobile ? (
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }}></div>
-                    <span style={{ fontSize: '11px', color: '#71717a' }}>Online • {lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                 </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#71717a', fontSize: '13px', fontWeight: 400 }}>
-                  {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })} • Workspace ativo
-                </div>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%' }}></div>
+                <span style={{ fontSize: '11px', color: '#71717a' }}>Online • {lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              </div>
             </div>
-            
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               {isMobile && (
-                <button 
-                  onClick={() => {
-                    const modes = ['list', 'grid', 'compact'];
-                    const nextIndex = (modes.indexOf(viewMode) + 1) % modes.length;
-                    setViewMode(modes[nextIndex]);
-                  }}
-                  style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                >
-                  {viewMode === 'list' && <LayoutList size={18} />}
-                  {viewMode === 'grid' && <LayoutGrid size={18} />}
-                  {viewMode === 'compact' && <Rows3 size={18} />}
+                <button onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424' }}>
+                  {viewMode === 'list' ? <LayoutGrid size={18} /> : <LayoutList size={18} />}
                 </button>
               )}
-              {isMobile ? (
-                <button 
-                  onClick={playNotificationSound}
-                  style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                >
-                  <Bell size={18} />
-                </button>
-              ) : (
-                <>
-                  <button 
-                    onClick={() => { localStorage.clear(); window.location.reload(); }}
-                    style={{ padding: '8px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#71717a', cursor: 'pointer', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
-                  >
-                    Reiniciar
-                  </button>
-                  <button 
-                    onClick={playNotificationSound}
-                    style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, transition: 'all 0.2s' }}
-                  >
-                    <Bell size={14} />
-                    Teste de som
-                  </button>
-                  <div style={{ padding: '8px 14px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 8px rgba(34,197,94,0.4)' }}></div>
-                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#fff' }}>Sincronizado</span>
-                     </div>
-                     <span style={{ fontSize: '9px', color: '#71717a' }}>Atualizado às {lastSync.toLocaleTimeString()}</span>
-                  </div>
-                </>
-              )}
+              <button onClick={playNotificationSound} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424' }}>
+                <Bell size={18} />
+              </button>
             </div>
           </header>
         )}
 
-        {activeTab === 'orders' && (
+        {(activeTab === 'orders' || activeTab === 'orders-history' || activeTab === 'search') && (
           <>
-            <div style={{ 
-              marginBottom: '30px', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              flexDirection: isMobile ? 'column' : 'row', 
-              gap: '15px' 
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                gap: '8px', 
-                overflowX: 'auto', 
-                width: isMobile ? 'calc(100% + 40px)' : 'auto', 
-                margin: isMobile ? '0 -20px' : '0', 
-                padding: isMobile ? '4px 20px 12px' : '0', 
-                scrollbarWidth: 'none',
-                WebkitOverflowScrolling: 'touch'
-              }}>
+            <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row', gap: '15px' }}>
+              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: isMobile ? '100%' : 'auto' }}>
                 <button 
                   onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
-                  style={{ 
-                    padding: isMobile ? '10px 18px' : '6px 14px', 
-                    borderRadius: '12px', 
-                    background: dateFilter === 'today' ? 'rgba(236, 148, 36, 0.15)' : 'rgba(255,255,255,0.03)', 
-                    color: dateFilter === 'today' ? '#EC9424' : '#71717a', 
-                    fontSize: '12px', 
-                    fontWeight: 700, 
-                    border: dateFilter === 'today' ? '1px solid rgba(236,148,36,0.3)' : '1px solid rgba(255,255,255,0.04)', 
-                    whiteSpace: 'nowrap', 
-                    cursor: 'pointer', 
-                    transition: 'all 0.2s' 
-                  }}
+                  style={{ padding: '8px 16px', borderRadius: '12px', background: dateFilter === 'today' ? 'rgba(236,148,36,0.1)' : 'rgba(255,255,255,0.03)', color: dateFilter === 'today' ? '#EC9424' : '#71717a', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}
                 >
-                  {dateFilter === 'today' ? 'Pedidos de Hoje' : 'Todos os Pedidos'}
+                  {dateFilter === 'today' ? 'Hoje' : 'Sempre'}
                 </button>
-                <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.06)', margin: 'auto 8px', flexShrink: 0 }}></div>
-                {[
-                  { id: 'all', label: 'Fila Geral' },
-                  { id: 'pending', label: 'Em Aberto' },
-                  { id: 'concluded', label: 'Concluídos', color: '#2dd4bf' },
-                  { id: 'deleted', label: 'Excluídos', color: '#f43f5e' }
-                ].map((f) => (
+                {['all', 'pending', 'concluded', 'deleted'].map(f => (
                   <button 
-                    key={f.id}
-                    onClick={() => setStatusFilter(f.id)}
-                    style={{ 
-                      padding: isMobile ? '10px 18px' : '6px 14px', 
-                      borderRadius: '12px', 
-                      background: statusFilter === f.id ? (f.color ? `${f.color}22` : 'rgba(255,255,255,0.08)') : 'rgba(255,255,255,0.03)', 
-                      color: statusFilter === f.id ? (f.color || '#ffffff') : '#71717a', 
-                      fontSize: '12px', 
-                      fontWeight: 700, 
-                      border: statusFilter === f.id ? `1px solid ${f.color || 'rgba(255,255,255,0.1)'}` : '1px solid rgba(255,255,255,0.04)', 
-                      whiteSpace: 'nowrap', 
-                      cursor: 'pointer', 
-                      transition: 'all 0.2s' 
-                    }}
+                    key={f} 
+                    onClick={() => setStatusFilter(f)}
+                    style={{ padding: '8px 16px', borderRadius: '12px', background: statusFilter === f ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', color: statusFilter === f ? 'white' : '#71717a', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}
                   >
-                    {f.label}
+                    {f === 'all' ? 'Geral' : f === 'pending' ? 'Abertos' : f === 'concluded' ? 'Finais' : 'Lixo'}
                   </button>
                 ))}
               </div>
-              
-              <button 
-                onClick={handlePrinterConnect}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '10px',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  background: isPrinterReady ? 'rgba(45,212,191,0.1)' : 'transparent',
-                  color: isPrinterReady ? '#2dd4bf' : '#a1a1aa',
-                  border: '1px solid ' + (isPrinterReady ? 'rgba(45,212,191,0.2)' : 'rgba(255,255,255,0.06)'),
-                  fontWeight: 500,
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  width: isMobile ? '100%' : 'auto',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <Printer size={14} />
-                {isPrinterReady ? 'Impressora Conectada' : 'Conectar Impressora'}
+              <button onClick={handlePrinterConnect} style={{ padding: '8px 16px', borderRadius: '12px', background: isPrinterReady ? 'rgba(34,197,94,0.1)' : 'transparent', color: isPrinterReady ? '#22c55e' : '#71717a', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Printer size={14} /> {isPrinterReady ? 'Pronto' : 'Imprimir'}
               </button>
             </div>
-
             <OrdersKanban orders={filteredOrders} updateStatus={updateStatus} handlePrint={handlePrint} statusFilter={statusFilter} viewMode={viewMode} />
           </>
         )}
 
         {activeTab === 'menu' && appMenuData && (
-           <div style={{ background: '#161618', borderRadius: '32px', padding: isMobile ? '20px' : '40px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-              {editingItem ? (
-                 <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '25px', color: '#ffffff', letterSpacing: '-0.5px' }}>
-                      {editingItem.id ? 'Editar Produto' : 'Novo Produto'}
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>FOTO DO PRODUTO</span>
-                          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                            <div 
-                              onClick={() => document.getElementById('file-upload').click()}
-                              style={{ 
-                                position: 'relative',
-                                width: '120px', 
-                                height: '120px', 
-                                borderRadius: '24px', 
-                                border: '2px dashed rgba(255,255,255,0.1)', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                overflow: 'hidden',
-                                background: '#0a0a0b',
-                                transition: 'all 0.3s'
-                              }}
-                              onMouseOver={e => e.currentTarget.style.borderColor = '#EC9424'}
-                              onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
-                            >
-                              {editingItem.image ? (
-                                <img src={editingItem.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <div style={{ textAlign: 'center', color: '#64748b' }}>
-                                  <ImageIcon size={24} style={{ marginBottom: '8px' }} />
-                                  <div style={{ fontSize: '10px', fontWeight: 700 }}>ADICIONAR</div>
-                                </div>
-                              )}
-                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', padding: '4px', fontSize: '9px', textAlign: 'center', color: 'white', fontWeight: 800 }}>ALTERAR</div>
-                            </div>
-                            
-                            <div style={{ flex: 1 }}>
-                              <input 
-                                id="file-upload"
-                                type="file" 
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setEditingItem({ ...editingItem, image: reader.result });
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                                style={{ display: 'none' }}
-                              />
-                              <button 
-                                onClick={() => document.getElementById('file-upload').click()}
-                                style={{ width: isMobile ? '100%' : 'auto', padding: '12px 20px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: '13px', fontWeight: 800, cursor: 'pointer' }}
-                              >
-                                {isMobile ? 'ESCOLHER FOTO' : 'SELECIONAR ARQUIVO'}
-                              </button>
-                              <div style={{ marginTop: '10px', color: '#64748b', fontSize: '11px', lineHeight: '1.4' }}>
-                                {isMobile ? 'Toque na imagem ou no botão para trocar a foto.' : 'Clique na imagem ou no botão para subir uma foto do seu computador.'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>NOME DO PRODUTO</span>
-                          <input 
-                            placeholder="Ex: X-Burguer Especial" 
-                            value={editingItem.name} 
-                            onChange={e => setEditingItem({...editingItem, name: e.target.value})} 
-                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', fontSize: isMobile ? '16px' : '14px' }} 
-                          />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>PREÇO (R$)</span>
-                          <input 
-                            placeholder="0,00" 
-                            type="number" 
-                            value={editingItem.price} 
-                            onChange={e => setEditingItem({...editingItem, price: e.target.value})} 
-                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', fontSize: isMobile ? '16px' : '14px' }} 
-                          />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', letterSpacing: '1px' }}>DESCRIÇÃO DO PRODUTO</span>
-                          <textarea 
-                            placeholder="Ex: Pão brioche, blend 150g, queijo cheddar, alface e tomate" 
-                            value={editingItem.description} 
-                            onChange={e => setEditingItem({...editingItem, description: e.target.value})} 
-                            style={{ padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0b', color: 'white', outline: 'none', minHeight: '100px', resize: 'vertical', fontFamily: 'inherit', fontSize: isMobile ? '16px' : '14px' }} 
-                          />
-                        </div>
-                        <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                          <button onClick={handleSaveEdit} style={{ flex: 1, padding: '18px', background: 'linear-gradient(135deg, #EC9424 0%, #d97706 100%)', color: 'white', border: 'none', borderRadius: '18px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(236,148,36,0.2)' }}>SALVAR ALTERAÇÕES</button>
-                          <button onClick={() => setEditingItem(null)} style={{ flex: 1, padding: '18px', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: 'none', borderRadius: '18px', fontWeight: '700', cursor: 'pointer' }}>DESCARTAR</button>
-                        </div>
-                    </div>
-                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                  {Object.keys(appMenuData.menu).map(category => (
-                    <div key={category}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderLeft: '4px solid #EC9424', paddingLeft: '15px' }}>
-                        <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '1px' }}>{category}</h3>
-                        <button 
-                          onClick={() => { setEditingCategory(category); setEditingItem({ name: '', price: '', description: '', image: '' }) }} 
-                          style={{ background: 'rgba(236, 148, 36, 0.1)', border: '1px solid rgba(236, 148, 36, 0.2)', color: '#EC9424', fontWeight: 900, fontSize: '12px', padding: '8px 16px', borderRadius: '12px', cursor: 'pointer' }}
-                        >
-                          + NOVO ITEM
-                        </button>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
-                         {appMenuData.menu[category].map(item => (
-                           <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', transition: 'all 0.2s hover' }}>
-                              <img src={item.image} alt="" style={{ width: '60px', height: '60px', borderRadius: '14px', objectFit: 'cover' }} />
-                              <div style={{ flex: 1 }}>
-                                 <div style={{ fontWeight: 800, fontSize: '14px', color: '#e2e8f0', marginBottom: '4px' }}>{item.name}</div>
-                                 <div style={{ color: '#00ff88', fontWeight: 900, fontSize: '15px' }}>R$ {parseFloat(item.price).toFixed(2).replace('.', ',')}</div>
-                              </div>
-                              <button 
-                                onClick={() => handleEditItem(category, item)} 
-                                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}
-                              >
-                                <Edit size={18} color="#EC9424" />
-                              </button>
-                           </div>
-                         ))}
-                      </div>
-                    </div>
-                  ))}
+          <div style={{ background: '#161618', borderRadius: '32px', padding: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            {editingItem ? (
+              <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <input placeholder="Nome" value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#000', color: '#fff', border: '1px solid #333' }} />
+                <input placeholder="Preço" type="number" value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#000', color: '#fff', border: '1px solid #333' }} />
+                <textarea placeholder="Descrição" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#000', color: '#fff', border: '1px solid #333', minHeight: '100px' }} />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={handleSaveEdit} style={{ flex: 1, padding: '16px', background: '#EC9424', color: '#fff', borderRadius: '12px', fontWeight: 800 }}>SALVAR</button>
+                  <button onClick={() => setEditingItem(null)} style={{ flex: 1, padding: '16px', background: '#333', color: '#fff', borderRadius: '12px' }}>CANCELAR</button>
                 </div>
-              )}
-           </div>
+              </div>
+            ) : (
+              Object.keys(appMenuData.menu).map(cat => (
+                <div key={cat} style={{ marginBottom: '30px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800 }}>{cat}</h3>
+                    <button onClick={() => { setEditingCategory(cat); setEditingItem({name:'', price:'', description:'', image:''}) }} style={{ color: '#EC9424', fontSize: '12px', fontWeight: 800 }}>+ ITEM</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
+                    {appMenuData.menu[cat].map(item => (
+                      <div key={item.id} style={{ padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '14px' }}>{item.name}</div>
+                          <div style={{ color: '#22c55e', fontSize: '14px', fontWeight: 800 }}>R$ {item.price.toFixed(2)}</div>
+                        </div>
+                        <button onClick={() => handleEditItem(cat, item)}><Edit size={16} color="#EC9424" /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         )}
 
         {activeTab === 'finance' && (
-           <FinanceDashboard 
-             orders={orders.filter(o => o.status === 'concluido' || o.status === 'pago')}
-             transactions={financeTransactions}
-             categories={financeCategories}
-             onAddTransaction={handleAddTransaction}
-             onDeleteTransaction={handleDeleteTransaction}
-             onUpdateTransaction={handleUpdateTransaction}
-             onAddCategory={handleAddCategory}
-             playNotificationSound={playNotificationSound}
-             handlePrinterConnect={handlePrinterConnect}
-             isPrinterReady={isPrinterReady}
-           />
+          <FinanceDashboard 
+            orders={orders.filter(o => o.status === 'concluido' || o.status === 'pago')}
+            transactions={financeTransactions}
+            categories={financeCategories}
+            onAddTransaction={handleAddTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+            onUpdateTransaction={handleUpdateTransaction}
+            onAddCategory={handleAddCategory}
+            playNotificationSound={playNotificationSound}
+            handlePrinterConnect={handlePrinterConnect}
+            isPrinterReady={isPrinterReady}
+          />
         )}
       </main>
 
-      {/* PlayStation-Inspired Premium Bottom Navigation (FIXED DOCK VERSION) */}
       {isMobile && (
-        <div style={{
-          position: 'fixed',
-          bottom: '0',
-          left: '0',
-          right: '0',
-          zIndex: 5000,
-          display: 'flex',
-          justifyContent: 'center',
-          pointerEvents: 'none'
-        }}>
-          <motion.nav 
-            initial={{ y: 200, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            style={{
-              width: '100%',
-              height: '115px',
-              position: 'relative',
-              background: 'none',
-              border: 'none',
-              boxShadow: 'none',
-              zIndex: 1000,
-              pointerEvents: 'none'
-            }}
-          >
-            <div style={{ position: 'relative', width: '100%', height: '100%', pointerEvents: 'auto' }}>
-            <svg
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '166%',
-                zIndex: 1,
-                transform: 'translateY(-66px)'
-              }}
-              viewBox="0 0 390 115"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="shellFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(15,15,18,0.99)" /> 
-                  <stop offset="55%" stopColor="rgba(10,10,12,0.99)" />
-                  <stop offset="100%" stopColor="rgba(5,5,7,1)" />
-                </linearGradient>
-                <linearGradient id="strokeGlow" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
-                  <stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
-                  <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
-                </linearGradient>
-              </defs>
-
-              {/* PREENCHIMENTO DA CÁPSULA (Onyx com Transparência Leve + Blur) */}
-              <path
-                d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z"
-                fill="rgba(5, 5, 7, 0.94)"
-                style={{ backdropFilter: 'blur(8px)' }}
-              />
-
-              {/* RODAPÉ DO MENU (Abaixo da Luz - Cinza Chumbo) */}
-              <path
-                d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102 V115 H0 Z"
-                fill="#121215"
-              />
-
-              {/* Linha do Horizonte Inferior (TRANSPARENTE) */}
-              <path
-                d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
-                fill="none"
-                stroke="none"
-              />
-              
-              {/* Segmento de Luz Branca com Super Aura Azul */}
-              <motion.path
-                d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                style={{ 
-                  filter: 'drop-shadow(0 0 8px #00f3ff) drop-shadow(0 0 16px rgba(0,243,255,0.6))'
-                }}
-                initial={false}
-                animate={{
-                  strokeDasharray: "44 350",
-                  strokeDashoffset: `${[
-                    -26,   // Pedidos (Refinado)
-                    -99,   // Cardápio (Refinado)
-                    -173,  // Busca (Centro Exato)
-                    -246,  // Financeiro (Refinado)
-                    -320   // Histórico (Refinado)
-                  ][['orders', 'menu', 'search', 'finance', 'orders-history'].indexOf(activeTab)]}px`
-                }}
-                transition={{ type: "spring", stiffness: 220, damping: 26 }}
-              />
-            </svg>
-
-            {/* ARCO SUPERIOR (Viseira - Recalibrado para 115px) */}
-            <svg
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '191%',
-                zIndex: 20, 
-                pointerEvents: 'none'
-              }}
-              viewBox="0 0 390 115"
-              preserveAspectRatio="none"
-            >
-              {/* Apenas a Linha do Arco (Sem Preenchimento) */}
-              <path
-                d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28"
-                fill="none"
-                stroke="none"
-              />
-            </svg>
-
-            {/* Halo de Seleção */}
-            <motion.div
-              style={{
-                position: 'absolute',
-                top: '25px',
-                width: '110px',
-                height: '60px',
-                marginLeft: '-55px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(160,200,255,0.22), rgba(160,200,255,0.04) 50%, transparent 72%)',
-                filter: 'blur(15px)',
-                zIndex: 2,
-                pointerEvents: 'none'
-              }}
-              animate={{ left: (['orders', 'menu', 'search', 'finance', 'orders-history'].indexOf(activeTab) * 20 + 10) + '%' }}
-              transition={{ type: "spring", stiffness: 200, damping: 25 }}
-            />
-
-
-
-            {/* Container de Ícones (Centralizado entre os arcos) */}
-            <div style={{
-              position: 'absolute',
-              top: '42px', // Descido de 35px para 42px para centralizar melhor
-              left: 0,
-              right: 0,
-              padding: '0 24px',
-              zIndex: 5
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start'
-              }}>
-                <LayoutGroup>
-                  {[
-                    { id: 'orders-history', icon: ClipboardList, offset: 8 },
-                    { id: 'menu', icon: ShoppingBag, offset: 0 },
-                    { id: 'search', icon: Search, offset: -12 },
-                    { id: 'finance', icon: MoneyBagIcon, offset: 0 },
-                    { id: 'orders', icon: Home, offset: 8 }
-                  ].map((item, index) => {
-                    const isActive = activeTab === item.id;
-                    return (
-                      <motion.button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveTab(item.id);
-                        }}
-                        style={{
-                          width: '48px',
-                          background: 'none',
-                          border: 'none',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          position: 'relative',
-                          cursor: 'pointer',
-                          WebkitTapHighlightColor: 'transparent'
-                        }}
-                        animate={{ y: item.offset }}
-                        transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                      >
-                        <motion.div
-                          style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                          }}
-                          animate={{
-                            scale: 1,
-                            opacity: isActive ? 1 : 0.6,
-                            filter: isActive 
-                              ? 'drop-shadow(0 0 12px rgba(0, 243, 255, 0.8))' 
-                              : 'drop-shadow(0 0 2px rgba(0, 243, 255, 0.1))'
-                          }}
-                          transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                        >
-
-                          <item.icon 
-                            size={24} 
-                            isActive={isActive}
-                            color="#ffffff"
-                            strokeWidth={isActive ? 2.2 : 1.8}
-                            style={{ 
-                              position: 'relative', 
-                              zIndex: 2,
-                              transform: item.id === 'search' 
-                                ? 'translateY(7px)' 
-                                : 'none'
-                            }}
-                          />
-                        </motion.div>
-                      </motion.button>
-                    );
-                  })}
-                </LayoutGroup>
-              </div>
-            </div>
-
-            {/* Texto de Identificação (Abaixo da Linha do Arco) */}
-            <div style={{
-              position: 'absolute',
-              bottom: '5px',
-              left: 0,
-              right: 0,
-              display: 'flex',
-              justifyContent: 'center',
-              zIndex: 10
-            }}>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: '900',
-                    color: '#ffffff',
-                    letterSpacing: '2.5px',
-                    textTransform: 'uppercase',
-                    textShadow: '0 0 12px rgba(0, 243, 255, 0.6)'
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 5000 }}>
+          <motion.nav style={{ height: '115px', position: 'relative' }}>
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '166%', transform: 'translateY(-66px)' }} viewBox="0 0 390 115" preserveAspectRatio="none">
+                <path d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z" fill="rgba(5, 5, 7, 0.94)" style={{ backdropFilter: 'blur(8px)' }} />
+                <path d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102 V115 H0 Z" fill="#121215" />
+                <motion.path
+                  d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  style={{ filter: 'drop-shadow(0 0 8px #00f3ff)' }}
+                  animate={{
+                    strokeDasharray: "44 350",
+                    strokeDashoffset: `${[
+                      -26,   // Histórico
+                      -99,   // Cardápio
+                      -173,  // Busca
+                      -246,  // Financeiro
+                      -320   // Pedidos
+                    ][['orders-history', 'menu', 'search', 'finance', 'orders'].indexOf(activeTab)]}px`
                   }}
-                >
-                  {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
-                </motion.span>
-              </AnimatePresence>
-            </div>
+                  transition={{ type: "spring", stiffness: 220, damping: 26 }}
+                />
+              </svg>
+
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '191%', zIndex: 20, pointerEvents: 'none' }} viewBox="0 0 390 115" preserveAspectRatio="none">
+                <path d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />
+              </svg>
+
+              <motion.div
+                style={{ position: 'absolute', top: '25px', width: '110px', height: '60px', marginLeft: '-55px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(160,200,255,0.22), transparent 72%)', filter: 'blur(15px)', zIndex: 2 }}
+                animate={{ left: (['orders-history', 'menu', 'search', 'finance', 'orders'].indexOf(activeTab) * 20 + 10) + '%' }}
+                transition={{ type: "spring", stiffness: 200, damping: 25 }}
+              />
+
+              <div style={{ position: 'absolute', top: '42px', left: 0, right: 0, padding: '0 24px', zIndex: 5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <LayoutGroup>
+                    {[
+                      { id: 'orders-history', icon: HistoryIcon, offset: 8 },
+                      { id: 'menu', icon: ShoppingBag, offset: 0 },
+                      { id: 'search', icon: Search, offset: -12 },
+                      { id: 'finance', icon: MoneyBagIcon, offset: 0 },
+                      { id: 'orders', icon: Home, offset: 8 }
+                    ].map((item) => {
+                      const isActive = activeTab === item.id;
+                      return (
+                        <motion.button
+                          key={item.id}
+                          onClick={() => setActiveTab(item.id)}
+                          style={{ width: '48px', background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
+                          animate={{ y: item.offset }}
+                        >
+                          <motion.div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} animate={{ opacity: isActive ? 1 : 0.6 }}>
+                            <item.icon size={24} isActive={isActive} color="#ffffff" style={{ transform: item.id === 'search' ? 'translateY(7px)' : 'none' }} />
+                          </motion.div>
+                        </motion.button>
+                      );
+                    })}
+                  </LayoutGroup>
+                </div>
+              </div>
+
+              <div style={{ position: 'absolute', bottom: '5px', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    style={{ fontSize: '12px', fontWeight: '500', color: '#ffffff', letterSpacing: '2.5px', textTransform: 'uppercase', textShadow: '0 0 12px rgba(0, 243, 255, 0.6)' }}
+                  >
+                    {activeTab === 'orders' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Histórico'}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
             </div>
           </motion.nav>
         </div>
