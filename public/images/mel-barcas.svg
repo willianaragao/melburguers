@@ -1,0 +1,133 @@
+<svg width="420" height="140" viewBox="0 0 420 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="honeyMain" x1="210" y1="10" x2="210" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFF3A6"/>
+      <stop offset="22%" stop-color="#FFE15A"/>
+      <stop offset="55%" stop-color="#FFC400"/>
+      <stop offset="100%" stop-color="#F09A00"/>
+    </linearGradient>
+
+    <linearGradient id="honeyEdge" x1="0" y1="40" x2="420" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E59A00"/>
+      <stop offset="50%" stop-color="#FFD24A"/>
+      <stop offset="100%" stop-color="#E59A00"/>
+    </linearGradient>
+
+    <filter id="glow" x="-20%" y="-40%" width="140%" height="220%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix
+        in="blur"
+        type="matrix"
+        values="
+          1 0 0 0 0
+          0 0.8 0 0 0
+          0 0.2 0 0 0
+          0 0 0 0.45 0"
+        result="glowColor"/>
+      <feMerge>
+        <feMergeNode in="glowColor"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="180%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#B66A00" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <!-- brilho externo -->
+  <path
+    d="M18 52
+       C50 47, 84 40, 118 31
+       C143 24, 172 19, 210 18
+       C248 17, 278 24, 304 33
+       C336 43, 364 48, 402 46
+       C390 53, 379 58, 368 63
+       C356 68, 349 76, 346 88
+       C344 98, 336 104, 327 104
+       C318 104, 311 97, 311 88
+       C311 77, 304 69, 291 68
+       C276 67, 268 75, 268 90
+       C268 103, 260 111, 248 111
+       C236 111, 228 103, 228 88
+       C228 75, 220 68, 207 68
+       C193 68, 184 76, 184 95
+       C184 116, 172 128, 156 128
+       C140 128, 128 116, 128 96
+       C128 78, 119 69, 105 69
+       C92 69, 84 77, 83 89
+       C82 104, 73 112, 61 112
+       C46 112, 38 101, 38 86
+       C38 71, 32 61, 18 52Z"
+    fill="url(#honeyMain)"
+    opacity="0.22"
+    filter="url(#glow)"
+  />
+
+  <!-- corpo principal -->
+  <path
+    d="M26 56
+       C62 48, 96 41, 126 33
+       C151 26, 178 21, 210 20
+       C246 19, 275 25, 301 34
+       C330 44, 360 48, 394 48
+
+       C382 54, 370 59, 360 64
+       C348 70, 342 79, 340 90
+       C338 100, 332 106, 324 106
+       C316 106, 309 100, 309 91
+       C309 79, 302 71, 289 70
+       C274 69, 264 77, 264 93
+       C264 107, 256 115, 244 115
+       C232 115, 224 107, 224 92
+       C224 77, 216 69, 204 69
+       C190 69, 181 78, 181 100
+       C181 122, 168 135, 152 135
+       C136 135, 123 122, 123 100
+       C123 81, 115 72, 101 72
+       C88 72, 80 80, 79 93
+       C78 107, 70 115, 59 115
+       C46 115, 38 106, 38 92
+       C38 76, 34 65, 26 56Z"
+    fill="url(#honeyMain)"
+    stroke="url(#honeyEdge)"
+    stroke-width="3"
+    filter="url(#softShadow)"
+  />
+
+  <!-- gota central separada -->
+  <path
+    d="M145 116
+       C151 125, 156 132, 156 140
+       C156 149, 150 155, 143 155
+       C135 155, 129 149, 129 140
+       C129 132, 135 124, 145 116Z"
+    transform="translate(0,-18)"
+    fill="url(#honeyMain)"
+    stroke="#E39A00"
+    stroke-width="2"
+    filter="url(#softShadow)"
+  />
+
+  <!-- highlights -->
+  <path
+    d="M58 46
+       C110 33, 163 24, 231 24
+       C271 24, 307 28, 337 36"
+    stroke="white"
+    stroke-opacity="0.55"
+    stroke-width="7"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
+
+  <ellipse cx="120" cy="63" rx="14" ry="8" fill="white" fill-opacity="0.42"/>
+  <ellipse cx="258" cy="36" rx="10" ry="6" fill="white" fill-opacity="0.34"/>
+  <ellipse cx="286" cy="38" rx="7" ry="5" fill="white" fill-opacity="0.28"/>
+  <ellipse cx="331" cy="66" rx="8" ry="5" fill="white" fill-opacity="0.30"/>
+
+  <!-- brilho nos pingos -->
+  <ellipse cx="147" cy="101" rx="6" ry="10" fill="white" fill-opacity="0.30"/>
+  <ellipse cx="223" cy="88" rx="5" ry="8" fill="white" fill-opacity="0.22"/>
+  <ellipse cx="331" cy="83" rx="4" ry="7" fill="white" fill-opacity="0.22"/>
+</svg>

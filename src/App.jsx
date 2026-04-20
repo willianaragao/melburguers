@@ -9,6 +9,114 @@ import confetti from 'canvas-confetti';
 import { supabase } from './utils/supabase';
 import { getMenuData } from './utils/menuStore';
 
+const HoneySVG = ({ id }) => (
+  <span className="honey-svg" aria-hidden="true">
+    <svg viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={`honeyFill-${id}`} x1="110" y1="0" x2="110" y2="90" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFF17A"/>
+          <stop offset="25%" stopColor="#FFD400"/>
+          <stop offset="65%" stopColor="#FFB300"/>
+          <stop offset="100%" stopColor="#F08A00"/>
+        </linearGradient>
+        <linearGradient id={`honeyStroke-${id}`} x1="0" y1="0" x2="220" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#E08A00"/>
+          <stop offset="50%" stopColor="#FFC52A"/>
+          <stop offset="100%" stopColor="#D97706"/>
+        </linearGradient>
+        <filter id={`honeyShadow-${id}`} x="-20%" y="-30%" width="140%" height="180%">
+          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#C97700" floodOpacity="0.25"/>
+        </filter>
+      </defs>
+
+      <path
+        d="M16 24
+           C28 10, 46 8, 68 10
+           C88 11, 107 9, 126 9
+           C144 9, 164 11, 184 10
+           C198 10, 208 13, 212 21
+           C210 28, 204 30, 198 30
+           C191 30, 186 34, 185 40
+           C184 47, 180 52, 172 52
+           C163 52, 159 45, 160 37
+           C161 30, 157 26, 149 26
+           C141 26, 136 30, 136 38
+           C136 48, 131 54, 121 54
+           C111 54, 106 47, 106 36
+           C106 29, 102 25, 94 25
+           C84 25, 80 30, 80 41
+           C80 53, 74 60, 63 60
+           C51 60, 44 52, 45 39
+           C46 30, 41 26, 31 26
+           C24 26, 19 25, 16 24Z"
+        fill={`url(#honeyFill-${id})`}
+        stroke={`url(#honeyStroke-${id})`}
+        strokeWidth="2.4"
+        filter={`url(#honeyShadow-${id})`}
+      />
+
+      <path
+        d="M52 20 C82 13, 118 13, 164 18"
+        fill="none"
+        stroke="rgba(255,255,255,0.48)"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+      <ellipse cx="46" cy="24" rx="18" ry="8" fill="secondary" style={{ fill: 'rgba(255,255,255,0.22)' }} />
+      <ellipse cx="131" cy="19" rx="26" ry="7" fill="secondary" style={{ fill: 'rgba(255,255,255,0.16)' }} />
+      <ellipse cx="177" cy="22" rx="16" ry="5" fill="secondary" style={{ fill: 'rgba(255,255,255,0.18)' }} />
+    </svg>
+  </span>
+);
+
+const SobremesaHoneySVG = ({ id }) => (
+  <span className="honey-svg" aria-hidden="true" style={{ width: '82px', top: '-7px' }}>
+    <svg viewBox="0 0 180 52" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={`honeyFillWide-${id}`} x1="90" y1="0" x2="90" y2="52" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFF3A6"/>
+          <stop offset="22%" stopColor="#FFD84A"/>
+          <stop offset="58%" stopColor="#FFBE14"/>
+          <stop offset="100%" stopColor="#E58A00"/>
+        </linearGradient>
+        <linearGradient id={`honeyStrokeWide-${id}`} x1="0" y1="0" x2="180" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#D98500"/>
+          <stop offset="50%" stopColor="#FFC12A"/>
+          <stop offset="100%" stopColor="#D98500"/>
+        </linearGradient>
+        <filter id={`honeyShadowWide-${id}`} x="-20%" y="-20%" width="140%" height="180%">
+          <feDropShadow dx="0" dy="2.5" stdDeviation="3" floodColor="#C97B00" floodOpacity="0.22"/>
+        </filter>
+      </defs>
+
+      <path
+        d="M12 18 C22 8, 38 6, 56 8 C72 10, 90 10, 108 8 C126 6, 144 7, 160 10 C168 12, 172 15, 170 20 C167 22, 164 23, 160 23 C154 23, 150 25, 149 30 C148 36, 144 40, 138 40 C132 40, 128 36, 128 30 C128 25, 125 22 120 22 C114 22, 111 25, 111 32 C111 40, 106 45, 99 45 C91 45, 87 39, 87 31 C87 25, 84 22, 79 22 C73 22, 69 25, 69 31 C69 38, 65 42, 58 42 C50 42, 46 37, 46 29 C46 24, 43 22, 38 22 C31 22, 27 25, 27 32 C27 40, 22 45, 15 45 C8 45, 5 38, 8 29 C10 24, 12 21, 12 18 Z"
+        fill={`url(#honeyFillWide-${id})`}
+        stroke={`url(#honeyStrokeWide-${id})`}
+        strokeWidth="2.2"
+        filter={`url(#honeyShadowWide-${id})`}
+      />
+
+      <path
+        d="M28 13 C55 7, 92 7, 145 12"
+        fill="none"
+        stroke="rgba(255,255,255,0.55)"
+        strokeWidth="4.5"
+        strokeLinecap="round"
+      />
+
+      <ellipse cx="38" cy="15" rx="12" ry="5" fill="secondary" style={{ fill: 'rgba(255,255,255,0.18)' }} />
+      <ellipse cx="104" cy="13" rx="18" ry="4.5" fill="secondary" style={{ fill: 'rgba(255,255,255,0.13)' }} />
+      <ellipse cx="145" cy="16" rx="10" ry="4" fill="secondary" style={{ fill: 'rgba(255,255,255,0.15)' }} />
+
+      <ellipse cx="138" cy="30" rx="3.5" ry="7" fill="secondary" style={{ fill: 'rgba(255,255,255,0.18)' }} />
+      <ellipse cx="99" cy="34" rx="4" ry="8" fill="secondary" style={{ fill: 'rgba(255,255,255,0.18)' }} />
+      <ellipse cx="58" cy="31" rx="3.5" ry="7" fill="secondary" style={{ fill: 'rgba(255,255,255,0.16)' }} />
+      <ellipse cx="15" cy="33" rx="3" ry="6" fill="secondary" style={{ fill: 'rgba(255,255,255,0.14)' }} />
+    </svg>
+  </span>
+);
+
 const App = () => {
   const [appMenuData, setAppMenuData] = useState(getMenuData());
   const [activeCategory, setActiveCategory] = useState(null);
@@ -235,11 +343,15 @@ const App = () => {
         {categories.map(cat => (
           <button 
             key={cat} 
-            className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
+            className={`categoria-pill ${activeCategory === cat ? 'active' : ''}`}
             onClick={() => scrollToCategory(cat)}
           >
-            <div className="honey-drip"></div>
-            <span style={{ position: 'relative', zIndex: 11 }}>{cat}</span>
+            {cat === 'Sobremesas' ? (
+              <SobremesaHoneySVG id={cat.replace(/\s+/g, '-')} />
+            ) : (
+              <HoneySVG id={cat.replace(/\s+/g, '-')} />
+            )}
+            <span className="label">{cat}</span>
           </button>
         ))}
       </nav>

@@ -1,0 +1,89 @@
+<svg width="220" height="48" viewBox="0 0 220 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="honeyFill" x1="110" y1="0" x2="110" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFE89A"/>
+      <stop offset="38%" stop-color="#FFC93A"/>
+      <stop offset="72%" stop-color="#F2A800"/>
+      <stop offset="100%" stop-color="#D88900"/>
+    </linearGradient>
+
+    <linearGradient id="honeyStroke" x1="0" y1="12" x2="220" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F7B500"/>
+      <stop offset="100%" stop-color="#C97800"/>
+    </linearGradient>
+
+    <filter id="honeyShadow" x="-10%" y="-20%" width="120%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#D98B00" flood-opacity="0.20"/>
+    </filter>
+
+    <filter id="innerGlow" x="-10%" y="-20%" width="120%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
+      <feOffset dx="0" dy="0"/>
+      <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1"/>
+      <feColorMatrix type="matrix" values="
+        0 0 0 0 1
+        0 0 0 0 0.96
+        0 0 0 0 0.75
+        0 0 0 0.45 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#honeyShadow)">
+    <path
+      d="
+        M14 24
+        C20 10, 34 6, 48 10
+        C58 13, 66 17, 76 15
+        C88 13, 97 7, 110 10
+        C123 13, 132 16, 143 14
+        C155 12, 165 8, 177 11
+        C189 14, 198 18, 206 24
+
+        L206 26
+        C199 25, 194 26, 191 31
+        C188 36, 189 42, 183 44
+        C177 46, 171 42, 171 36
+        C171 30, 168 27, 162 27
+        C156 27, 153 30, 153 35
+        C153 41, 149 46, 142 46
+        C134 46, 129 40, 130 33
+        C131 27, 128 24, 122 24
+        C115 24, 112 28, 112 36
+        C112 43, 107 47, 100 47
+        C92 47, 88 42, 88 34
+        C88 28, 84 25, 78 25
+        C71 25, 68 29, 68 34
+        C68 40, 64 44, 58 44
+        C51 44, 47 39, 48 33
+        C49 28, 45 26, 39 26
+        C31 26, 24 25, 14 26
+        Z
+      "
+      fill="url(#honeyFill)"
+      stroke="url(#honeyStroke)"
+      stroke-width="2"
+      stroke-linejoin="round"
+      filter="url(#innerGlow)"
+    />
+  </g>
+
+  <path
+    d="M34 14 C40 10, 48 10, 55 14"
+    stroke="rgba(255,255,255,0.55)"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M94 12 C101 8, 110 8, 118 12"
+    stroke="rgba(255,255,255,0.42)"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M154 13 C161 10, 169 10, 176 14"
+    stroke="rgba(255,255,255,0.35)"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+</svg>

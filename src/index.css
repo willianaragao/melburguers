@@ -188,66 +188,82 @@ body {
   flex: 0 0 46px;
 }
 
-/* Category Navigation */
+/* 🍯 SISTEMA DEFINITIVO: Categoria Pill + Honey SVG */
 .category-nav {
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 15px 20px;
-  background: var(--glass);
-  backdrop-filter: blur(10px);
-  display: flex;
-  gap: 12px;
+  padding: 28px 12px 16px;
+  background: var(--bg);
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: center; /* Centraliza as categorias */
+  gap: 10px;
   overflow-x: auto;
   scrollbar-width: none;
   border-bottom: 1px solid var(--border);
+  flex-wrap: nowrap !important;
 }
 
-.category-nav::-webkit-scrollbar {
-  display: none;
-}
+.category-nav::-webkit-scrollbar { display: none; }
 
-.category-btn {
+.categoria-pill {
   position: relative;
-  min-width: 110px;
-  height: 44px;
-  border-radius: 22px;
-  display: flex;
+  min-width: 96px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.2px solid #f2a00a;
+  background: #ffffff;
+  color: #d78400;
+  font: 700 13px/1 sans-serif;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid var(--primary);
-  background: var(--bg);
-  color: var(--primary);
-  font-weight: 800;
-  font-size: 14px;
-  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  overflow: visible !important;
   cursor: pointer;
-  transition: all 0.3s;
-  overflow: visible;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.honey-drip {
+.categoria-pill.active {
+  background: linear-gradient(180deg, #f7ab21 0%, #e5920f 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 16px rgba(229,146,15,0.22);
+  border-color: transparent;
+}
+
+.categoria-pill .label {
+  position: relative;
+  z-index: 2;
+  margin-top: 2px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.honey-svg {
   position: absolute;
-  top: -14px; 
-  left: -2px;
-  right: -2px;
-  height: 32px; 
-  background-image: url('/images/honey-frame.png');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  z-index: 10;
+  top: -6px; /* Ajuste final para sentar na margem superior */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 76px;
+  height: auto;
   pointer-events: none;
+  z-index: 3;
 }
 
-.category-btn.active {
-  background: var(--primary);
-  color: white;
-  box-shadow: 0 8px 20px rgba(236,148,36,0.25);
+.honey-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
-/* Menu Items */
+/* Menu Items Standard */
 .menu-section {
-  padding: 30px 20px 100px;
+  padding: 20px;
 }
 
 .section-title {
