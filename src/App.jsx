@@ -319,22 +319,10 @@ const App = () => {
   );
 
   return (
-    <div className="app-container" style={{ background: isDarkMode ? '#0C0C0E' : '#FFFFFF', transition: 'background 0.3s' }}>
-      {/* 1. Banner */}
-      <div className="banner-top" style={{ position: 'relative' }}>
+    <div className="app-container">
+      {/* 1. Header Premium */}
+      <div className="banner-top">
         <img src="/images/MEL Burgers iluminado e convidativo.png" alt="Mel Burgers Banner" />
-        <button 
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          style={{ 
-            position: 'absolute', top: '24px', right: '24px', zIndex: 150, 
-            background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', 
-            border: '1px solid rgba(255,255,255,0.2)', width: '36px', height: '36px', 
-            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            cursor: 'pointer', color: 'white'
-          }}
-        >
-          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
       </div>
 
       <header className="insta-header">
@@ -344,28 +332,21 @@ const App = () => {
               <img src="/images/logo.png" alt="Mel Burgers Logo" />
             </div>
           </div>
-          <div className="profile-title-area">
-            <div className="username-row">
-              <h2>melburguers</h2>
-              <BadgeCheck size={20} fill="#0095f6" color="white" />
-              <MoreHorizontal size={20} style={{ marginLeft: 'auto', color: '#8e8e8e' }} />
+          <div className="username-row">
+            <h2>MELBURGERS</h2>
+            <div className="bio-text">
+              Sabor que conquista na primeira mordida ✨ <br />
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '8px' }}>
+                <span><Truck size={12} /> Delivery</span>
+                <span><MapPin size={12} /> Tamoios</span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="bio-area">
-          <div className="bio-text">
-            Sabor que conquista na primeira mordida ✨ <br />
-            <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
-            Somente Delivery <br />
-            <MapPin size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
-            Tamoios • Cabo Frio 🌴 <br />
-            <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
-            Seg a Seg • 19h às 01h
-          </div>
-        </div>
+        
         <div className="header-actions">
-          <a href="https://www.instagram.com/melburgerrs/" target="_blank" rel="noopener noreferrer" className="action-btn btn-primary" style={{ textDecoration: 'none' }}>Seguir</a>
-          <button className="action-btn btn-secondary btn-icon" onClick={() => setIsCartOpen(true)}>
+          <a href="https://www.instagram.com/melburgerrs/" target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none' }}>VER INSTAGRAM</a>
+          <button className="btn-secondary" onClick={() => setIsCartOpen(true)}>
             <ShoppingCart size={20} />
           </button>
         </div>
@@ -376,33 +357,48 @@ const App = () => {
           <button 
             key={cat} 
             className={`categoria-pill ${activeCategory === cat ? 'active' : ''}`}
-            onClick={() => scrollToCategory(cat)}
+            onClick={() => {
+              setActiveCategory(cat);
+              scrollToCategory(cat);
+            }}
           >
-            {cat === 'Sobremesas' ? (
-              <SobremesaHoneySVG id={cat.replace(/\s+/g, '-')} />
-            ) : (
-              <HoneySVG id={cat.replace(/\s+/g, '-')} />
-            )}
-            <span className="label">{cat}</span>
+            {cat}
           </button>
         ))}
       </nav>
 
       <main className="menu-section">
         {categories.map(cat => (
-          <section id={`category-${cat}`} key={cat} style={{ marginBottom: '48px' }}>
+          <section id={`category-${cat}`} key={cat}>
             <h2 className="section-title">{cat}</h2>
             <div className="items-grid">
-              {appMenuData.menu[cat].map((item, i) => (
-                <motion.div key={i} className="menu-card" initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              {(appMenuData.menu[cat] || []).map((item, i) => (
+                <motion.div 
+                  key={i} 
+                  className="menu-card" 
+                  initial={{ opacity: 0, y: 15 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
+                  viewport={{ once: true }}
+                >
                   <div className="card-info">
-                    <div className="card-header"><h3>{item.name}</h3><p>{item.description}</p></div>
+                    <div className="card-header">
+                      <h3>{item.name}</h3>
+                      <p>{item.description || 'Sem descrição definida'}</p>
+                    </div>
                     <div className="card-footer">
-                      <span className="price-tag">R$ {item.price.toFixed(2).replace('.', ',')}</span>
+                      <span className="price-tag">R$ {item.price ? item.price.toFixed(2).replace('.', ',') : '0,00'}</span>
                       <button className="add-btn" onClick={() => addToCart(item)}><Plus size={22} strokeWidth={3} /></button>
                     </div>
                   </div>
-                  <div className="card-img"><img src={item.image} alt={item.name} /></div>
+                  <div className="card-img">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333' }}>
+                        <ShoppingCart size={24} />
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -410,22 +406,27 @@ const App = () => {
         ))}
       </main>
 
-      {/* 5. Floating Cart */}
-      {cart.length > 0 && !isCartOpen && (
-        <div style={{ position: 'fixed', bottom: '30px', left: 0, right: 0, zIndex: 1000, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
-          <motion.div 
-            className="cart-floating"
-            style={{ pointerEvents: 'auto', position: 'relative', left: 'auto', transform: 'none', width: '95%', maxWidth: '460px' }}
-            initial={{ y: 100, opacity: 0 }} 
-            animate={{ y: 0, opacity: 1 }}
-            onClick={() => setIsCartOpen(true)}
-          >
-            <div className="cart-count">{cart.length}</div>
-            <div className="cart-view-text">Ver Carrinho</div>
-            <div style={{ fontWeight: 800 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</div>
-          </motion.div>
-        </div>
-      )}
+      {/* 5. Floating Cart Premium */}
+      <AnimatePresence>
+        {cart.length > 0 && !isCartOpen && (
+          <div style={{ position: 'fixed', bottom: '30px', left: 0, right: 0, zIndex: 1000, display: 'flex', justifyContent: 'center', pointerEvents: 'none', padding: '0 20px' }}>
+            <motion.div 
+              className="cart-floating"
+              initial={{ y: 50, opacity: 0 }} 
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              style={{ pointerEvents: 'auto', width: '100%', maxWidth: '460px' }}
+              onClick={() => setIsCartOpen(true)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="cart-count">{cart.length}</div>
+                <div className="cart-view-text">Carrinho</div>
+              </div>
+              <div style={{ fontWeight: 900, fontSize: '18px' }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isCartOpen && (

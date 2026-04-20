@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShoppingBag, Printer, Bell, CheckCircle, Clock, 
-  RefreshCcw, ChevronRight, LayoutDashboard, Settings, Edit, Plus, Trash2, Save, X, Image as ImageIcon,
+  RefreshCcw, ChevronRight, LayoutDashboard, Settings, Edit, Plus, Trash2, Save, X, Image as ImageIcon, Camera, Upload,
   DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare,
-  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown
+  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown, GripVertical
 } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { printOrder, formatOrderForPrinter, connectToPrinter, sendToPrinter } from './utils/printer';
+import { 
+  DndContext, closestCorners, KeyboardSensor, PointerSensor, 
+  useSensor, useSensors, DragOverlay 
+} from '@dnd-kit/core';
+import { 
+  SortableContext, arrayMove, sortableKeyboardCoordinates, 
+  rectSortingStrategy, useSortable 
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { getMenuData, saveMenuData } from './utils/menuStore';
 import { supabase } from './utils/supabase';
+import { formatOrderForPrinter, connectToPrinter, sendToPrinter, printOrder } from './utils/printer';
 import { FinanceDashboard } from './FinanceDashboard';
 import { OrdersKanban } from './OrdersKanban';
 
@@ -162,6 +171,121 @@ const SearchIcon = ({ size = 24, className, style, isActive }) => (
   </svg>
 );
 
+const MenuSkeleton = () => (
+  <div style={{ 
+    padding: '16px', 
+    background: 'rgba(255,255,255,0.02)', 
+    borderRadius: '20px', 
+    border: '1px solid rgba(255,255,255,0.05)',
+    display: 'flex', 
+    gap: '16px',
+    alignItems: 'center',
+    position: 'relative',
+    minHeight: '130px',
+    overflow: 'hidden'
+  }}>
+    {/* Image Placeholder */}
+    <div style={{ 
+      width: '80px', height: '80px', borderRadius: '14px', 
+      background: 'rgba(255,255,255,0.03)', position: 'relative'
+    }}>
+      <motion.div
+        animate={{ x: ['-100%', '100%'] }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)'
+        }}
+      />
+    </div>
+    
+    <div style={{ flex: 1 }}>
+      {/* Title Placeholder */}
+      <div style={{ width: '40%', height: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', marginBottom: '8px', position: 'relative', overflow: 'hidden' }}>
+        <motion.div animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)' }} />
+      </div>
+      {/* Desc Placeholder */}
+      <div style={{ width: '80%', height: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '3px', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
+        <motion.div animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)' }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ width: '50px', height: '16px', background: 'rgba(34,197,94,0.05)', borderRadius: '4px', position: 'relative', overflow: 'hidden' }}>
+           <motion.div animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, rgba(34,197,94,0.1), transparent)' }} />
+        </div>
+        <div style={{ width: '24px', height: '24px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px' }} />
+      </div>
+    </div>
+  </div>
+);
+
+const SortableMenuItem = ({ item, cat, handleEditItem }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -4, background: 'rgba(255,255,255,0.05)' }}
+        style={{ 
+          padding: '16px', 
+          background: 'rgba(255,255,255,0.02)', 
+          borderRadius: '20px', 
+          border: '1px solid rgba(255,255,255,0.05)',
+          display: 'flex', 
+          gap: '16px',
+          alignItems: 'center',
+          cursor: 'pointer',
+          position: 'relative',
+          minHeight: '130px', // Garante tamanho uniforme
+          boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.4)' : 'none'
+        }}
+        onClick={() => handleEditItem(cat, item)}
+      >
+        <div 
+          {...attributes} {...listeners} 
+          style={{ width: '24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)', cursor: 'grab' }}
+        >
+          <GripVertical size={16} />
+        </div>
+
+        <div style={{ width: '80px', height: '80px', borderRadius: '14px', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
+          {item.image ? (
+            <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#27272a' }}>
+              <ImageIcon size={24} />
+            </div>
+          )}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignSelf: 'stretch', justifyContent: 'center' }}>
+          <div style={{ fontWeight: 800, fontSize: '15px', color: 'white', marginBottom: '4px', wordBreak: 'break-word', lineHeight: '1.2' }}>
+            {item.name}
+          </div>
+          <div style={{ color: '#52525b', fontSize: '11px', marginBottom: '8px', lineHeight: '1.4', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+            {item.description || 'Sem descrição definida'}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+            <div style={{ color: '#22c55e', fontSize: '16px', fontWeight: 900 }}>
+              R$ {item.price ? item.price.toFixed(2) : '0.00'}
+            </div>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EC9424' }}>
+              <Edit size={14} />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 const SettingsIcon = ({ size = 24, className, style, isActive }) => (
   <svg 
     width={size} 
@@ -240,9 +364,8 @@ const AdminDashboard = () => {
   });
 
   const [orders, setOrders] = useState([]);
-  const [dbError, setDbError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastSync, setLastSync] = useState(new Date());
-  const [isPrinting, setIsPrinting] = useState(false);
   const [isPrinterReady, setIsPrinterReady] = useState(false);
   const [isAutoPrint, setIsAutoPrint] = useState(appSettings.autoPrint);
   const printerRef = useRef(null);
@@ -252,17 +375,21 @@ const AdminDashboard = () => {
   const [financeTransactions, setFinanceTransactions] = useState([]);
   const [financeCategories, setFinanceCategories] = useState([]);
   const [viewMode, setViewMode] = useState(appSettings.defaultViewMode);
-  const [defaultCategories] = useState([
-    { id: '1', name: 'Suprimentos', color: '#3b82f6' },
-    { id: '2', name: 'Contas', color: '#ef4444' },
-    { id: '3', name: 'Funcionários', color: '#10b981' },
-    { id: '4', name: 'Manutenção', color: '#f59e0b' },
-  ]);
   
   // Menu State
   const [appMenuData, setAppMenuData] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const [isMenuLoading, setIsMenuLoading] = useState(true);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // POS (Point of Sale) State
+  const [posCart, setPosCart] = useState([]);
+  const [posCustomer, setPosCustomer] = useState({ name: '', phone: '', address: '', number: '', payment: 'Pix' });
 
   const playBellSound = () => {
     try {
@@ -344,14 +471,16 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // Only fetch menu data on client after auth
-    setAppMenuData(getMenuData());
+    setIsMenuLoading(true);
+    const data = getMenuData();
+    setAppMenuData(data);
+    setTimeout(() => setIsMenuLoading(false), 800);
   }, []);
 
     const fetchOrders = async () => {
     if (!isAuthenticated) return;
     
     try {
-      setDbError(null);
       
       const { data: activeData, error: activeError } = await supabase
         .from('pedidos')
@@ -359,10 +488,10 @@ const AdminDashboard = () => {
         .order('created_at', { ascending: false });
         
       if (activeError) {
-        setDbError("Erro na tabela pedidos: " + activeError.message);
+        console.error("Erro na tabela pedidos:", activeError.message);
       }
 
-      const { data: deletedData, error: deletedError } = await supabase
+      const { data: deletedData } = await supabase
         .from('pedidos_excluidos')
         .select('*')
         .order('created_at', { ascending: false });
@@ -380,7 +509,6 @@ const AdminDashboard = () => {
       setLastSync(new Date());
     } catch (err) {
       console.error("CRITICAL SYNC ERROR:", err);
-      setDbError("Erro crítico de sincronização.");
     }
   };
 
@@ -641,7 +769,6 @@ const AdminDashboard = () => {
   };
 
   const handlePrint = async (order) => {
-    setIsPrinting(true);
     const printerData = formatOrderForPrinter(order.items, order.total, order.address);
     
     try {
@@ -653,8 +780,6 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       alert("Erro ao imprimir. Verifique a conexão com a impressora.");
-    } finally {
-      setIsPrinting(false);
     }
   };
 
@@ -751,6 +876,75 @@ const AdminDashboard = () => {
     setEditingCategory(null);
   };
 
+  const handleDragEndMenu = (event, category) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = appMenuData.menu[category].findIndex(i => i.id === active.id);
+      const newIndex = appMenuData.menu[category].findIndex(i => i.id === over.id);
+      
+      const newMenu = { ...appMenuData };
+      newMenu.menu[category] = arrayMove(newMenu.menu[category], oldIndex, newIndex);
+      handleSaveMenu(newMenu);
+    }
+  };
+
+  const handleAddToCartPos = (item) => {
+    const existing = posCart.find(i => i.id === item.id);
+    if (existing) {
+      setPosCart(posCart.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+    } else {
+      setPosCart([...posCart, { ...item, quantity: 1 }]);
+    }
+  };
+
+  const handleRemoveFromCartPos = (itemId) => {
+    setPosCart(posCart.filter(i => i.id !== itemId));
+  };
+
+  const handleUpdateCartQtyPos = (itemId, delta) => {
+    setPosCart(posCart.map(i => {
+      if (i.id === itemId) {
+        const newQty = Math.max(1, i.quantity + delta);
+        return { ...i, quantity: newQty };
+      }
+      return i;
+    }));
+  };
+
+  const handleFinalizePos = async () => {
+    if (posCart.length === 0) return alert("Carrinho vazio!");
+    if (!posCustomer.name) return alert("Pelo menos o nome do cliente é obrigatório!");
+
+    const subtotal = posCart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const orderData = {
+      order_id: `ADM-${Date.now().toString().slice(-6)}`,
+      items: posCart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+      total: subtotal,
+      status: 'preparo',
+      payment_method: posCustomer.payment,
+      address: {
+        customerName: posCustomer.name,
+        customerPhone: posCustomer.phone,
+        street: posCustomer.address,
+        number: posCustomer.number
+      },
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      const { error } = await supabase.from('pedidos').insert([orderData]).select();
+      if (error) throw error;
+      
+      alert("Pedido lançado com sucesso!");
+      setPosCart([]);
+      setPosCustomer({ name: '', phone: '', address: '', number: '', payment: 'Pix' });
+      setActiveTab('orders-history');
+      fetchOrders();
+    } catch (err) {
+      alert("Erro ao salvar pedido: " + err.message);
+    }
+  };
+
   const filteredOrders = (orders || []).filter(order => {
     if (!order) return false;
     const orderDate = new Date(order.created_at || order.timestamp);
@@ -840,6 +1034,8 @@ const AdminDashboard = () => {
           <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {[
               { id: 'orders-history', renderIcon: (isActive) => <HistoryIcon size={20} isActive={isActive} />, label: 'Pedidos' },
+              { id: 'pos', renderIcon: (isActive) => <ShoppingBag size={20} color={isActive ? '#00f3ff' : '#a1a1aa'} />, label: 'Lançar Venda' },
+              { id: 'search', renderIcon: (isActive) => <SearchIcon size={20} isActive={isActive} />, label: 'Explorar' },
               { id: 'menu', renderIcon: (isActive) => <MenuIcon size={20} isActive={isActive} />, label: 'Cardápio' },
               { id: 'finance', renderIcon: (isActive) => <MoneyBagIcon size={20} isActive={isActive} />, label: 'Financeiro' },
               { id: 'orders', renderIcon: (isActive) => <SettingsIcon size={20} isActive={isActive} />, label: 'Ajustes' },
@@ -882,7 +1078,7 @@ const AdminDashboard = () => {
           <header style={{ marginBottom: isMobile ? '24px' : '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc' }}>
-                {activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : 'Pedidos'}
+                {activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'pos' ? 'Lançar Venda' : 'Pedidos'}
               </h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%' }}></div>
@@ -1060,41 +1256,250 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === 'menu' && appMenuData && (
-          <div style={{ background: '#161618', borderRadius: '32px', padding: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            {editingItem ? (
-              <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <input placeholder="Nome" value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#000', color: '#fff', border: '1px solid #333' }} />
-                <input placeholder="Preço" type="number" value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#000', color: '#fff', border: '1px solid #333' }} />
-                <textarea placeholder="Descrição" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#000', color: '#fff', border: '1px solid #333', minHeight: '100px' }} />
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={handleSaveEdit} style={{ flex: 1, padding: '16px', background: '#EC9424', color: '#fff', borderRadius: '12px', fontWeight: 800 }}>SALVAR</button>
-                  <button onClick={() => setEditingItem(null)} style={{ flex: 1, padding: '16px', background: '#333', color: '#fff', borderRadius: '12px' }}>CANCELAR</button>
-                </div>
-              </div>
-            ) : (
-              Object.keys(appMenuData.menu).map(cat => (
-                <div key={cat} style={{ marginBottom: '30px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800 }}>{cat}</h3>
-                    <button onClick={() => { setEditingCategory(cat); setEditingItem({name:'', price:'', description:'', image:''}) }} style={{ color: '#EC9424', fontSize: '12px', fontWeight: 800 }}>+ ITEM</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
+            <AnimatePresence mode="wait">
+              {editingItem ? (
+                <motion.div
+                  key="edit-form"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  style={{ 
+                    maxWidth: '600px', 
+                    margin: '0 auto', 
+                    background: '#111113', 
+                    borderRadius: '24px', 
+                    padding: '32px', 
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'white', margin: 0 }}>
+                      {editingItem.id ? 'Editar Produto' : 'Novo Produto'}
+                    </h2>
+                    <button 
+                      onClick={() => setEditingItem(null)}
+                      style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#71717a', cursor: 'pointer' }}
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
-                    {appMenuData.menu[cat].map(item => (
-                      <div key={item.id} style={{ padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '14px' }}>{item.name}</div>
-                          <div style={{ color: '#22c55e', fontSize: '14px', fontWeight: 800 }}>R$ {item.price.toFixed(2)}</div>
-                        </div>
-                        <button onClick={() => handleEditItem(cat, item)}><Edit size={16} color="#EC9424" /></button>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Imagem do Produto</label>
+                      <div 
+                        onClick={() => document.getElementById('item-image-input-final').click()}
+                        style={{ 
+                          height: '200px', borderRadius: '20px', background: '#0a0a0b', border: '2px dashed rgba(255,255,255,0.06)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', transition: 'all 0.3s ease'
+                        }}
+                      >
+                        <AnimatePresence mode="wait">
+                          {editingItem.image ? (
+                            <motion.div key="p" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.25 }} style={{ width: '100%', height: '100%' }}>
+                              <img src={editingItem.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', display: 'flex', alignItems: 'flex-end', padding: '16px' }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'white', fontSize: '12px', fontWeight: 700 }}>
+                                  <Camera size={14} /> ALTERAR FOTO
+                                </div>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <motion.div key="pl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#3f3f46' }}>
+                              <Upload size={32} /><span style={{ fontSize: '13px', fontWeight: 600 }}>Foto Produto</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        <input type="file" id="item-image-input-final" hidden accept="image/*" onChange={(e) => {
+                          const file = e.target.files[0];
+                          if(file) {
+                             const r = new FileReader();
+                             r.onload = (ev) => setEditingItem({...editingItem, image: ev.target.result});
+                             r.readAsDataURL(file);
+                          }
+                        }} />
                       </div>
-                    ))}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>Nome</label>
+                      <input value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>Preço</label>
+                      <input type="number" value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>Descrição</label>
+                      <textarea value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', minHeight: '100px' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSaveEdit} style={{ flex: 2, padding: '18px', background: '#EC9424', color: '#fff', borderRadius: '14px', fontWeight: 800, border: 'none' }}>SALVAR</motion.button>
+                      <button onClick={() => setEditingItem(null)} style={{ flex: 1, padding: '18px', background: 'rgba(255,255,255,0.04)', color: '#71717a', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)' }}>CANCELAR</button>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="menu-list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
+                >
+                  {isMenuLoading ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                      {[1, 2].map(cat => (
+                        <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                          <div style={{ width: '150px', height: '24px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px' }} />
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+                            {[1, 2, 3].map(i => <MenuSkeleton key={i} />)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    Object.keys(appMenuData.menu).map((cat, catIdx) => (
+                      <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div>
+                            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: 0 }}>{cat}</h3>
+                            <span style={{ fontSize: '11px', color: '#52525b', fontWeight: 700 }}>{appMenuData.menu[cat].length} PRODUTOS</span>
+                          </div>
+                          <motion.button whileHover={{ scale: 1.05 }} onClick={() => { setEditingCategory(cat); setEditingItem({name:'', price:'', description:'', image:''}) }} style={{ padding: '10px 16px', background: 'rgba(236,148,36,0.1)', color: '#EC9424', borderRadius: '10px', border: '1px solid rgba(236,148,36,0.2)' }}><Plus size={14} /> NOVO</motion.button>
+                        </div>
+                        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={(e) => handleDragEndMenu(e, cat)}>
+                          <SortableContext items={appMenuData.menu[cat].map(i => i.id)} strategy={rectSortingStrategy}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+                              {appMenuData.menu[cat].map((item) => (
+                                <SortableMenuItem key={item.id} item={item} cat={cat} isMobile={isMobile} handleEditItem={handleEditItem} />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+                    ))
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
+        {activeTab === 'pos' && appMenuData && (
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '32px', height: '100%' }}>
+            {/* Lado Esquerdo: Menu de Seleção */}
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'white', margin: 0 }}>Lançar Pedido Balcão</h2>
+                <div style={{ padding: '6px 12px', background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}>MODO PDV</div>
+              </div>
+
+              {Object.keys(appMenuData.menu).map(cat => (
+                <div key={cat} style={{ marginBottom: '32px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'rgba(255,255,255,0.6)', marginBottom: '16px', borderLeft: '3px solid #EC9424', paddingLeft: '12px' }}>{cat}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                    {appMenuData.menu[cat].map(item => (
+                      <motion.div
+                        key={item.id}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleAddToCartPos(item)}
+                        style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: '16px',
+                          padding: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px'
+                        }}
+                      >
+                        <div style={{ height: '80px', borderRadius: '10px', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                          {item.image ? <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '13px', color: 'white', height: '36px', overflow: 'hidden' }}>{item.name}</div>
+                        <div style={{ color: '#22c55e', fontWeight: 900, fontSize: '15px' }}>R$ {item.price.toFixed(2).replace('.', ',')}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Lado Direito: Carrinho e Cliente */}
+            <div style={{ width: isMobile ? '100%' : '380px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ background: '#111113', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px', position: 'sticky', top: 0 }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <ShoppingCart size={20} color="#EC9424" /> Carrinho ({posCart.length})
+                </h3>
+
+                {posCart.length === 0 ? (
+                  <div style={{ padding: '40px 0', textAlign: 'center', color: '#52525b', fontSize: '13px' }}>Selecione produtos ao lado</div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
+                      {posCart.map(item => (
+                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '12px' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>{item.name}</div>
+                            <div style={{ fontSize: '11px', color: '#22c55e' }}>R$ {(item.price * item.quantity).toFixed(2)}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0a0a0b', padding: '4px', borderRadius: '8px' }}>
+                            <button onClick={() => handleUpdateCartQtyPos(item.id, -1)} style={{ border: 'none', background: 'none', color: 'white', cursor: 'pointer' }}><X size={12} /></button>
+                            <span style={{ fontSize: '12px', fontWeight: 900 }}>{item.quantity}</span>
+                            <button onClick={() => handleUpdateCartQtyPos(item.id, 1)} style={{ border: 'none', background: 'none', color: 'white', cursor: 'pointer' }}><Plus size={12} /></button>
+                          </div>
+                          <button onClick={() => handleRemoveFromCartPos(item.id)} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <input 
+                          placeholder="Nome do Cliente" 
+                          value={posCustomer.name} 
+                          onChange={e => setPosCustomer({...posCustomer, name: e.target.value})}
+                          style={{ width: '100%', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.06)', padding: '12px', borderRadius: '12px', color: 'white', fontSize: '13px' }}
+                        />
+                        <input 
+                          placeholder="Telefone/Zap" 
+                          value={posCustomer.phone} 
+                          onChange={e => setPosCustomer({...posCustomer, phone: e.target.value})}
+                          style={{ width: '100%', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.06)', padding: '12px', borderRadius: '12px', color: 'white', fontSize: '13px' }}
+                        />
+                        <select 
+                          value={posCustomer.payment} 
+                          onChange={e => setPosCustomer({...posCustomer, payment: e.target.value})}
+                          style={{ width: '100%', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.06)', padding: '12px', borderRadius: '12px', color: 'white', fontSize: '13px' }}
+                        >
+                          <option value="Pix">Pix</option>
+                          <option value="Dinheiro">Dinheiro</option>
+                          <option value="Cartão">Cartão</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '20px', fontWeight: 900, color: 'white' }}>
+                        <span>TOTAL</span>
+                        <span>R$ {posCart.reduce((acc, i) => acc + (i.price * i.quantity), 0).toFixed(2).replace('.', ',')}</span>
+                      </div>
+
+                      <button 
+                        onClick={handleFinalizePos}
+                        style={{ width: '100%', padding: '16px', background: '#EC9424', color: 'white', borderRadius: '16px', border: 'none', fontWeight: 900, fontSize: '14px', cursor: 'pointer', boxShadow: '0 8px 24px rgba(236,148,36,0.2)' }}
+                      >
+                        LANÇAR PEDIDO
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         {activeTab === 'finance' && (
           <FinanceDashboard 
             orders={orders.filter(o => o.status === 'concluido' || o.status === 'pago')}
