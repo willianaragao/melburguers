@@ -513,7 +513,17 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
         overflowY: 'visible' // Para permitir que o main controle o scroll
       }}>
         {filteredByStatus.length === 0 ? (
-          <div style={{ color: '#71717a', fontSize: '14px', textAlign: 'center', width: '100%', padding: '60px 20px' }}>
+          <div style={{ 
+            gridColumn: '1 / -1',
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            width: '100%', 
+            padding: '60px 20px',
+            textAlign: 'center',
+            color: '#71717a', 
+            fontSize: '14px'
+          }}>
             Nenhum pedido encontrado nesta categoria.
           </div>
         ) : (
