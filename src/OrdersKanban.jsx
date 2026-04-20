@@ -30,7 +30,7 @@ const useIsMobile = () => {
   return isMobile;
 };
 
-const MinimalistTimer = ({ createdAt }) => {
+const MinimalistTimer = ({ createdAt, size = 30 }) => {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -52,11 +52,7 @@ const MinimalistTimer = ({ createdAt }) => {
     ? (elapsedMinutes % limit) / limit 
     : (limit - elapsedMinutes) / limit;
 
-  const size = 30;
-  const stroke = 2.4;
-  const radius = (size - stroke) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (progress * circumference);
+  const fontSize = size > 35 ? '10px' : '8px';
 
   return (
     <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -71,7 +67,7 @@ const MinimalistTimer = ({ createdAt }) => {
           style={{ transition: 'stroke-dashoffset 0.8s ease, stroke 0.5s ease' }}
         />
       </svg>
-      <div style={{ position: 'absolute', fontSize: '8px', fontWeight: 900, color: color, textAlign: 'center', fontFamily: 'monospace' }}>
+      <div style={{ position: 'absolute', fontSize: fontSize, fontWeight: 900, color: color, textAlign: 'center', fontFamily: 'monospace' }}>
         {displayMinutes}m
       </div>
     </div>
@@ -265,18 +261,20 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ 
-          background: `${statusColor}22`, 
-          color: statusColor, 
-          padding: '4px 10px', 
-          borderRadius: '8px', 
-          fontSize: '10px', 
-          fontWeight: 900,
-          letterSpacing: '0.05em',
-          border: `1px solid ${statusColor}44`
-        }}>
-          {getStatusLabel(order.status)}
-        </div>
+        {(!isMobile || order.status !== 'concluido') ? (
+          <div style={{ 
+            background: `${statusColor}22`, 
+            color: statusColor, 
+            padding: '4px 10px', 
+            borderRadius: '8px', 
+            fontSize: '10px', 
+            fontWeight: 900,
+            letterSpacing: '0.05em',
+            border: `1px solid ${statusColor}44`
+          }}>
+            {getStatusLabel(order.status)}
+          </div>
+        ) : <div />}
         {(isGrid || isCompact) && (
           <div style={{ color: '#71717a' }}>
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -294,24 +292,26 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
           <div style={{ fontSize: '12px', color: '#71717a', fontWeight: 600, marginBottom: '8px' }}>
             Mel Burgers
           </div>
-          <div style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '5px', 
-            background: 'rgba(255,255,255,0.04)', 
-            padding: '4px 10px', 
-            borderRadius: '8px',
-            fontSize: '11px',
-            color: '#a1a1aa',
-            border: '1px solid rgba(255,255,255,0.06)'
-          }}>
-            <ShoppingBag size={10} />
-            Própria
-          </div>
+          {!isMobile && (
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '5px', 
+              background: 'rgba(255,255,255,0.04)', 
+              padding: '4px 10px', 
+              borderRadius: '8px',
+              fontSize: '11px',
+              color: '#a1a1aa',
+              border: '1px solid rgba(255,255,255,0.06)'
+            }}>
+              <ShoppingBag size={10} />
+              Própria
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <MinimalistTimer createdAt={order.created_at || order.timestamp} />
+          <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 40 : 30} />
           <span style={{ fontSize: '10px', fontWeight: 700, color: '#52525b' }}>{orderTime}</span>
         </div>
       </div>
@@ -349,32 +349,47 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 900, color: '#EC9424' }}>
-                  R$ {order.total?.toFixed(2)}
-                </div>
-                {order.payment_method && (
-                  <div style={{ fontSize: '11px', color: '#71717a', fontWeight: 600 }}>
-                     • {order.payment_method}
+              {isMobile ? (
+                <>
+                  <div style={{ flex: 1, marginRight: '15px' }}>
+                    <ActionButton order={order} updateStatus={updateStatus} />
                   </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {waLink && (
-                  <a href={waLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '8px', borderRadius: '10px' }}>
-                    <MessageSquare size={16} />
-                  </a>
-                )}
-                <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '8px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <Printer size={16} />
-                </button>
-                <DeleteButton order={order} updateStatus={updateStatus} />
-              </div>
+                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#EC9424', whiteSpace: 'nowrap' }}>
+                    R$ {order.total?.toFixed(2)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#EC9424' }}>
+                      R$ {order.total?.toFixed(2)}
+                    </div>
+                    {order.payment_method && (
+                      <div style={{ fontSize: '11px', color: '#71717a', fontWeight: 600 }}>
+                         • {order.payment_method}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {waLink && (
+                      <a href={waLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '8px', borderRadius: '10px' }}>
+                        <MessageSquare size={16} />
+                      </a>
+                    )}
+                    <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '8px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <Printer size={16} />
+                    </button>
+                    <DeleteButton order={order} updateStatus={updateStatus} />
+                  </div>
+                </>
+              )}
             </div>
             
-            <div style={{ marginTop: '16px' }}>
-              <ActionButton order={order} updateStatus={updateStatus} />
-            </div>
+            {!isMobile && (
+              <div style={{ marginTop: '16px' }}>
+                <ActionButton order={order} updateStatus={updateStatus} />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -447,7 +462,7 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   if (isMobile) {
     const filtered = statusFilter === 'all' 
       ? localOrders.filter(o => o.status !== 'excluido')
-      : localOrders.filter(o => o.status === statusFilter || (statusFilter === 'pending' && (o.status === 'pendente' || o.status === 'pago' || !o.status)));
+      : localOrders.filter(o => o.status === statusFilter || (statusFilter === 'pending' && (o.status === 'pendente' || o.status === 'pago' || !o.status)) || (statusFilter === 'preparo' && o.status === 'preparo'));
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
         {filtered.map(order => <OrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={updateStatus} viewMode={viewMode} />)}

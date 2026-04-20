@@ -1126,7 +1126,7 @@ const AdminDashboard = () => {
                 >
                   {dateFilter === 'today' ? 'Hoje' : 'Sempre'}
                 </button>
-                {['all', 'pending', 'concluded', 'deleted'].map(f => (
+                {['preparo', 'all', 'pending', 'concluded', 'deleted'].map(f => (
                   <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button 
                       onClick={() => {
@@ -1146,7 +1146,7 @@ const AdminDashboard = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      {f === 'all' ? 'Geral' : f === 'pending' ? 'Abertos' : f === 'concluded' ? 'Finais' : 'Lixo'}
+                      {f === 'preparo' ? 'Em Preparo' : f === 'all' ? 'Geral' : f === 'pending' ? 'Abertos' : f === 'concluded' ? 'Finais' : 'Lixo'}
                       {f === 'deleted' && (
                         <div 
                           onClick={(e) => {
