@@ -258,8 +258,11 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
               <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
             </div>
           </div>
-          <div style={{ color: '#3f3f46', marginLeft: '4px' }}>
-            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <DeleteButton order={order} updateStatus={updateStatus} />
+            <div style={{ color: '#3f3f46' }}>
+              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </div>
           </div>
         </div>
       </div>
@@ -340,11 +343,6 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
           <div style={{ fontSize: '18px', fontWeight: 900, color: '#EC9424', whiteSpace: 'nowrap' }}>
             R$ {order.total?.toFixed(2)}
           </div>
-          {!isExpanded && (
-            <div style={{ fontSize: '9px', color: '#3f3f46', fontWeight: 800, textTransform: 'uppercase' }}>
-              {order.items?.length || 0} Itens
-            </div>
-          )}
         </div>
       </div>
     </motion.div>
