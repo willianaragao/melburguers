@@ -147,8 +147,7 @@ const DigitalTimer = ({ createdAt, isWarning }) => {
       borderRadius: '8px',
       width: '100%',
       justifyContent: 'center',
-      border: '1px solid rgba(255,255,255,0.04)',
-      transform: 'translateX(-7px)'
+      border: '1px solid rgba(255,255,255,0.04)'
     }}>
       <Clock size={12} />
       <span style={{ letterSpacing: '0.05em' }}>{time.m}m {time.s}s</span>
