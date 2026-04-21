@@ -310,8 +310,6 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
           </div>
-          
-          </div>
         </div>
 
         {!isGrid && (
