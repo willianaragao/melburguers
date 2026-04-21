@@ -142,13 +142,15 @@ const DigitalTimer = ({ createdAt, isWarning }) => {
       fontSize: '11px', 
       fontWeight: 800,
       marginTop: '10px',
-      background: 'rgba(255,255,255,0.02)',
-      padding: '4px 8px',
-      borderRadius: '6px',
-      width: 'fit-content'
+      background: 'rgba(255,255,255,0.03)',
+      padding: '6px 12px',
+      borderRadius: '8px',
+      width: '100%',
+      justifyContent: 'center',
+      border: '1px solid rgba(255,255,255,0.04)'
     }}>
-      <Clock size={10} />
-      <span>{time.m}m {time.s}s</span>
+      <Clock size={12} />
+      <span style={{ letterSpacing: '0.05em' }}>{time.m}m {time.s}s</span>
     </div>
   );
 };
@@ -296,19 +298,19 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
                 <WhatsAppIcon size={13} color="#22c55e" /> WhatsApp
               </button>
             )}
+            <div style={{ 
+              padding: '8px', display: 'flex', alignItems: 'center', 
+              justifyContent: 'center', opacity: isExpanded ? 0.8 : 0.3,
+              background: 'rgba(255,255,255,0.03)', borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.05)', color: 'white'
+            }}>
+              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </div>
           </div>
           
           {isGrid && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
+            <div style={{ display: 'flex', width: '100%' }}>
               <DigitalTimer createdAt={order.created_at || order.timestamp} isWarning={isWarning} />
-              <div style={{ 
-                padding: '8px', display: 'flex', alignItems: 'center', 
-                justifyContent: 'center', opacity: isExpanded ? 0.8 : 0.3,
-                background: 'rgba(255,255,255,0.03)', borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.05)', color: 'white'
-              }}>
-                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </div>
             </div>
           )}
         </div>
