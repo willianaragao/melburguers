@@ -357,6 +357,18 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
               ))}
             </div>
 
+            {order.payment_method && (
+              <div style={{ 
+                background: 'rgba(34,197,94,0.05)', borderRadius: '12px', padding: '12px',
+                border: '1px solid rgba(34,197,94,0.1)', marginBottom: '12px'
+              }}>
+                <div style={{ fontSize: '10px', color: '#22c55e', textTransform: 'uppercase', marginBottom: '4px', letterSpacing: '0.05em', fontWeight: 800 }}>Pagamento</div>
+                <div style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 700 }}>
+                  {order.payment_method}
+                </div>
+              </div>
+            )}
+
             {order.address?.street && (
               <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', padding: '0 4px' }}>
                 <MapPin size={14} style={{ color: '#71717a', flexShrink: 0, marginTop: '2px' }} />

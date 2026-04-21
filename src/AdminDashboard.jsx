@@ -899,7 +899,7 @@ const AdminDashboard = () => {
   };
 
   const handlePrint = async (order) => {
-    const printerData = formatOrderForPrinter(order.items, order.total, order.address);
+    const printerData = formatOrderForPrinter(order.items, order.total, order.address, order.payment_method);
     
     try {
       if (printerRef.current) {
@@ -1057,7 +1057,7 @@ const AdminDashboard = () => {
       items: posCart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
       total: subtotal,
       status: 'pendente',
-      payment_method: posCustomer.payment,
+      payment_method: posCustomer.payment === 'Dinheiro' && posCustomer.change ? `Dinheiro (Troco para R$ ${posCustomer.change})` : posCustomer.payment,
       address: {
         customerName: posCustomer.name,
         customerPhone: posCustomer.phone,
@@ -1073,7 +1073,7 @@ const AdminDashboard = () => {
       
       alert("Pedido lançado com sucesso!");
       setPosCart([]);
-      setPosCustomer({ name: '', phone: '', address: '', number: '', payment: 'Pix' });
+      setPosCustomer({ name: '', phone: '', address: '', number: '', payment: 'Pix', change: '' });
       setActiveTab('orders-history');
       fetchOrders();
     } catch (err) {
@@ -1728,6 +1728,14 @@ const AdminDashboard = () => {
                           <option value="Dinheiro">Dinheiro</option>
                           <option value="Cartão">Cartão</option>
                         </select>
+                        {posCustomer.payment === 'Dinheiro' && (
+                          <input 
+                            placeholder="Troco para quanto?" 
+                            value={posCustomer.change} 
+                            onChange={e => setPosCustomer({...posCustomer, change: e.target.value})}
+                            style={{ width: '100%', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', padding: '12px', borderRadius: '12px', color: 'white', fontSize: '13px' }}
+                          />
+                        )}
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '20px', fontWeight: 900, color: 'white' }}>

@@ -1,5 +1,5 @@
 
-export const formatOrderForPrinter = (cart, total, address) => {
+export const formatOrderForPrinter = (cart, total, address, paymentMethod) => {
   let text = "\x1B\x40"; // Initialize printer
   text += "\x1B\x61\x01"; // Center align
   text += "\x1B\x21\x30"; // Double height and width
@@ -12,6 +12,7 @@ export const formatOrderForPrinter = (cart, total, address) => {
     text += "\x1B\x61\x01";
     text += "DADOS PARA ENTREGA\n";
     text += "\x1B\x61\x00";
+    text += `${address.customerName || 'Cliente'}\n`;
     text += `${address.street}, ${address.number}\n`;
     text += `Bairro: ${address.neighborhood}\n`;
     if (address.complement) text += `Ref: ${address.complement}\n`;
@@ -21,13 +22,19 @@ export const formatOrderForPrinter = (cart, total, address) => {
   text += "\x1B\x61\x00"; // Left align
   cart.forEach((item) => {
     const priceStr = `R$ ${item.price.toFixed(2).replace('.', ',')}`;
-    text += `${item.name}\n`;
+    text += `${item.quantity}x ${item.name}\n`;
     text += `                   ${priceStr}\n`;
   });
   
   text += "--------------------------------\n";
   text += "\x1B\x61\x02"; // Right align
   text += `TOTAL: R$ ${total.toFixed(2).replace('.', ',')}\n`;
+  
+  if (paymentMethod) {
+    text += "\x1B\x61\x00"; // Left align
+    text += `PAGTO: ${paymentMethod}\n`;
+  }
+
   text += "\x1B\x61\x01"; // Center align
   text += "\nObrigado pela preferência!\n";
   text += "Documento sem valor fiscal\n";
