@@ -359,14 +359,43 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               {isMobile ? (
-                <>
-                  <div style={{ flex: 1, marginRight: '15px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, marginRight: '15px' }}>
+                  {order.status !== 'pendente' && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const prevMap = {
+                          'preparo': 'pendente',
+                          'pronto': 'preparo',
+                          'entrega': 'pronto',
+                          'concluido': 'entrega'
+                        };
+                        const prevStatus = prevMap[order.status];
+                        if (prevStatus) updateStatus(order.id, prevStatus);
+                      }}
+                      style={{ 
+                        width: '40px', 
+                        height: '35px', 
+                        borderRadius: '10px', 
+                        background: 'rgba(255,255,255,0.03)', 
+                        border: '1px solid rgba(255,255,255,0.06)', 
+                        color: 'white', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                  )}
+                  <div style={{ flex: 1 }}>
                     <ActionButton order={order} updateStatus={updateStatus} />
                   </div>
                   <div style={{ fontSize: '16px', fontWeight: 900, color: '#EC9424', whiteSpace: 'nowrap' }}>
                     R$ {order.total?.toFixed(2)}
                   </div>
-                </>
+                </div>
               ) : (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
