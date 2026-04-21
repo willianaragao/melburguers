@@ -311,11 +311,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
             </div>
           </div>
           
-          {isGrid && (
-            <div style={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
-              <DigitalTimer createdAt={order.created_at || order.timestamp} isWarning={isWarning} />
-            </div>
-          )}
+          </div>
         </div>
 
         {!isGrid && (
@@ -329,6 +325,12 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
           </div>
         )}
       </div>
+
+      {isGrid && (
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '0 4px' }}>
+          <DigitalTimer createdAt={order.created_at || order.timestamp} isWarning={isWarning} />
+        </div>
+      )}
 
       {/* Conteúdo Expansível (Itens e Endereço) */}
       <AnimatePresence>
