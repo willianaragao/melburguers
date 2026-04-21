@@ -1154,7 +1154,7 @@ const AdminDashboard = () => {
 
             {isMobile && activeTab === 'orders-history' && (
               <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: 'calc(100% + 40px)', margin: '0 -20px', padding: '0 20px', scrollSnapType: 'x mandatory' }}>
-                {['pendente', 'preparo', 'pronto', 'entrega', 'concluido'].map(f => (
+                {['pendente', 'preparo', 'pronto', 'entrega', 'concluido', 'excluido'].map(f => (
                   <button 
                     key={f}
                     onClick={() => {
@@ -1172,7 +1172,7 @@ const AdminDashboard = () => {
                       fontWeight: 500
                     }}
                   >
-                    {f === 'pendente' ? 'Fila Geral' : f === 'preparo' ? 'Em preparo' : f === 'pronto' ? 'Pronto' : f === 'entrega' ? 'Saiu p/ entrega' : 'Concluído'}
+                    {f === 'pendente' ? 'Fila Geral' : f === 'preparo' ? 'Em preparo' : f === 'pronto' ? 'Pronto' : f === 'entrega' ? 'Saiu p/ entrega' : f === 'concluido' ? 'Concluído' : 'Lixo'}
                   </button>
                 ))}
               </div>
