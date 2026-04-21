@@ -1232,15 +1232,15 @@ const AdminDashboard = () => {
                 >
                   {dateFilter === 'today' ? 'Hoje' : 'Sempre'}
                 </button>
-                {['preparo', 'all', 'pending', 'deleted'].map(f => (
+                {['preparo', 'all', 'pending', 'excluido'].map(f => (
                   <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button 
                       onClick={() => {
                         setStatusFilter(f);
-                        if (f !== 'deleted') setIsTrashMenuOpen(false);
+                        if (f !== 'excluido') setIsTrashMenuOpen(false);
                       }}
                       style={{ 
-                        padding: f === 'deleted' ? '8px 12px 8px 16px' : '8px 16px', 
+                        padding: f === 'excluido' ? '8px 12px 8px 16px' : '8px 16px', 
                         borderRadius: '12px', 
                         background: statusFilter === f ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', 
                         color: statusFilter === f ? 'white' : '#71717a', 
@@ -1253,7 +1253,7 @@ const AdminDashboard = () => {
                       }}
                     >
                       {f === 'preparo' ? 'Em Preparo' : f === 'all' ? 'Geral' : f === 'pending' ? 'Abertos' : 'Lixo'}
-                      {f === 'deleted' && (
+                      {f === 'excluido' && (
                         <div 
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1273,7 +1273,7 @@ const AdminDashboard = () => {
                       )}
                     </button>
 
-                    {f === 'deleted' && (
+                    {f === 'excluido' && (
                       <AnimatePresence>
                         {isTrashMenuOpen && (
                           <motion.button
