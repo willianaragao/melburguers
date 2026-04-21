@@ -457,6 +457,11 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const handleOptimisticUpdate = (orderId, newStatus) => {
+    setLocalOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    updateStatus(orderId, newStatus);
+  };
+
   const handleDragStart = ({ active }) => setActiveOrder(localOrders.find(o => o.id === active.id));
   const handleDragEnd = ({ active, over }) => {
     setActiveOrder(null);
@@ -465,8 +470,7 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
     const overId = over.id;
     let newStatus = COLUMNS.some(c => c.id === overId) ? overId : localOrders.find(o => o.id === overId)?.status;
     if (activeOrder && newStatus && activeOrder.status !== newStatus) {
-      setLocalOrders(prev => prev.map(o => o.id === activeOrder.id ? { ...o, status: newStatus } : o));
-      updateStatus(activeOrder.id, newStatus);
+      handleOptimisticUpdate(activeOrder.id, newStatus);
     }
   };
 
@@ -496,7 +500,7 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {colOrders.map(order => (
-                  <OrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={updateStatus} viewMode={viewMode} />
+                  <OrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={handleOptimisticUpdate} viewMode={viewMode} />
                 ))}
               </div>
             </div>
@@ -511,10 +515,10 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div style={{ display: 'flex', gap: '20px', height: '100%' }}>
           {COLUMNS.map(column => (
-            <KanbanColumn key={column.id} column={column} orders={localOrders.filter(o => o.status === column.id || (column.id === 'pendente' && (o.status === 'pago' || !o.status)))} handlePrint={handlePrint} updateStatus={updateStatus} />
+            <KanbanColumn key={column.id} column={column} orders={localOrders.filter(o => o.status === column.id || (column.id === 'pendente' && (o.status === 'pago' || !o.status)))} handlePrint={handlePrint} updateStatus={handleOptimisticUpdate} />
           ))}
         </div>
-        <DragOverlay>{activeOrder && <OrderCard order={activeOrder} handlePrint={handlePrint} updateStatus={updateStatus} isDragging />}</DragOverlay>
+        <DragOverlay>{activeOrder && <OrderCard order={activeOrder} handlePrint={handlePrint} updateStatus={handleOptimisticUpdate} isDragging />}</DragOverlay>
       </DndContext>
     </div>
   );
