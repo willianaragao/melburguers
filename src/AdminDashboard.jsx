@@ -370,13 +370,23 @@ const AdminDashboard = () => {
   
   // System Settings State
   const [appSettings, setAppSettings] = useState(() => {
-    const saved = localStorage.getItem('melburguers_settings');
-    return saved ? JSON.parse(saved) : {
-      defaultViewMode: 'grid',
-      notificationSound: '/sonido-shopify.mp3',
-      autoPrint: false,
-      compactCards: false
-    };
+    try {
+      const saved = localStorage.getItem('melburguers_settings');
+      return saved ? JSON.parse(saved) : {
+        defaultViewMode: 'grid',
+        notificationSound: '/sonido-shopify.mp3',
+        autoPrint: false,
+        compactCards: false
+      };
+    } catch (e) {
+      console.warn("Could not read settings from localStorage:", e);
+      return {
+        defaultViewMode: 'grid',
+        notificationSound: '/sonido-shopify.mp3',
+        autoPrint: false,
+        compactCards: false
+      };
+    }
   });
 
   const [orders, setOrders] = useState([]);
