@@ -115,6 +115,44 @@ const DeleteButton = ({ order, updateStatus }) => {
   );
 };
 
+const DigitalTimer = ({ createdAt, isWarning }) => {
+  const [time, setTime] = useState({ m: 0, s: 0 });
+
+  useEffect(() => {
+    const update = () => {
+      const start = new Date(createdAt).getTime();
+      const now = new Date().getTime();
+      const diff = Math.max(0, now - start);
+      setTime({
+        m: Math.floor(diff / 60000),
+        s: Math.floor((diff % 60000) / 1000)
+      });
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [createdAt]);
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '4px', 
+      color: isWarning ? '#ef4444' : '#22c55e', 
+      fontSize: '11px', 
+      fontWeight: 800,
+      marginTop: '10px',
+      background: 'rgba(255,255,255,0.02)',
+      padding: '4px 8px',
+      borderRadius: '6px',
+      width: 'fit-content'
+    }}>
+      <Clock size={10} />
+      <span>{time.m}m {time.s}s</span>
+    </div>
+  );
+};
+
 const ActionButton = ({ order, updateStatus }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -261,16 +299,19 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
           </div>
+          {isGrid && <DigitalTimer createdAt={order.created_at || order.timestamp} isWarning={isWarning} />}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-            <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 56 : 42} />
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
+        {!isGrid && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 56 : 42} />
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Conteúdo Expansível (Itens e Endereço) */}
