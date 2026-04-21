@@ -154,11 +154,11 @@ const ActionButton = ({ order, updateStatus }) => {
         width: '100%', 
         background: isHovered ? hoverBg : 'rgba(255,255,255,0.04)', 
         color: isHovered ? '#ffffff' : '#e2e8f0', 
-        padding: '8px', 
-        borderRadius: '8px', 
+        padding: '10px 8px', 
+        borderRadius: '12px', 
         fontSize: '11px', 
         border: '1px solid ' + (isHovered ? hoverBorder : 'rgba(255,255,255,0.04)'), 
-        fontWeight: 600, 
+        fontWeight: 700, 
         cursor: 'pointer', 
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         display: 'flex',
@@ -182,7 +182,163 @@ const COLUMNS = [
   { id: 'pendente', title: 'Fila Geral', color: '#71717a' }
 ];
 
-// === COMPONENTE SORTABLE CARD ===
+// === COMPONENTE VISUAL DO CARD ===
+const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'list' }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
+  
+  const clientPhone = (order.address?.phone || order.address?.customerPhone)?.replace(/\D/g, '');
+  const waLink = clientPhone ? `https://wa.me/55${clientPhone}` : null;
+  const isGrid = viewMode === 'grid';
+  const isCompact = viewMode === 'compact';
+  
+  if (!order) return null;
+  const orderTime = new Date(order.created_at || order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const displayId = String(order.id || '').slice(-4);
+
+  return (
+    <motion.div 
+      layout
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ y: -2 }}
+      onClick={() => setIsExpanded(!isExpanded)}
+      style={{
+        background: '#111113',
+        border: isExpanded ? '1px solid rgba(236,148,36,0.3)' : '1px solid rgba(255,255,255,0.06)',
+        borderRadius: '20px',
+        padding: '16px',
+        boxShadow: isDragging ? '0 12px 48px rgba(0,0,0,0.7)' : '0 4px 12px rgba(0,0,0,0.2)',
+        cursor: 'pointer',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px'
+      }}
+    >
+      {/* Header com Nome, Zap e Timer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+        <div style={{ flex: 1 }}>
+          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.02em', marginBottom: '2px' }}>
+            #{displayId} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
+          </h3>
+          <div style={{ fontSize: '11px', color: '#52525b', fontWeight: 500, marginBottom: '8px' }}>
+            Mel Burgers
+          </div>
+          {waLink && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(waLink, '_blank');
+              }}
+              style={{ 
+                display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', 
+                background: 'rgba(34,197,94,0.1)', borderRadius: '10px', color: '#22c55e', 
+                border: '1px solid rgba(34,197,94,0.1)', fontSize: '11px', fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <MessageSquare size={13} /> WhatsApp
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 44 : 32} />
+          <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
+        </div>
+      </div>
+
+      {/* Conteúdo Expansível (Itens e Endereço) */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ 
+              background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px',
+              border: '1px solid rgba(255,255,255,0.04)', marginBottom: '12px', marginTop: '4px'
+            }}>
+              <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em', fontWeight: 800 }}>Itens do Pedido</div>
+              {(order.items || []).map((item, i) => (
+                <div key={i} style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '6px', fontWeight: 600, display: 'flex', gap: '8px' }}>
+                  <span style={{ color: '#52525b' }}>{item.quantity}x</span>
+                  {item.product_name || item.name}
+                </div>
+              ))}
+            </div>
+
+            {order.address?.street && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', padding: '0 4px' }}>
+                <MapPin size={14} style={{ color: '#71717a', flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ fontSize: '12px', color: '#a1a1aa', lineHeight: '1.4' }}>
+                  <div style={{ fontWeight: 800, color: '#52525b', fontSize: '10px', textTransform: 'uppercase', marginBottom: '2px' }}>Entrega</div>
+                  {order.address.street}, {order.address.number} • {order.address.neighborhood}
+                </div>
+              </div>
+            )}
+            
+            {!isMobile && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', fontSize: '12px', fontWeight: 600 }}>
+                  <Printer size={16} /> Imprimir
+                </button>
+                <DeleteButton order={order} updateStatus={updateStatus} />
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Rodapé fixo com Botões (Esquerda) e Preço (Direita) */}
+      <div style={{ 
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+        paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '4px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+          {order.status !== 'pendente' && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                const prevMap = { 'preparo': 'pendente', 'pronto': 'preparo', 'entrega': 'pronto', 'concluido': 'entrega' };
+                const prevStatus = prevMap[order.status];
+                if (prevStatus) updateStatus(order.id, prevStatus);
+              }}
+              style={{ 
+                width: '42px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid rgba(255,255,255,0.06)', color: 'white', display: 'flex', 
+                alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+          <div style={{ flex: 1 }}>
+            <ActionButton order={order} updateStatus={updateStatus} />
+          </div>
+        </div>
+        
+        <div style={{ textAlign: 'right', marginLeft: '15px' }}>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#EC9424', whiteSpace: 'nowrap' }}>
+            R$ {order.total?.toFixed(2)}
+          </div>
+          {!isExpanded && (
+            <div style={{ fontSize: '9px', color: '#3f3f46', fontWeight: 800, textTransform: 'uppercase' }}>
+              {order.items?.length || 0} Itens
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// === COMPONENTE SORTABLE CARD WRAPPER ===
 const SortableOrderCard = ({ order, handlePrint, updateStatus }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: order.id,
@@ -196,255 +352,11 @@ const SortableOrderCard = ({ order, handlePrint, updateStatus }) => {
   };
 
   return (
-    <motion.div 
-      layout
-      layoutId={`card-${order.id}`}
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners}
-    >
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <OrderCard order={order} handlePrint={handlePrint} updateStatus={updateStatus} isDragging={isDragging} />
-    </motion.div>
-  );
-};
-
-// === MAPA DE CORES DE STATUS ===
-const STATUS_COLORS = {
-  pendente: '#71717a', // Cinza suave
-  pago: '#71717a',     // Mesmo que pendente
-  preparo: '#b45309',  // Laranja elegante
-  pronto: '#0369a1',   // Azul sofisticado
-  entrega: '#6b21a8',  // Roxo discreto
-  concluido: '#0f766e', // Verde suave
-  excluido: '#991b1b', // Vermelho fechado
-};
-
-// === COMPONENTE VISUAL DO CARD ===
-const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'list' }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const isMobile = useIsMobile();
-  
-  const clientPhone = order.address?.customerPhone?.replace(/\D/g, '');
-  const waLink = clientPhone ? `https://wa.me/55${clientPhone}` : null;
-  const statusColor = STATUS_COLORS[order.status] || '#71717a';
-  const isGrid = viewMode === 'grid';
-  const isCompact = viewMode === 'compact';
-  
-  if (!order) return null;
-  const orderTime = new Date(order.created_at || order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const displayId = String(order.id || '').slice(-4);
-
-  const getStatusLabel = (s) => {
-    switch(s) {
-      case 'pendente': return 'FILA GERAL';
-      case 'preparo': return 'EM PREPARO';
-      case 'pronto': return 'PRONTO';
-      case 'entrega': return 'SAIU P/ ENTREGA';
-      case 'concluido': return 'CONCLUÍDO';
-      default: return s?.toUpperCase();
-    }
-  };
-
-  return (
-    <div 
-      onClick={() => (isGrid || isCompact) && setIsExpanded(!isExpanded)}
-      style={{
-        background: '#111113',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '16px',
-        padding: '16px',
-        marginBottom: (isGrid || isCompact) ? '0' : '14px',
-        boxShadow: isDragging ? '0 12px 48px rgba(0,0,0,0.7)' : '0 4px 12px rgba(0,0,0,0.2)',
-        cursor: 'pointer',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {(!isMobile || order.status !== 'concluido') ? (
-          <div style={{ 
-            color: isMobile ? '#71717a' : statusColor, 
-            padding: isMobile ? '0' : '4px 10px', 
-            borderRadius: '8px', 
-            fontSize: isMobile ? '13px' : '10px', 
-            fontWeight: isMobile ? 500 : 900,
-            letterSpacing: '0.05em',
-            background: isMobile ? 'none' : `${statusColor}22`,
-            border: isMobile ? 'none' : `1px solid ${statusColor}44`,
-            textTransform: isMobile ? 'none' : 'uppercase'
-          }}>
-            {isMobile ? getStatusLabel(order.status).toLowerCase().replace(/^\w/, c => c.toUpperCase()) : getStatusLabel(order.status)}
-          </div>
-        ) : <div />}
-        {(isGrid || isCompact) && (
-          <div style={{ color: '#71717a' }}>
-            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </div>
-        )}
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-            <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.02em' }}>
-              #{displayId} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
-            </h3>
-          </div>
-          <div style={{ fontSize: '12px', color: '#52525b', fontWeight: 500, marginBottom: '8px' }}>
-            Mel Burgers
-          </div>
-          {!isMobile && (
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '5px', 
-              background: 'rgba(255,255,255,0.04)', 
-              padding: '4px 10px', 
-              borderRadius: '8px',
-              fontSize: '11px',
-              color: '#a1a1aa',
-              border: '1px solid rgba(255,255,255,0.06)'
-            }}>
-              <ShoppingBag size={10} />
-              Própria
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 44 : 30} />
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {(viewMode === 'list' || isExpanded) && (
-          <motion.div
-            initial={(isGrid || isCompact) ? { height: 0, opacity: 0 } : false}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            style={{ overflow: 'hidden' }}
-          >
-            <div style={{ 
-              background: 'rgba(255,255,255,0.02)', 
-              borderRadius: '12px', 
-              padding: '12px',
-              border: '1px solid rgba(255,255,255,0.04)',
-              marginBottom: '12px'
-            }}>
-              {order.items?.map((item, i) => (
-                <div key={i} style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '4px', fontWeight: 600 }}>
-                  <span style={{ color: '#71717a', marginRight: '8px' }}>{item.quantity}x</span>
-                  {item.name}
-                </div>
-              ))}
-            </div>
-
-            {order.address?.street && (
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', padding: '0 4px' }}>
-                <MapPin size={14} style={{ color: '#71717a', flexShrink: 0, marginTop: '2px' }} />
-                <div style={{ fontSize: '12px', color: '#a1a1aa', lineHeight: '1.4' }}>
-                  {order.address.street}, {order.address.number} • {order.address.neighborhood}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              {isMobile ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, marginRight: '15px' }}>
-                  {order.status !== 'pendente' && (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const prevMap = {
-                          'preparo': 'pendente',
-                          'pronto': 'preparo',
-                          'entrega': 'pronto',
-                          'concluido': 'entrega'
-                        };
-                        const prevStatus = prevMap[order.status];
-                        if (prevStatus) updateStatus(order.id, prevStatus);
-                      }}
-                      style={{ 
-                        width: '40px', 
-                        height: '35px', 
-                        borderRadius: '10px', 
-                        background: 'rgba(255,255,255,0.03)', 
-                        border: '1px solid rgba(255,255,255,0.06)', 
-                        color: 'white', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <ActionButton order={order} updateStatus={updateStatus} />
-                  </div>
-                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#EC9424', whiteSpace: 'nowrap' }}>
-                    R$ {order.total?.toFixed(2)}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#EC9424' }}>
-                      R$ {order.total?.toFixed(2)}
-                    </div>
-                    {order.payment_method && (
-                      <div style={{ fontSize: '11px', color: '#71717a', fontWeight: 600 }}>
-                         • {order.payment_method}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {waLink && (
-                      <a href={waLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '8px', borderRadius: '10px' }}>
-                        <MessageSquare size={16} />
-                      </a>
-                    )}
-                    {!isMobile && (
-                      <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '8px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <Printer size={16} />
-                      </button>
-                    )}
-                    <DeleteButton order={order} updateStatus={updateStatus} />
-                  </div>
-                </>
-              )}
-            </div>
-            
-            {!isMobile && (
-              <div style={{ marginTop: '16px' }}>
-                <ActionButton order={order} updateStatus={updateStatus} />
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {(isGrid || isCompact) && !isExpanded && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-           <div style={{ fontSize: '13px', fontWeight: 900, color: '#EC9424' }}>R$ {order.total?.toFixed(2)}</div>
-           <div style={{ fontSize: '10px', color: '#52525b', fontWeight: 700 }}>{order.items?.length || 0} ITENS</div>
-        </div>
-      )}
     </div>
   );
 };
-
-
 
 const KanbanColumn = ({ column, orders, handlePrint, updateStatus }) => {
   const { setNodeRef } = useDroppable({
