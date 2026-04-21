@@ -157,6 +157,7 @@ const DigitalTimer = ({ createdAt, isWarning }) => {
 };
 
 const ActionButton = ({ order, updateStatus }) => {
+  const [isAdvancing, setIsAdvancing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   if (order.status === 'excluido') return null;
@@ -184,6 +185,19 @@ const ActionButton = ({ order, updateStatus }) => {
     default: return null;
   }
 
+  const handleAdvance = (e) => {
+    e.stopPropagation();
+    if (isAdvancing) return;
+    
+    setIsAdvancing(true);
+    
+    // Simula o processamento e então muda o status
+    setTimeout(() => {
+      updateStatus(order.id, nextStatus);
+      setIsAdvancing(false);
+    }, 1000);
+  };
+
   const isGreenHover = order.status === 'pendente';
   const hoverBg = isGreenHover ? '#22c55e' : 'rgba(255,255,255,0.08)';
   const hoverBorder = isGreenHover ? '#22c55e' : 'rgba(255,255,255,0.1)';
@@ -193,10 +207,8 @@ const ActionButton = ({ order, updateStatus }) => {
       onPointerDown={(e) => e.stopPropagation()} 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={(e) => { 
-        e.stopPropagation(); 
-        updateStatus(order.id, nextStatus); 
-      }}
+      onClick={handleAdvance}
+      disabled={isAdvancing}
       style={{ 
         width: '100%', 
         background: isHovered ? hoverBg : 'rgba(255,255,255,0.04)', 
@@ -212,10 +224,23 @@ const ActionButton = ({ order, updateStatus }) => {
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        zIndex: 10
+        zIndex: 10,
+        overflow: 'hidden'
       }}
     >
-      {btnText}
+      {/* Barra de Progresso Animada (Mesmo estilo do botão de configurações) */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, bottom: 0, 
+        width: isAdvancing ? '100%' : '0%',
+        background: '#22c55e',
+        zIndex: -1,
+        transition: isAdvancing ? 'width 1s linear' : 'none',
+        opacity: isAdvancing ? 1 : 0
+      }} />
+
+      <span style={{ position: 'relative', zIndex: 2 }}>
+        {isAdvancing ? 'PROCESSANDO...' : btnText}
+      </span>
     </button>
   );
 };
