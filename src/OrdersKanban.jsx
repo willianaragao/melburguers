@@ -312,13 +312,19 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
         )}
       </AnimatePresence>
 
-      {/* Rodapé fixo com Botões (Esquerda) e Preço (Direita) */}
+      {/* FOOTER OPERACIONAL - FIXO NO CARD */}
       <div style={{ 
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-        paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '4px'
+        marginTop: isCompact ? '6px' : '12px', 
+        paddingTop: isCompact ? '6px' : '12px', 
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex',
+        flexDirection: isGrid ? 'column' : 'row',
+        alignItems: isGrid ? 'stretch' : 'center',
+        justifyContent: 'space-between',
+        gap: isGrid ? '8px' : '4px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-          {order.status !== 'pendente' && (
+          {isMobile && order.status !== 'pendente' && (
             <button 
               onClick={(e) => {
                 e.stopPropagation();
@@ -327,12 +333,19 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
                 if (prevStatus) updateStatus(order.id, prevStatus);
               }}
               style={{ 
-                width: '42px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', 
-                border: '1px solid rgba(255,255,255,0.06)', color: 'white', display: 'flex', 
-                alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+                width: isGrid ? '36px' : '42px', 
+                height: isGrid ? '36px' : '40px', 
+                borderRadius: '10px', 
+                background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid rgba(255,255,255,0.06)', 
+                color: 'white', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                cursor: 'pointer'
               }}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={isGrid ? 16 : 20} />
             </button>
           )}
           <div style={{ flex: 1 }}>
@@ -340,8 +353,8 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
           </div>
         </div>
         
-        <div style={{ textAlign: 'right', marginLeft: '15px' }}>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#EC9424', whiteSpace: 'nowrap' }}>
+        <div style={{ textAlign: isGrid ? 'center' : 'right', marginLeft: isGrid ? 0 : '15px' }}>
+          <div style={{ fontSize: isGrid ? '16px' : '18px', fontWeight: 900, color: '#EC9424', whiteSpace: 'nowrap' }}>
             R$ {order.total?.toFixed(2)}
           </div>
         </div>
