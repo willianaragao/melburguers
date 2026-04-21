@@ -60,7 +60,7 @@ const MinimalistTimer = ({ createdAt, size = 30 }) => {
     ? (elapsedMinutes % limit) / limit 
     : (limit - elapsedMinutes) / limit;
 
-  const fontSize = size > 35 ? '10px' : '8px';
+  const fontSize = size > 50 ? '16px' : (size > 35 ? '12px' : '10px');
   const stroke = 3;
   const radius = (size / 2) - stroke;
   const circumference = 2 * Math.PI * radius;
@@ -79,8 +79,8 @@ const MinimalistTimer = ({ createdAt, size = 30 }) => {
           style={{ transition: 'stroke-dashoffset 0.8s ease, stroke 0.5s ease' }}
         />
       </svg>
-      <div style={{ position: 'absolute', fontSize: fontSize, fontWeight: 900, color: color, textAlign: 'center', fontFamily: 'monospace' }}>
-        {displayMinutes}m
+      <div style={{ position: 'absolute', fontSize: fontSize, fontWeight: 900, color: color, textAlign: 'center', fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+        {displayMinutes}<span style={{ fontSize: '0.6em', opacity: 0.8, marginLeft: '1px' }}>m</span>
       </div>
     </div>
   );
@@ -251,9 +251,16 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 44 : 32} />
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 56 : 42} />
+              <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
+            </div>
+          </div>
+          <div style={{ color: '#3f3f46', marginLeft: '4px' }}>
+            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </div>
         </div>
       </div>
 
