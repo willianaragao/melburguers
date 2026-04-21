@@ -211,7 +211,7 @@ const ActionButton = ({ order, updateStatus }) => {
       disabled={isAdvancing}
       style={{ 
         width: '100%', 
-        background: isHovered ? hoverBg : 'rgba(255,255,255,0.04)', 
+        background: (isHovered && !isAdvancing) ? hoverBg : 'rgba(255,255,255,0.04)', 
         color: isHovered ? '#ffffff' : '#e2e8f0', 
         padding: '10px 8px', 
         borderRadius: '12px', 
