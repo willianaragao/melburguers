@@ -3,7 +3,7 @@ import {
   ShoppingBag, Printer, Bell, CheckCircle, Clock, 
   RefreshCcw, ChevronRight, LayoutDashboard, Settings, Edit, Plus, Trash2, Save, X, Image as ImageIcon, Camera, Upload,
   DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare,
-  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown, GripVertical, ShoppingCart
+  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown, GripVertical, ShoppingCart, Maximize
 } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { 
