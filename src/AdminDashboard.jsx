@@ -1159,25 +1159,62 @@ const AdminDashboard = () => {
             {isMobile && activeTab === 'orders-history' && (
               <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: 'calc(100% + 40px)', margin: '0 -20px', padding: '0 20px', scrollSnapType: 'x mandatory' }}>
                 {['pendente', 'preparo', 'pronto', 'entrega', 'concluido', 'excluido'].map(f => (
-                  <button 
-                    key={f}
-                    onClick={() => {
-                      setStatusFilter(f);
-                      if (f !== 'deleted') setIsTrashMenuOpen(false);
-                    }}
-                    style={{ 
-                      padding: '8px 16px', 
-                      borderRadius: '12px', 
-                      background: statusFilter === f ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', 
-                      color: statusFilter === f ? 'white' : '#71717a', 
-                      border: '1px solid rgba(255,255,255,0.05)', 
-                      whiteSpace: 'nowrap',
-                      fontSize: '13px',
-                      fontWeight: 500
-                    }}
-                  >
-                    {f === 'pendente' ? 'Fila Geral' : f === 'preparo' ? 'Em preparo' : f === 'pronto' ? 'Pronto' : f === 'entrega' ? 'Saiu p/ entrega' : f === 'concluido' ? 'Concluído' : 'Lixo'}
-                  </button>
+                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button 
+                      onClick={() => {
+                        setStatusFilter(f);
+                        if (f !== 'excluido') setIsTrashMenuOpen(false);
+                      }}
+                      style={{ 
+                        padding: f === 'excluido' ? '8px 12px 8px 16px' : '8px 16px', 
+                        borderRadius: '12px', 
+                        background: statusFilter === f ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', 
+                        color: statusFilter === f ? 'white' : '#71717a', 
+                        border: '1px solid rgba(255,255,255,0.05)', 
+                        whiteSpace: 'nowrap',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {f === 'pendente' ? 'Fila Geral' : f === 'preparo' ? 'Em preparo' : f === 'pronto' ? 'Pronto' : f === 'entrega' ? 'Saiu p/ entrega' : f === 'concluido' ? 'Concluído' : 'Lixo'}
+                      
+                      {f === 'excluido' && (
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsTrashMenuOpen(!isTrashMenuOpen);
+                          }}
+                          style={{ padding: '2px', display: 'flex', alignItems: 'center' }}
+                        >
+                          <ChevronDown size={14} style={{ transform: isTrashMenuOpen ? 'rotate(-180deg)' : 'none', transition: 'transform 0.3s' }} />
+                        </div>
+                      )}
+                    </button>
+
+                    {f === 'excluido' && (
+                      <AnimatePresence>
+                        {isTrashMenuOpen && (
+                          <motion.button
+                            initial={{ width: 0, opacity: 0, x: -10 }}
+                            animate={{ width: 'auto', opacity: 1, x: 0 }}
+                            exit={{ width: 0, opacity: 0, x: -5 }}
+                            onClick={handleClearDeletedOrders}
+                            style={{ 
+                              padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', 
+                              border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', 
+                              color: '#ef4444', fontSize: '11px', fontWeight: 800, 
+                              whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px'
+                            }}
+                          >
+                            <Trash2 size={12} /> LIMPAR
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
