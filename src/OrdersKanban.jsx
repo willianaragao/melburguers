@@ -107,7 +107,8 @@ const DeleteButton = ({ order, updateStatus }) => {
         transition: 'all 0.2s',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        transform: style?.transform // Permite passar transform via props
       }}
     >
       <Trash2 size={12} />
@@ -279,7 +280,11 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
             <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.02em' }}>
               #{displayId} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
             </h3>
-            <DeleteButton order={order} updateStatus={updateStatus} />
+            <DeleteButton 
+              order={order} 
+              updateStatus={updateStatus} 
+              style={{ transform: !isGrid ? 'translate(-85px, 2px)' : 'none' }}
+            />
           </div>
           <div style={{ fontSize: '11px', color: '#52525b', fontWeight: 500, marginBottom: '8px' }}>
             Mel Burgers
