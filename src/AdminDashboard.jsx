@@ -323,39 +323,104 @@ const SettingsIcon = ({ size = 24, className, style, isActive }) => (
   </svg>
 );
 
+// Componente do Botão de Salvar movido para dentro ou simplificado para garantir execução
 const SaveSettingsButton = ({ appSettings, viewMode, isAutoPrint }) => {
-  const [saved, setSaved] = React.useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [showToast, setShowToast] = useState(false);
 
   const handleSave = () => {
-    try {
-      const toSave = { ...appSettings, defaultViewMode: viewMode, autoPrint: isAutoPrint };
-      localStorage.setItem('melburguers_settings', JSON.stringify(toSave));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch (e) {
-      console.warn("Could not save settings to localStorage:", e);
-      alert("Espaço no navegador cheio. Configurações não salvas localmente.");
-    }
+    if (isSaving) return;
+    setIsSaving(true);
+    
+    // O salvamento acontece após 1 segundo
+    setTimeout(() => {
+      try {
+        const settings = { ...appSettings, defaultViewMode: viewMode, autoPrint: isAutoPrint };
+        try {
+          localStorage.setItem('melburguers_settings', JSON.stringify(settings));
+        } catch (e) {
+          localStorage.removeItem('viewMode'); 
+          localStorage.setItem('melburguers_settings', JSON.stringify(settings));
+        }
+        setIsSaving(false);
+        setShowToast(true);
+        if (navigator.vibrate) navigator.vibrate(40);
+        setTimeout(() => setShowToast(false), 3000);
+      } catch (e) {
+        setIsSaving(false);
+        setShowToast(true);
+      }
+    }, 1000);
   };
 
   return (
-    <button
-      onClick={handleSave}
-      style={{
-        width: '100%', padding: '16px',
-        borderRadius: '16px',
-        background: saved ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
-        color: saved ? '#22c55e' : 'rgba(255,255,255,0.8)',
-        border: saved ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(255,255,255,0.08)',
-        fontWeight: 800, fontSize: '13px', cursor: 'pointer',
-        letterSpacing: '1px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-        transition: 'all 0.4s ease',
-        boxShadow: saved ? '0 0 20px rgba(34,197,94,0.1)' : 'none'
-      }}
-    >
-      {saved ? <CheckCircle size={16} /> : <Save size={16} />}
-      {saved ? 'CONFIGURAÇÕES SALVAS!' : 'SALVAR CONFIGURAÇÕES'}
-    </button>
+    <div style={{ position: 'relative', width: '100%', marginTop: '24px', zIndex: 100 }}>
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ y: -100, opacity: 0, x: '-50%' }}
+            animate={{ y: 40, opacity: 1, x: '-50%' }}
+            exit={{ y: -100, opacity: 0, x: '-50%' }}
+            style={{
+              position: 'fixed', top: 0, left: '50%',
+              zIndex: 999999, background: '#22c55e', color: 'white',
+              padding: '14px 28px', borderRadius: '18px', 
+              fontWeight: 500, fontSize: '14px',
+              display: 'flex', alignItems: 'center', gap: '12px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+              border: '1px solid rgba(255,255,255,0.2)'
+            }}
+          >
+            <CheckCircle size={18} /> Configurações salvas com sucesso
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <button
+        onClick={handleSave}
+        onTouchStart={(e) => {
+          if (!isSaving) handleSave();
+        }}
+        disabled={isSaving}
+        style={{
+          width: '100%', padding: '20px',
+          borderRadius: '24px',
+          background: '#161618',
+          color: 'white',
+          border: '1px solid rgba(255,255,255,0.1)',
+          fontWeight: 600, fontSize: '14px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+          position: 'relative', overflow: 'hidden',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation'
+        }}
+      >
+        {/* Barra de Progresso - ANIMADA VIA CSS (Mais confiável no Mobile) */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, bottom: 0, 
+          width: isSaving ? '100%' : '0%', // Dispara o movimento CSS
+          background: '#22c55e',
+          zIndex: 5,
+          transition: isSaving ? 'width 1s linear' : 'none', // 1 segundo exato de animação
+          transform: 'translateZ(0)',
+          boxShadow: isSaving ? '0 0 20px rgba(34, 197, 94, 0.6)' : 'none',
+          opacity: isSaving ? 1 : 0
+        }} />
+        
+        <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {isSaving ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: 'flex' }}>
+              <RefreshCcw size={18} />
+            </motion.div>
+          ) : (
+            <Save size={18} />
+          )}
+          <span style={{ letterSpacing: '0.5px' }}>{isSaving ? 'SALVANDO...' : 'SALVAR CONFIGURAÇÕES'}</span>
+        </div>
+      </button>
+    </div>
   );
 };
 
@@ -1926,11 +1991,16 @@ const AdminDashboard = () => {
                 </div>
               </motion.div>
 
-              {/* Save Button */}
+              {/* Save Button with extra padding for mobile to clear bottom nav */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
+                style={{ 
+                  marginBottom: isMobile ? '180px' : '40px', // Aumentado drasticamente para mobile
+                  position: 'relative',
+                  zIndex: 9999 // Garante que fique acima de quase tudo no fluxo
+                }}
               >
                 <SaveSettingsButton
                   appSettings={appSettings}
