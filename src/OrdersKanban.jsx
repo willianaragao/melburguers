@@ -296,7 +296,6 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
                 <WhatsAppIcon size={13} color="#22c55e" /> WhatsApp
               </button>
             )}
-            <DeleteButton order={order} updateStatus={updateStatus} />
           </div>
           
           {isGrid && (
@@ -314,19 +313,22 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
           )}
         </div>
 
-        {!isGrid && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {!isGrid && (
             <div style={{ textAlign: 'right' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                 <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 56 : 42} />
                 <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
               </div>
             </div>
+          )}
+          <DeleteButton order={order} updateStatus={updateStatus} />
+          {!isGrid && (
             <div style={{ color: '#3f3f46', marginLeft: '4px', opacity: 0.3 }}>
               {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Conteúdo Expansível (Itens e Endereço) */}
