@@ -241,6 +241,13 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
   const orderTime = new Date(order.created_at || order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const displayId = String(order.id || '').slice(-4);
 
+  // Time metrics for warning states
+  const startTime = new Date(order.created_at || order.timestamp).getTime();
+  const now = new Date().getTime();
+  const elapsed = Math.floor((now - startTime) / 60000);
+  const isWarning = elapsed > 30;
+  const progress = Math.min((elapsed / 45) * 100, 100);
+
   return (
     <motion.div 
       layout
