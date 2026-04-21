@@ -14,5 +14,9 @@ export const getMenuData = () => {
 };
 
 export const saveMenuData = (newMenuData) => {
-  localStorage.setItem('melburgers_menu', JSON.stringify(newMenuData));
+  try {
+    localStorage.setItem('melburgers_menu', JSON.stringify(newMenuData));
+  } catch (e) {
+    console.warn("Storage full or unavailable. Using cloud data only.", e);
+  }
 };

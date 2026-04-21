@@ -40,6 +40,7 @@ const MinimalistTimer = ({ createdAt, size = 30 }) => {
   }, []);
 
   const createdTime = new Date(createdAt);
+  if (isNaN(createdTime.getTime())) return null; // Prevenir crash se data for inválida
   const elapsedMinutes = (now - createdTime) / 60000;
   const limit = 40;
   const isDelayed = elapsedMinutes >= limit;
@@ -54,6 +55,10 @@ const MinimalistTimer = ({ createdAt, size = 30 }) => {
     : (limit - elapsedMinutes) / limit;
 
   const fontSize = size > 35 ? '10px' : '8px';
+  const stroke = 3;
+  const radius = (size / 2) - stroke;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress * circumference);
 
   return (
     <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -170,11 +175,11 @@ const ActionButton = ({ order, updateStatus }) => {
 
 // === DEFINIÇÃO DAS COLUNAS ===
 const COLUMNS = [
-  { id: 'pendente', title: 'Fila Geral', color: '#71717a' },
-  { id: 'preparo', title: 'Em Preparo', color: '#b45309' },
+  { id: 'preparo', title: 'Em preparo', color: '#b45309' },
   { id: 'pronto', title: 'Pronto', color: '#0369a1' },
-  { id: 'entrega', title: 'Saiu p/ Entrega', color: '#6b21a8' },
-  { id: 'concluido', title: 'Concluído', color: '#0f766e' }
+  { id: 'entrega', title: 'Saiu p/ entrega', color: '#6b21a8' },
+  { id: 'concluido', title: 'Concluído', color: '#0f766e' },
+  { id: 'pendente', title: 'Fila Geral', color: '#71717a' }
 ];
 
 // === COMPONENTE SORTABLE CARD ===
@@ -239,7 +244,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
       case 'pendente': return 'FILA GERAL';
       case 'preparo': return 'EM PREPARO';
       case 'pronto': return 'PRONTO';
-      case 'entrega': return 'EM ROTA';
+      case 'entrega': return 'SAIU P/ ENTREGA';
       case 'concluido': return 'CONCLUÍDO';
       default: return s?.toUpperCase();
     }
@@ -266,16 +271,17 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         {(!isMobile || order.status !== 'concluido') ? (
           <div style={{ 
-            background: `${statusColor}22`, 
-            color: statusColor, 
-            padding: '4px 10px', 
+            color: isMobile ? '#71717a' : statusColor, 
+            padding: isMobile ? '0' : '4px 10px', 
             borderRadius: '8px', 
-            fontSize: '10px', 
-            fontWeight: 900,
+            fontSize: isMobile ? '13px' : '10px', 
+            fontWeight: isMobile ? 500 : 900,
             letterSpacing: '0.05em',
-            border: `1px solid ${statusColor}44`
+            background: isMobile ? 'none' : `${statusColor}22`,
+            border: isMobile ? 'none' : `1px solid ${statusColor}44`,
+            textTransform: isMobile ? 'none' : 'uppercase'
           }}>
-            {getStatusLabel(order.status)}
+            {isMobile ? getStatusLabel(order.status).toLowerCase().replace(/^\w/, c => c.toUpperCase()) : getStatusLabel(order.status)}
           </div>
         ) : <div />}
         {(isGrid || isCompact) && (
@@ -287,12 +293,12 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+            <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.02em' }}>
               #{displayId} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
             </h3>
           </div>
-          <div style={{ fontSize: '12px', color: '#71717a', fontWeight: 600, marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: '#52525b', fontWeight: 500, marginBottom: '8px' }}>
             Mel Burgers
           </div>
           {!isMobile && (
@@ -314,8 +320,8 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 40 : 30} />
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#52525b' }}>{orderTime}</span>
+          <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 44 : 30} />
+          <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
         </div>
       </div>
 
@@ -379,9 +385,11 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
                         <MessageSquare size={16} />
                       </a>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '8px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <Printer size={16} />
-                    </button>
+                    {!isMobile && (
+                      <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '8px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <Printer size={16} />
+                      </button>
+                    )}
                     <DeleteButton order={order} updateStatus={updateStatus} />
                   </div>
                 </>
@@ -463,15 +471,37 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   };
 
   if (isMobile) {
-    const filtered = statusFilter === 'all' 
-      ? localOrders.filter(o => o.status !== 'excluido')
-      : localOrders.filter(o => o.status === statusFilter || 
-          (statusFilter === 'pending' && (o.status === 'pendente' || o.status === 'pago' || !o.status)) ||
-          (statusFilter === 'preparo' && o.status === 'preparo')
-        );
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
-        {filtered.map(order => <OrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={updateStatus} viewMode={viewMode} />)}
+        {COLUMNS.filter(col => statusFilter === 'all' || statusFilter === col.id).map(column => {
+          const colOrders = localOrders.filter(o => o.status === column.id || (column.id === 'pendente' && (o.status === 'pago' || !o.status)));
+          if (colOrders.length === 0 && statusFilter !== column.id) return null;
+          
+          return (
+            <div key={column.id} style={{ marginBottom: '8px' }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                padding: '4px 8px', 
+                marginBottom: '10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ChevronDown size={14} style={{ color: '#71717a' }} />
+                  <span style={{ fontSize: '15px', color: '#71717a', fontWeight: 500 }}>
+                    {column.title}
+                  </span>
+                </div>
+                <span style={{ fontSize: '12px', color: '#52525b' }}>{colOrders.length} pedidos</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {colOrders.map(order => (
+                  <OrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={updateStatus} viewMode={viewMode} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }

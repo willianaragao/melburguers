@@ -327,10 +327,15 @@ const SaveSettingsButton = ({ appSettings, viewMode, isAutoPrint }) => {
   const [saved, setSaved] = React.useState(false);
 
   const handleSave = () => {
-    const toSave = { ...appSettings, defaultViewMode: viewMode, autoPrint: isAutoPrint };
-    localStorage.setItem('melburguers_settings', JSON.stringify(toSave));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    try {
+      const toSave = { ...appSettings, defaultViewMode: viewMode, autoPrint: isAutoPrint };
+      localStorage.setItem('melburguers_settings', JSON.stringify(toSave));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e) {
+      console.warn("Could not save settings to localStorage:", e);
+      alert("Espaço no navegador cheio. Configurações não salvas localmente.");
+    }
   };
 
   return (
@@ -477,7 +482,11 @@ const AdminDashboard = () => {
   }, [isAutoPrint, viewMode]);
 
   useEffect(() => {
-    localStorage.setItem('melburguers_settings', JSON.stringify(appSettings));
+    try {
+      localStorage.setItem('melburguers_settings', JSON.stringify(appSettings));
+    } catch (e) {
+      console.warn("Auto-save settings failed:", e);
+    }
   }, [appSettings]);
 
   useEffect(() => {
@@ -1098,33 +1107,74 @@ const AdminDashboard = () => {
 
       <main style={{ flex: 1, padding: isMobile ? '20px' : '40px 50px', paddingBottom: isMobile ? '120px' : '40px', overflowY: 'auto', height: '100vh' }}>
         {activeTab !== 'finance' && activeTab !== 'orders' && (
-          <header style={{ marginBottom: isMobile ? '24px' : '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc' }}>
-                {activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'pos' ? 'Lançar Venda' : 'Pedidos'}
-              </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%' }}></div>
-                <span style={{ fontSize: '11px', color: '#71717a' }}>Online • {lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+          <header style={{ marginBottom: isMobile ? '24px' : '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc' }}>
+                  {activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'pos' ? 'Lançar Venda' : 'Pedidos'}
+                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%' }}></div>
+                  <span style={{ fontSize: '11px', color: '#71717a' }}>Online • {lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {isMobile && (
+                  <>
+                    <button 
+                      onClick={() => {
+                        const visibleOrders = orders.filter(o => o.status !== 'excluido');
+                        if (visibleOrders.length > 0) handlePrint(visibleOrders[0]);
+                      }} 
+                      style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Printer size={18} />
+                    </button>
+                    <button onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {viewMode === 'list' ? <LayoutGrid size={18} /> : <LayoutList size={18} />}
+                    </button>
+                  </>
+                )}
+                <button onClick={playNotificationSound} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Bell size={18} />
+                </button>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {isMobile && (
-                <button onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424' }}>
-                  {viewMode === 'list' ? <LayoutGrid size={18} /> : <LayoutList size={18} />}
-                </button>
-              )}
-              <button onClick={playNotificationSound} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424' }}>
-                <Bell size={18} />
-              </button>
-            </div>
+
+            {isMobile && activeTab === 'orders-history' && (
+              <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: 'calc(100% + 40px)', margin: '0 -20px', padding: '0 20px', scrollSnapType: 'x mandatory' }}>
+                {['preparo', 'pronto', 'entrega', 'concluido'].map(f => (
+                  <button 
+                    key={f}
+                    onClick={() => {
+                      setStatusFilter(f);
+                      if (f !== 'deleted') setIsTrashMenuOpen(false);
+                    }}
+                    style={{ 
+                      padding: '8px 16px', 
+                      borderRadius: '12px', 
+                      background: statusFilter === f ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', 
+                      color: statusFilter === f ? 'white' : '#71717a', 
+                      border: '1px solid rgba(255,255,255,0.05)', 
+                      whiteSpace: 'nowrap',
+                      fontSize: '13px',
+                      fontWeight: 500
+                    }}
+                  >
+                    {f === 'preparo' ? 'Em preparo' : f === 'pronto' ? 'Pronto' : f === 'entrega' ? 'Saiu p/ entrega' : 'Concluído'}
+                  </button>
+                ))}
+              </div>
+            )}
           </header>
         )}
 
         {(activeTab === 'orders-history' || activeTab === 'search') && (
           <>
             <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row', gap: '15px' }}>
-              <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: isMobile ? '100%' : 'auto', paddingBottom: '4px' }}>
+              {!isMobile && (
+                <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: 'auto', paddingBottom: '4px' }}>
                 <button 
                   onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
                   style={{ padding: '8px 16px', borderRadius: '12px', background: dateFilter === 'today' ? 'rgba(236,148,36,0.1)' : 'rgba(255,255,255,0.03)', color: dateFilter === 'today' ? '#EC9424' : '#71717a', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap' }}
@@ -1206,7 +1256,8 @@ const AdminDashboard = () => {
                   </div>
                 ))}
               </div>
-              {activeTab === 'orders-history' && (
+              )}
+              {!isMobile && activeTab === 'orders-history' && (
                 <button onClick={handlePrinterConnect} style={{ padding: '8px 16px', borderRadius: '12px', background: isPrinterReady ? 'rgba(34,197,94,0.1)' : 'transparent', color: isPrinterReady ? '#22c55e' : '#71717a', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Printer size={14} /> {isPrinterReady ? 'Pronto' : 'Imprimir'}
                 </button>
