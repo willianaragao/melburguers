@@ -815,48 +815,44 @@ const AdminDashboard = () => {
 
   const updateStatus = async (id, newStatus) => {
     setOrders(current => current.map(o => 
-      (o.order_id === id || String(o.id) === String(id) || String(o.original_db_id) === String(id)) ? { ...o, status: newStatus } : o
+      (o.id === id || String(o.original_db_id) === String(id)) ? { ...o, status: newStatus } : o
     ));
 
     try {
-      if (newStatus === 'excluido') {
-        const orderToMove = orders.find(o => o.order_id === id || String(o.id) === String(id));
-        if (orderToMove) {
-          const dbId = orderToMove.original_db_id;
-          const { id: oldId, created_at: oldDate, original_db_id: oldDbId, ...orderData } = orderToMove;
-          
-          const { error: insertError } = await supabase
-            .from('pedidos_excluidos')
-            .insert([{ ...orderData, status: 'excluido' }]);
-          
-          if (!insertError) {
-             await supabase.from('pedidos').delete().eq('id', dbId);
-          }
-        }
-      } else {
-        const itemBeforeUpdate = orders.find(o => o.order_id === id || String(o.id) === String(id));
-        
-        if (itemBeforeUpdate && itemBeforeUpdate.status === 'excluido') {
-          const dbId = itemBeforeUpdate.original_db_id;
-          const { id: oldId, created_at: oldDate, original_db_id: oldDbId, ...orderData } = itemBeforeUpdate;
+      const orderToUpdate = orders.find(o => o.id === id || String(o.original_db_id) === String(id));
+      if (!orderToUpdate) return;
+      
+      const dbId = orderToUpdate.original_db_id;
+      const isCurrentlyDeleted = orderToUpdate._isDeleted;
+      const { id: uiId, original_db_id, _isDeleted, ...pureData } = orderToUpdate;
 
-          const { error: insertError } = await supabase
-            .from('pedidos')
-            .insert([{ ...orderData, status: newStatus }]);
-          
-          if (!insertError) {
-            await supabase.from('pedidos_excluidos').delete().eq('id', dbId);
-          }
-        } else {
-          const dbId = itemBeforeUpdate?.original_db_id;
-          if (dbId) {
-            await supabase.from('pedidos')
-              .update({ status: newStatus })
-              .eq('id', dbId);
-          }
-        }
+      if (newStatus === 'excluido' && !isCurrentlyDeleted) {
+        const { error: insertError } = await supabase
+          .from('pedidos_excluidos')
+          .insert([{ ...pureData, status: 'excluido' }]);
+        
+        if (!insertError) {
+          await supabase.from('pedidos').delete().eq('id', dbId);
+        } else throw insertError;
+      } else if (newStatus !== 'excluido' && isCurrentlyDeleted) {
+        const { error: insertError } = await supabase
+          .from('pedidos')
+          .insert([{ ...pureData, status: newStatus }]);
+        
+        if (!insertError) {
+          await supabase.from('pedidos_excluidos').delete().eq('id', dbId);
+        } else throw insertError;
+      } else {
+        const table = isCurrentlyDeleted ? 'pedidos_excluidos' : 'pedidos';
+        const { error } = await supabase
+          .from(table)
+          .update({ status: newStatus })
+          .eq('id', dbId);
+        
+        if (error) throw error;
       }
     } catch (err) {
+      console.error("DB Update Error:", err);
       fetchOrders();
     }
   };
