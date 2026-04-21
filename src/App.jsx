@@ -326,9 +326,33 @@ const App = () => {
 
       if (insertError) throw insertError;
 
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, colors: ['#EC9424', '#2D1B14', '#22c55e', '#FFFFFF'] };
+
+      const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        // since particles fall down, start a bit higher than random
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+
+      // Explosão inicial épica
       confetti({
-        particleCount: 200, spread: 90, origin: { y: 0.6 },
-        colors: ['#EC9424', '#2D1B14', '#22c55e']
+        particleCount: 400,
+        spread: 100,
+        origin: { y: 0.6 },
+        colors: ['#EC9424', '#2D1B14', '#22c55e'],
+        zIndex: 9999,
+        scalar: 1.2
       });
 
       setIsOrderSuccess(true);
