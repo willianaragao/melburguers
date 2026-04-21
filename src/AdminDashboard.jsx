@@ -511,7 +511,6 @@ const AdminDashboard = () => {
     if (!isAuthenticated) return;
     
     try {
-      
       const { data: activeData, error: activeError } = await supabase
         .from('pedidos')
         .select('*')
@@ -521,18 +520,43 @@ const AdminDashboard = () => {
         console.error("Erro na tabela pedidos:", activeError.message);
       }
 
-      const { data: deletedData } = await supabase
+      const { data: deletedData, error: deletedError } = await supabase
         .from('pedidos_excluidos')
         .select('*')
         .order('created_at', { ascending: false });
 
-      const combined = [
-        ...(activeData || []).map(o => ({ ...o, _isDeleted: false })),
-        ...(deletedData || []).map(o => ({ ...o, _isDeleted: true }))
-      ].map(o => ({
+      if (deletedError) {
+        console.error("Erro na tabela pedidos_excluidos:", deletedError.message);
+      }
+
+      // Merge and De-duplicate: Prioritize based on transition logic
+      // Key includes created_at to distinguish #0001 from different days
+      const ordersMap = new Map();
+      
+      const processOrder = (o, isDeleted) => {
+        if (!o) return;
+        const key = `${o.order_id || 'no-id'}-${o.created_at || o.timestamp}`;
+        const existing = ordersMap.get(key);
+        
+        // Logical prioritizing during transitions:
+        // Prefer 'excluido' status if it exists in either version to prevent active list flash
+        if (existing) {
+           if (o.status === 'excluido' || isDeleted) {
+             ordersMap.set(key, { ...o, _isDeleted: true });
+           }
+        } else {
+          ordersMap.set(key, { ...o, _isDeleted: isDeleted });
+        }
+      };
+
+      (activeData || []).forEach(o => processOrder(o, false));
+      (deletedData || []).forEach(o => processOrder(o, true));
+
+      const combined = Array.from(ordersMap.values()).map(o => ({
         ...o,
         original_db_id: o.id,
-        id: o._isDeleted ? `del-${o.order_id || o.id}` : `act-${o.order_id || o.id}`
+        // Stable ID for React reconciliation
+        id: o.order_id && o.created_at ? `${o.order_id}-${o.created_at}` : `db-${o.id}`
       }));
 
       setOrders(combined);
@@ -714,7 +738,6 @@ const AdminDashboard = () => {
       } else if (error) {
         if (error.code === '23505') {
           alert("Esta categoria já existe no banco de dados!");
-        } else {
           throw error;
         }
       }
@@ -723,18 +746,27 @@ const AdminDashboard = () => {
     }
   };
 
+  const maxTimestampRef = useRef(0);
+
   useEffect(() => {
-    if (orders.length > 0 && isAuthenticated) {
-      const latestOrder = orders[0];
-      if (latestOrder.id !== lastOrderId.current) {
-        if (lastOrderId.current !== null) {
+    // Only care about active (non-deleted) orders for the new sale notification
+    const activeOrders = (orders || []).filter(o => !o._isDeleted);
+    
+    if (activeOrders.length > 0 && isAuthenticated) {
+      const latestOrder = activeOrders[0];
+      const orderTime = new Date(latestOrder.created_at || latestOrder.timestamp).getTime();
+      
+      // If we see an order with a timestamp NEWER than any we've seen before, it's a new sale
+      if (orderTime > maxTimestampRef.current) {
+        // Avoid playing on initial load (when maxTimestampRef is 0)
+        if (maxTimestampRef.current !== 0) {
           playNotificationSound();
+          if (isAutoPrint) {
+            handlePrint(latestOrder);
+          }
         }
+        maxTimestampRef.current = orderTime;
         lastOrderId.current = latestOrder.id;
-        
-        if (isAutoPrint) {
-          handlePrint(latestOrder);
-        }
       }
     }
   }, [orders, isAutoPrint, isAuthenticated]);

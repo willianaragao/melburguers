@@ -240,9 +240,9 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
   const isGrid = viewMode === 'grid';
   const isCompact = viewMode === 'compact';
   
-  if (!order) return null;
+    if (!order) return null;
   const orderTime = new Date(order.created_at || order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const displayId = String(order.id || '').slice(-4);
+  const displayId = order.order_id || String(order.original_db_id || order.id || '').split('-')[0].slice(-4);
 
   // Time metrics for warning states
   const startTime = new Date(order.created_at || order.timestamp).getTime();
@@ -278,7 +278,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
             <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: '#f8fafc', letterSpacing: '-0.02em' }}>
-              #{displayId} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
+              {displayId?.startsWith('#') ? '' : '#'}{displayId} • {order.address?.customerName?.split(' ')[0] || 'Cliente'}
             </h3>
             <DeleteButton 
               order={order} 
@@ -486,12 +486,9 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   const isCompact = viewMode === 'compact';
   const isGrid = viewMode === 'grid';
 
-  // Fluency Sync: Only update local orders if the incoming data is substantively different
+  // Fluency Sync: Synchronize with orders from props to ensure UI stays matched with DB
   useEffect(() => {
-    const hasLengthChanged = localOrders.length !== orders.length;
-    if (hasLengthChanged) {
-      setLocalOrders(orders);
-    }
+    setLocalOrders(orders);
   }, [orders]);
 
   const sensors = useSensors(

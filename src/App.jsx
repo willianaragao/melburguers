@@ -122,18 +122,44 @@ const App = () => {
   const [activeCategory, setActiveCategory] = useState(null);
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [address, setAddress] = useState(() => {
+    const saved = localStorage.getItem('melburguers_customer_data');
+    return saved ? JSON.parse(saved) : {
+      street: '', number: '', neighborhood: '', complement: '', zipCode: '', customerName: '', customerPhone: '',
+    };
+  });
+  const [deliveryFee, setDeliveryFee] = useState(() => {
+    const saved = localStorage.getItem('melburguers_delivery_fee');
+    return saved ? parseFloat(saved) : 0;
+  });
   const [paymentMethod, setPaymentMethod] = useState('PIX');
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
-  const [address, setAddress] = useState({
-    street: '', number: '', neighborhood: '', complement: '', zipCode: '', customerName: '', customerPhone: '',
-  });
   const [isMenuLoading, setIsMenuLoading] = useState(true);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [changeNeeded, setChangeNeeded] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('melburguers_theme') === 'dark';
+  });
+
+  // === PERSISTÊNCIA DE DADOS ===
+  useEffect(() => {
+    localStorage.setItem('melburguers_customer_data', JSON.stringify(address));
+  }, [address]);
+
+  useEffect(() => {
+    localStorage.setItem('melburguers_delivery_fee', deliveryFee.toString());
+  }, [deliveryFee]);
+
+  useEffect(() => {
+    localStorage.setItem('melburguers_theme', isDarkMode ? 'dark' : 'light');
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   // === CARREGAMENTO INICIAL ===
   useEffect(() => {
