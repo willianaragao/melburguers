@@ -403,7 +403,13 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   const [activeOrder, setActiveOrder] = useState(null);
   const [localOrders, setLocalOrders] = useState(orders);
 
-  useEffect(() => { setLocalOrders(orders); }, [orders]);
+  // Fluency Sync: Only update local orders if the incoming data is substantively different
+  useEffect(() => {
+    const hasLengthChanged = localOrders.length !== orders.length;
+    if (hasLengthChanged) {
+      setLocalOrders(orders);
+    }
+  }, [orders]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -411,7 +417,14 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   );
 
   const handleOptimisticUpdate = (orderId, newStatus) => {
-    setLocalOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    // Instant UI feedback with broader ID matching
+    setLocalOrders(prev => prev.map(o => 
+      (o.id === orderId || String(o.original_db_id) === String(orderId)) 
+        ? { ...o, status: newStatus } 
+        : o
+    ));
+    
+    // Global update
     updateStatus(orderId, newStatus);
   };
 

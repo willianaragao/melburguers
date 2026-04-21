@@ -578,8 +578,11 @@ const AdminDashboard = () => {
         .subscribe();
 
       const polling = setInterval(() => {
-        fetchOrders();
-      }, 7000);
+        // High-Fluidity Sync: Only poll if the dashboard is actively being viewed
+        if (document.visibilityState === 'visible') {
+          fetchOrders();
+        }
+      }, 10000);
 
       const channelExcluidos = supabase
         .channel('excluidos_realtime')
