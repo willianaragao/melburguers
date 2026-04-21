@@ -402,6 +402,9 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   const isMobile = useIsMobile();
   const [activeOrder, setActiveOrder] = useState(null);
   const [localOrders, setLocalOrders] = useState(orders);
+  
+  const isCompact = viewMode === 'compact';
+  const isGrid = viewMode === 'grid';
 
   // Fluency Sync: Only update local orders if the incoming data is substantively different
   useEffect(() => {
@@ -448,23 +451,28 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
           if (colOrders.length === 0 && statusFilter !== column.id) return null;
           
           return (
-            <div key={column.id} style={{ marginBottom: '8px' }}>
+            <div key={column.id} style={{ marginBottom: isCompact ? '4px' : '8px' }}>
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between', 
-                padding: '4px 8px', 
-                marginBottom: '10px'
+                padding: isCompact ? '2px 8px' : '4px 8px', 
+                marginBottom: isCompact ? '4px' : '10px'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ChevronDown size={14} style={{ color: '#71717a' }} />
-                  <span style={{ fontSize: '15px', color: '#71717a', fontWeight: 500 }}>
+                  <span style={{ fontSize: isCompact ? '13px' : '15px', color: '#71717a', fontWeight: 500 }}>
                     {column.title}
                   </span>
                 </div>
-                <span style={{ fontSize: '12px', color: '#52525b' }}>{colOrders.length} pedidos</span>
+                {!isCompact && <span style={{ fontSize: '12px', color: '#52525b' }}>{colOrders.length} pedidos</span>}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ 
+                display: isGrid ? 'grid' : 'flex', 
+                flexDirection: isGrid ? 'unset' : 'column',
+                gridTemplateColumns: isGrid ? 'repeat(auto-fill, minmax(160px, 1fr))' : 'unset',
+                gap: isCompact ? '8px' : '12px' 
+              }}>
                 {colOrders.map(order => (
                   <OrderCard key={order.id} order={order} handlePrint={handlePrint} updateStatus={handleOptimisticUpdate} viewMode={viewMode} />
                 ))}

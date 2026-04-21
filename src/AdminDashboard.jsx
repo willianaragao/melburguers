@@ -1144,8 +1144,16 @@ const AdminDashboard = () => {
                     >
                       <Printer size={18} />
                     </button>
-                    <button onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {viewMode === 'list' ? <LayoutGrid size={18} /> : <LayoutList size={18} />}
+                    <button 
+                      onClick={() => {
+                        const modes = ['list', 'grid', 'compact'];
+                        const nextMode = modes[(modes.indexOf(viewMode) + 1) % modes.length];
+                        setViewMode(nextMode);
+                        localStorage.setItem('viewMode', nextMode);
+                      }} 
+                      style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      {viewMode === 'list' ? <LayoutList size={18} /> : viewMode === 'grid' ? <LayoutGrid size={18} /> : <Maximize size={18} />}
                     </button>
                   </>
                 )}
