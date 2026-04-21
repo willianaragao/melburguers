@@ -234,22 +234,33 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
           <div style={{ fontSize: '11px', color: '#52525b', fontWeight: 500, marginBottom: '8px' }}>
             Mel Burgers
           </div>
-          {waLink && (
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(waLink, '_blank');
-              }}
-              style={{ 
-                display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', 
-                background: 'rgba(34,197,94,0.1)', borderRadius: '10px', color: '#22c55e', 
-                border: '1px solid rgba(34,197,94,0.1)', fontSize: '11px', fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              <WhatsAppIcon size={13} color="#22c55e" /> WhatsApp
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
+            {waLink && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(waLink, '_blank');
+                }}
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', 
+                  background: 'rgba(34,197,94,0.1)', borderRadius: '10px', color: '#22c55e', 
+                  border: '1px solid rgba(34,197,94,0.1)', fontSize: '11px', fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <WhatsAppIcon size={13} color="#22c55e" /> WhatsApp
+              </button>
+            )}
+            <DeleteButton order={order} updateStatus={updateStatus} />
+            <div style={{ 
+              padding: '8px', display: 'flex', alignItems: 'center', 
+              justifyContent: 'center', opacity: isExpanded ? 0.8 : 0.3,
+              background: 'rgba(255,255,255,0.03)', borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.05)', color: 'white'
+            }}>
+              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -257,12 +268,6 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
             <MinimalistTimer createdAt={order.created_at || order.timestamp} size={isMobile ? 56 : 42} />
               <span style={{ fontSize: '10px', fontWeight: 700, color: '#3f3f46' }}>{orderTime}</span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <DeleteButton order={order} updateStatus={updateStatus} />
-            <div style={{ color: '#3f3f46' }}>
-              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </div>
           </div>
         </div>
