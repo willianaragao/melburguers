@@ -228,12 +228,12 @@ const ActionButton = ({ order, updateStatus }) => {
         overflow: 'hidden'
       }}
     >
-      {/* Barra de Progresso Animada (Mesmo estilo do botão de configurações) */}
+      {/* Barra de Progresso Animada - Camada Visível */}
       <div style={{
         position: 'absolute', top: 0, left: 0, bottom: 0, 
         width: isAdvancing ? '100%' : '0%',
         background: '#22c55e',
-        zIndex: -1,
+        zIndex: 1, // Trazido para frente do fundo do botão
         transition: isAdvancing ? 'width 1s linear' : 'none',
         opacity: isAdvancing ? 1 : 0
       }} />
