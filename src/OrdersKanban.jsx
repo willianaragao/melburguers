@@ -181,11 +181,11 @@ const ActionButton = ({ order, updateStatus }) => {
 
 // === DEFINIÇÃO DAS COLUNAS ===
 const COLUMNS = [
+  { id: 'pendente', title: 'Fila Geral', color: '#71717a' },
   { id: 'preparo', title: 'Em preparo', color: '#b45309' },
   { id: 'pronto', title: 'Pronto', color: '#0369a1' },
   { id: 'entrega', title: 'Saiu p/ entrega', color: '#6b21a8' },
   { id: 'concluido', title: 'Concluído', color: '#0f766e' },
-  { id: 'pendente', title: 'Fila Geral', color: '#71717a' },
   { id: 'excluido', title: 'Lixeira', color: '#991b1b' }
 ];
 
