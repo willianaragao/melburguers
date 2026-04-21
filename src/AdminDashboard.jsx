@@ -133,11 +133,11 @@ const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
     <text
       x="256"
       y="374"
-      text-anchor="middle"
-      dominant-baseline="middle"
-      font-size="170"
-      font-family="Arial, Helvetica, sans-serif"
-      font-weight="700"
+      textAnchor="middle"
+      dominantBaseline="middle"
+      fontSize="170"
+      fontFamily="Arial, Helvetica, sans-serif"
+      fontWeight="700"
       fill="black"
     >
       $

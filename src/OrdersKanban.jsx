@@ -18,7 +18,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MessageSquare, Printer, Clock, Trash2, MapPin, ShoppingBag, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageSquare, Printer, Clock, Trash2, MapPin, ShoppingBag, ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const useIsMobile = () => {
