@@ -86,7 +86,7 @@ const MinimalistTimer = ({ createdAt, size = 30 }) => {
   );
 };
 
-const DeleteButton = ({ order, updateStatus }) => {
+const DeleteButton = ({ order, updateStatus, style }) => {
   const [isHovered, setIsHovered] = useState(false);
   return (
     <button 
