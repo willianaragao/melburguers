@@ -815,7 +815,7 @@ const AdminDashboard = () => {
 
   const updateStatus = async (id, newStatus) => {
     setOrders(current => current.map(o => 
-      (o.order_id === id || String(o.id) === String(id)) ? { ...o, status: newStatus } : o
+      (o.order_id === id || String(o.id) === String(id) || String(o.original_db_id) === String(id)) ? { ...o, status: newStatus } : o
     ));
 
     try {
@@ -991,13 +991,17 @@ const AdminDashboard = () => {
     const today = new Date();
     const isToday = orderDate.toLocaleDateString() === today.toLocaleDateString();
     
-    if (statusFilter === 'concluido') return order.status === 'concluido';
-    if (statusFilter === 'deleted') return order.status === 'excluido';
+    if (statusFilter === 'excluido') return order.status === 'excluido';
     if (order.status === 'excluido') return false;
+    
+    if (statusFilter === 'concluido') return order.status === 'concluido';
     if (dateFilter === 'today' && !isToday) return false;
     if (statusFilter === 'pending' && order.status !== 'pendente' && order.status !== 'pago') return false;
     if (statusFilter === 'preparo' && order.status !== 'preparo') return false;
+    if (statusFilter === 'pronto' && order.status !== 'pronto') return false;
+    if (statusFilter === 'entrega' && order.status !== 'entrega') return false;
     if (statusFilter === 'all' && order.status === 'concluido') return false;
+    if (statusFilter !== 'all' && statusFilter !== 'pending' && order.status !== statusFilter) return false;
     
     return true;
   }).sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp));
