@@ -184,6 +184,10 @@ const App = () => {
   // === GEOLOCALIZAÇÃO E BUSCA DE ENDEREÇO ===
   const SHOP_COORDS = { lat: -22.6225, lng: -42.0163 };
 
+  const normalizeString = (str) => {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  };
+
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -213,14 +217,16 @@ const App = () => {
     const controller = new AbortController();
     const searchTimeout = setTimeout(async () => {
       const query = address.street.trim();
+      const normalizedQuery = normalizeString(query);
+      
       if (query.length > 2 && !isSearchingAddress) {
         const internalMatches = INTERNAL_ADDRESSES.filter(addr => 
-          addr.properties.name.toLowerCase().includes(query.toLowerCase()) ||
-          addr.properties.street.toLowerCase().includes(query.toLowerCase())
+          normalizeString(addr.properties.name).includes(normalizedQuery) ||
+          normalizeString(addr.properties.street).includes(normalizedQuery)
         );
 
         try {
-          const cleanQuery = query.toLowerCase().replace(/^(rua|r\.|\d+|avenida|av\.|alameda|travessa|estrada)\s+/i, '').replace(/\d+.*$/, '').trim();
+          const cleanQuery = normalizedQuery.replace(/^(rua|r\.|\d+|avenida|av\.|alameda|travessa|estrada)\s+/i, '').replace(/\d+.*$/, '').trim();
           
           let combined = [...internalMatches];
           
@@ -655,7 +661,10 @@ const App = () => {
                             {addressSuggestions.map((f, i) => (
                               <div 
                                 key={i} 
-                                onClick={() => handleSelectSuggestion(f)} 
+                                onPointerDown={(e) => {
+                                   e.preventDefault(); 
+                                   handleSelectSuggestion(f);
+                                }} 
                                 style={{ 
                                   padding: '14px 18px', 
                                   fontSize: '13px', 
