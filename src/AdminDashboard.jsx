@@ -707,6 +707,8 @@ const AdminDashboard = () => {
         }
       }, 10000);
 
+      const channelFinance = supabase
+        .channel('finance_realtime')
         .on('postgres_changes', { event: '*', table: 'finance' }, () => {
           fetchFinanceData();
         })
