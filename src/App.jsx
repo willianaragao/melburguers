@@ -142,6 +142,7 @@ const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('melburguers_theme') === 'dark';
   });
+  const [locationError, setLocationError] = useState(null);
 
   // === PERSISTÊNCIA DE DADOS ===
   useEffect(() => {
@@ -260,8 +261,12 @@ const App = () => {
         console.error("Erro ao obter endereço:", err);
         alert("Erro ao identificar sua localização.");
       }
-    }, () => {
-      alert("Permissão de localização negada.");
+    }, (err) => {
+      if (err.code === 1) { // PERMISSION_DENIED
+        setLocationError('denied');
+      } else {
+        alert("Erro ao identificar sua localização.");
+      }
     });
   };
 
@@ -485,6 +490,52 @@ const App = () => {
       )}
 
       <AnimatePresence>
+        {locationError === 'denied' && (
+          <motion.div 
+            className="cart-modal-overlay" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            style={{ zIndex: 3000 }}
+            onClick={() => setLocationError(null)}
+          >
+            <motion.div 
+              className="cart-modal-content" 
+              initial={{ y: '100%' }} 
+              animate={{ y: 0 }} 
+              exit={{ y: '100%' }} 
+              onClick={e => e.stopPropagation()}
+              style={{ maxHeight: '80vh', padding: '32px' }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{ width: '64px', height: '64px', background: '#fee2e2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <MapPin size={32} color="#ef4444" />
+                </div>
+                <h2 style={{ fontSize: '22px', fontWeight: 900, marginBottom: '8px' }}>Localização Negada</h2>
+                <p style={{ color: '#64748b', fontSize: '15px' }}>Não conseguimos acessar sua posição atual. Siga as instruções para ativar:</p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                <div style={{ background: isDarkMode ? '#1a1a1c' : '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '8px', color: '#EC9424' }}>iPhone (Safari)</h3>
+                  <p style={{ fontSize: '13px', lineHeight: 1.5 }}>Ajustes → Privacidade → Localização → Safari → Permita "Durante o Uso".</p>
+                </div>
+                <div style={{ background: isDarkMode ? '#1a1a1c' : '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '8px', color: '#EC9424' }}>Android / Chrome</h3>
+                  <p style={{ fontSize: '13px', lineHeight: 1.5 }}>Clique no 🔒 cadeado ao lado do site → Configurações do site → Localização → Permitir.</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setLocationError(null)}
+                style={{ width: '100%', padding: '18px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '18px', fontSize: '16px', fontWeight: 900, cursor: 'pointer' }}
+              >
+                Entendi
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
         {isCartOpen && (
           <motion.div className="cart-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCartOpen(false)}>
             <motion.div className="cart-modal-content" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} onClick={e => e.stopPropagation()}>
