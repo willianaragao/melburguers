@@ -143,6 +143,8 @@ const App = () => {
     return localStorage.getItem('melburguers_theme') === 'dark';
   });
   const [locationError, setLocationError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastCheckoutTime = useRef(0);
 
   // === PERSISTÊNCIA DE DADOS ===
   useEffect(() => {
@@ -350,11 +352,19 @@ const App = () => {
 
   // === CHECKOUT FINAL ===
   const handleCheckout = async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || isSubmitting) return;
+    
+    // Anti-duplicação por tempo (5 segundos)
+    const now = Date.now();
+    if (now - lastCheckoutTime.current < 5000) return;
+    lastCheckoutTime.current = now;
+
     if (!address.street || !address.number || !address.neighborhood || !address.customerName || !address.customerPhone) {
       alert("Por favor, preencha todos os seus dados e o endereço completo!");
       return;
     }
+
+    setIsSubmitting(true);
 
     const todayStr = new Date().toISOString().split('T')[0];
     const { count } = await supabase
@@ -417,6 +427,8 @@ const App = () => {
       
     } catch (err) {
       alert(`ERRO AO ENVIAR PEDIDO: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

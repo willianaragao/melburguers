@@ -505,6 +505,7 @@ const AdminDashboard = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [isMenuLoading, setIsMenuLoading] = useState(true);
+  const [isSubmittingPos, setIsSubmittingPos] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -706,15 +707,6 @@ const AdminDashboard = () => {
         }
       }, 10000);
 
-      const channelExcluidos = supabase
-        .channel('excluidos_realtime')
-        .on('postgres_changes', { event: 'INSERT', table: 'pedidos_excluidos' }, () => {
-          fetchOrders();
-        })
-        .subscribe();
-
-      const channelFinance = supabase
-        .channel('finance_realtime')
         .on('postgres_changes', { event: '*', table: 'finance' }, () => {
           fetchFinanceData();
         })
@@ -722,7 +714,6 @@ const AdminDashboard = () => {
 
       return () => {
         supabase.removeChannel(channel);
-        supabase.removeChannel(channelExcluidos);
         supabase.removeChannel(channelFinance);
         clearInterval(polling);
       };
@@ -1071,8 +1062,10 @@ const AdminDashboard = () => {
   };
 
   const handleFinalizePos = async () => {
-    if (posCart.length === 0) return alert("Carrinho vazio!");
+    if (posCart.length === 0 || isSubmittingPos) return;
     if (!posCustomer.name) return alert("Pelo menos o nome do cliente é obrigatório!");
+    
+    setIsSubmittingPos(true);
 
     const subtotal = posCart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     
@@ -1112,6 +1105,8 @@ const AdminDashboard = () => {
       fetchOrders();
     } catch (err) {
       alert("Erro ao salvar pedido: " + err.message);
+    } finally {
+      setIsSubmittingPos(false);
     }
   };
 
