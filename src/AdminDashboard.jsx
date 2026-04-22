@@ -513,7 +513,7 @@ const AdminDashboard = () => {
 
   // POS (Point of Sale) State
   const [posCart, setPosCart] = useState([]);
-  const [posCustomer, setPosCustomer] = useState({ name: '', phone: '', address: '', number: '', payment: 'Pix' });
+  const [posCustomer, setPosCustomer] = useState({ name: '', phone: '', address: '', number: '', complement: '', payment: 'Pix' });
 
   const playBellSound = () => {
     try {
@@ -1095,7 +1095,8 @@ const AdminDashboard = () => {
         customerName: posCustomer.name,
         customerPhone: posCustomer.phone,
         street: posCustomer.address,
-        number: posCustomer.number
+        number: posCustomer.number,
+        complement: posCustomer.complement
       },
       created_at: new Date().toISOString()
     };
@@ -1770,6 +1771,12 @@ const AdminDashboard = () => {
                             style={{ width: '100%', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', padding: '12px', borderRadius: '12px', color: 'white', fontSize: '13px' }}
                           />
                         )}
+                        <input 
+                          placeholder="Complemento / Ref"
+                          value={posCustomer.complement} 
+                          onChange={e => setPosCustomer({...posCustomer, complement: e.target.value})}
+                          style={{ width: '100%', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.06)', padding: '12px', borderRadius: '12px', color: 'white', fontSize: '13px' }}
+                        />
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '20px', fontWeight: 900, color: 'white' }}>

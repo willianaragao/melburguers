@@ -399,7 +399,7 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
                 <MapPin size={14} style={{ color: '#71717a', flexShrink: 0, marginTop: '2px' }} />
                 <div style={{ fontSize: '12px', color: '#a1a1aa', lineHeight: '1.4' }}>
                   <div style={{ fontWeight: 800, color: '#52525b', fontSize: '10px', textTransform: 'uppercase', marginBottom: '2px' }}>Entrega</div>
-                  {order.address.street}, {order.address.number} • {order.address.neighborhood}
+                  {order.address.street}, {order.address.number}{order.address.complement ? ` (${order.address.complement})` : ''} • {order.address.neighborhood}
                 </div>
               </div>
             )}
