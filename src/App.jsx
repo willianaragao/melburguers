@@ -210,6 +210,7 @@ const App = () => {
   ];
 
   useEffect(() => {
+    const controller = new AbortController();
     const searchTimeout = setTimeout(async () => {
       const query = address.street.trim();
       if (query.length > 2 && !isSearchingAddress) {
@@ -224,7 +225,7 @@ const App = () => {
           let combined = [...internalMatches];
           
           if (cleanQuery) {
-            const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + " Tamoios Cabo Frio")}&limit=5&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
+            const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + " Tamoios Cabo Frio")}&limit=5&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`, { signal: controller.signal });
             const data = await response.json();
             if (data && data.features) {
               const apiFeatures = data.features.filter(f => f.properties.countrycode === 'BR');
@@ -232,17 +233,29 @@ const App = () => {
             }
           }
           
-          setAddressSuggestions(combined.slice(0, 8));
+          // Verificar novamente se ainda não estamos selecionando antes de atualizar
+          if (!isSearchingAddress) {
+            setAddressSuggestions(combined.slice(0, 8));
+          }
         } catch (err) {
-          console.error("Erro na busca:", err);
-          setAddressSuggestions(internalMatches);
+          if (err.name !== 'AbortError') {
+            console.error("Erro na busca:", err);
+            setAddressSuggestions(internalMatches);
+          }
         }
       } else { setAddressSuggestions([]); }
     }, 200);
-    return () => clearTimeout(searchTimeout);
+
+    return () => {
+      clearTimeout(searchTimeout);
+      controller.abort();
+    };
   }, [address.street]);
 
   const handleSelectSuggestion = (feature) => {
+    setIsSearchingAddress(true);
+    setAddressSuggestions([]); // Limpar imediatamente para fechar o dropdown
+    
     const [lon, lat] = feature.geometry.coordinates;
     const p = feature.properties;
     const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
@@ -250,15 +263,15 @@ const App = () => {
     const fee = getCalculatedFee(distance, streetName);
     
     setDeliveryFee(fee);
-    setIsSearchingAddress(true);
     setAddress({
       ...address,
       street: streetName,
       neighborhood: p.district || p.suburb || p.locality || '',
       zipCode: p.postcode || '',
     });
-    setAddressSuggestions([]);
-    setTimeout(() => setIsSearchingAddress(false), 400);
+    
+    // Manter o bloqueio de busca por um tempo para evitar disparos do useEffect
+    setTimeout(() => setIsSearchingAddress(false), 800);
   };
 
   const handleUseCurrentLocation = () => {
