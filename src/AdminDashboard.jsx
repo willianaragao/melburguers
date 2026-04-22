@@ -21,6 +21,39 @@ import { formatOrderForPrinter, connectToPrinter, sendToPrinter, printOrder } fr
 import { FinanceDashboard } from './FinanceDashboard';
 import { OrdersKanban } from './OrdersKanban';
 
+// Injeta estilos CSS globais para barra de rolagem minimalista
+const ScrollbarStyles = () => (
+  <style>{`
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    
+    /* Suporte para Firefox */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    }
+
+    /* Ajuste para containers com .hide-scrollbar se quiser que apareça agora */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: block !important;
+      height: 4px !important;
+    }
+  `}</style>
+);
+
 const HistoryIcon = ({ size = 24, className, style, isActive }) => (
   <svg 
     width={size} 
@@ -1136,6 +1169,7 @@ const AdminDashboard = () => {
       color: '#e2e8f0',
       fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif"
     }}>
+      <ScrollbarStyles />
       {!isMobile && (
         <motion.aside 
           initial={false}
