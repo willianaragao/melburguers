@@ -199,17 +199,44 @@ const App = () => {
     return fee;
   };
 
+  const INTERNAL_ADDRESSES = [
+    { properties: { name: 'Bouganvile 1', district: 'Tamoios', street: 'Condomínio Bouganvile 1' }, geometry: { coordinates: [-42.0080, -22.6250] } },
+    { properties: { name: 'Bouganvile 2', district: 'Tamoios', street: 'Condomínio Bouganvile 2' }, geometry: { coordinates: [-42.0060, -22.6270] } },
+    { properties: { name: 'Bouganvile 3', district: 'Tamoios', street: 'Condomínio Bouganvile 3' }, geometry: { coordinates: [-42.0040, -22.6290] } },
+    { properties: { name: 'Bouganvile 4', district: 'Tamoios', street: 'Condomínio Bouganvile 4' }, geometry: { coordinates: [-42.0020, -22.6310] } },
+    { properties: { name: 'Gravatá 1', district: 'Tamoios', street: 'Condomínio Gravatá 1' }, geometry: { coordinates: [-41.9950, -22.6150] } },
+    { properties: { name: 'Gravatá 2', district: 'Tamoios', street: 'Condomínio Gravatá 2' }, geometry: { coordinates: [-41.9930, -22.6130] } },
+    { properties: { name: 'Condomínio Residencial Nova Califórnia', district: 'Tamoios', street: 'Condomínio Nova Califórnia' }, geometry: { coordinates: [-41.9750, -22.6050] } },
+  ];
+
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
       const query = address.street.trim();
-      if (query.length > 3 && !isSearchingAddress) {
+      if (query.length > 2 && !isSearchingAddress) {
+        const internalMatches = INTERNAL_ADDRESSES.filter(addr => 
+          addr.properties.name.toLowerCase().includes(query.toLowerCase()) ||
+          addr.properties.street.toLowerCase().includes(query.toLowerCase())
+        );
+
         try {
-          const cleanQuery = query.toLowerCase().replace(/^(rua|r\.|avenida|av\.|alameda|travessa|estrada)\s+/i, '').replace(/\d+.*$/, '').trim();
-          if (!cleanQuery) return;
-          const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + " Tamoios Cabo Frio")}&limit=5&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
-          const data = await response.json();
-          if (data && data.features) setAddressSuggestions(data.features.filter(f => f.properties.countrycode === 'BR'));
-        } catch (err) { console.error("Erro na busca:", err); }
+          const cleanQuery = query.toLowerCase().replace(/^(rua|r\.|\d+|avenida|av\.|alameda|travessa|estrada)\s+/i, '').replace(/\d+.*$/, '').trim();
+          
+          let combined = [...internalMatches];
+          
+          if (cleanQuery) {
+            const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + " Tamoios Cabo Frio")}&limit=5&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`);
+            const data = await response.json();
+            if (data && data.features) {
+              const apiFeatures = data.features.filter(f => f.properties.countrycode === 'BR');
+              combined = [...combined, ...apiFeatures];
+            }
+          }
+          
+          setAddressSuggestions(combined.slice(0, 8));
+        } catch (err) {
+          console.error("Erro na busca:", err);
+          setAddressSuggestions(internalMatches);
+        }
       } else { setAddressSuggestions([]); }
     }, 200);
     return () => clearTimeout(searchTimeout);
