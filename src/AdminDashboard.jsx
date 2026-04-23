@@ -1311,67 +1311,70 @@ const AdminDashboard = () => {
                     </button>
                   </>
                 )}
-                {/* 🧹 Botão de Limpeza e Otimização */}
-                <button 
-                  id="btn-opt-all"
-                  onClick={async () => {
-                    if(!window.confirm("Isso vai reduzir o peso de todas as fotos antigas para deixar o sistema rápido. Deseja continuar?")) return;
-                    
-                    const btn = document.getElementById('btn-opt-all');
-                    const originalText = btn.innerText;
-                    btn.innerText = "OTIMIZANDO...";
-                    btn.disabled = true;
+                {/* 🧹 Botão de Limpeza e Otimização - Apenas Mobile & Tab Cardápio */}
+                {isMobile && activeTab === 'menu' && (
+                  <button 
+                    id="btn-opt-all"
+                    onClick={async () => {
+                      if(!window.confirm("Isso vai reduzir o peso de todas as fotos antigas para deixar o sistema rápido. Deseja continuar?")) return;
+                      
+                      const btn = document.getElementById('btn-opt-all');
+                      const originalText = btn.innerText;
+                      btn.innerText = "OTIMIZANDO...";
+                      btn.disabled = true;
 
-                    try {
-                      const newMenu = {...appMenuData};
-                      let optimizedCount = 0;
+                      try {
+                        const newMenu = {...appMenuData};
+                        let optimizedCount = 0;
 
-                      for (const cat of Object.keys(newMenu.menu)) {
-                        for (const item of newMenu.menu[cat]) {
-                          if (item.image && item.image.startsWith('data:image')) {
-                            const compressed = await new Promise((resolve) => {
-                              const img = new Image();
-                              img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 400;
-                                let w = img.width, h = img.height;
-                                if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
-                                canvas.width = w; canvas.height = h;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, w, h);
-                                resolve(canvas.toDataURL('image/jpeg', 0.4));
-                              };
-                              img.src = item.image;
-                            });
-                            item.image = compressed;
-                            optimizedCount++;
+                        for (const cat of Object.keys(newMenu.menu)) {
+                          for (const item of newMenu.menu[cat]) {
+                            if (item.image && item.image.startsWith('data:image')) {
+                              const compressed = await new Promise((resolve) => {
+                                const img = new Image();
+                                img.onload = () => {
+                                  const canvas = document.createElement('canvas');
+                                  const MAX_WIDTH = 400;
+                                  let w = img.width, h = img.height;
+                                  if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
+                                  canvas.width = w; canvas.height = h;
+                                  const ctx = canvas.getContext('2d');
+                                  ctx.drawImage(img, 0, 0, w, h);
+                                  resolve(canvas.toDataURL('image/jpeg', 0.4));
+                                };
+                                img.src = item.image;
+                              });
+                              item.image = compressed;
+                              optimizedCount++;
+                            }
                           }
                         }
-                      }
 
-                      await handleSaveMenu(newMenu);
-                      alert(`Sucesso! ${optimizedCount} fotos foram otimizadas. O sistema agora está leve!`);
-                    } catch (err) {
-                      alert("Erro na otimização: " + err.message);
-                    } finally {
-                      btn.innerText = "CARDÁPIO OTIMIZADO";
-                      btn.disabled = false;
-                    }
-                  }}
-                  style={{ 
-                    padding: '0 16px', 
-                    height: '40px',
-                    background: 'rgba(236, 148, 36, 0.1)', 
-                    color: '#EC9424', 
-                    border: '1px solid rgba(236, 148, 36, 0.3)', 
-                    borderRadius: '12px', 
-                    fontSize: '11px', 
-                    fontWeight: 800,
-                    cursor: 'pointer'
-                  }}
-                >
-                  OTIMIZAR TODO O CARDÁPIO
-                </button>
+                        await handleSaveMenu(newMenu);
+                        alert(`Sucesso! ${optimizedCount} fotos foram otimizadas. O sistema agora está leve!`);
+                      } catch (err) {
+                        alert("Erro na otimização: " + err.message);
+                      } finally {
+                        btn.innerText = "CARDÁPIO OTIMIZADO";
+                        btn.disabled = false;
+                      }
+                    }}
+                    style={{ 
+                      padding: '0 16px', 
+                      height: '40px',
+                      background: 'rgba(236, 148, 36, 0.1)', 
+                      color: '#EC9424', 
+                      border: '1px solid rgba(236, 148, 36, 0.3)', 
+                      borderRadius: '12px', 
+                      fontSize: '11px', 
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    OTIMIZAR TODO O CARDÁPIO
+                  </button>
+                )}
+
 
                 <button onClick={playNotificationSound} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Bell size={18} />
