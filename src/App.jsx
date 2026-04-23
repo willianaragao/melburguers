@@ -145,6 +145,9 @@ const App = () => {
   const [locationError, setLocationError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastCheckoutTime = useRef(0);
+  const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false);
+  const [myOrders, setMyOrders] = useState([]);
+  const [isMyOrdersLoading, setIsMyOrdersLoading] = useState(false);
 
   // === PERSISTÊNCIA DE DADOS ===
   useEffect(() => {
@@ -432,6 +435,52 @@ const App = () => {
     }
   };
 
+  const fetchMyOrders = async () => {
+    if (!address.customerPhone) return;
+    setIsMyOrdersLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select('*')
+        .eq('address->>customerPhone', address.customerPhone)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      setMyOrders(data || []);
+    } catch (err) {
+      console.error("Erro ao buscar histórico:", err);
+    } finally {
+      setIsMyOrdersLoading(false);
+    }
+  };
+
+  const repeatOrder = (order) => {
+    const newItems = [];
+    order.items.forEach(oldItem => {
+      // Tentar encontrar o item atualizado no menu
+      let found = false;
+      Object.keys(appMenuData.menu).forEach(cat => {
+        const itemInMenu = appMenuData.menu[cat].find(i => i.name === oldItem.name);
+        if (itemInMenu) {
+          newItems.push(itemInMenu);
+          found = true;
+        }
+      });
+      // Se não encontrar (item deletado), adiciona o antigo mesmo
+      if (!found) newItems.push(oldItem);
+    });
+    
+    setCart([...cart, ...newItems]);
+    setIsMyOrdersOpen(false);
+    setIsCartOpen(true);
+    if (navigator.vibrate) navigator.vibrate(50);
+  };
+
+  useEffect(() => {
+    if (isMyOrdersOpen) fetchMyOrders();
+  }, [isMyOrdersOpen]);
+
   if (isMenuLoading) return (
     <div style={{ background: '#FFFFFF', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }} style={{ width: 40, height: 40, border: '3px solid #EC942422', borderTopColor: '#EC9424', borderRadius: '50%' }} />
@@ -485,11 +534,36 @@ const App = () => {
             Seg a Seg • 19h às 01h
           </div>
         </div>
-        <div className="header-actions">
-          <a href="https://www.instagram.com/melburgerrs/" target="_blank" rel="noopener noreferrer" className="action-btn btn-primary" style={{ textDecoration: 'none' }}>Seguir</a>
-          <button className="action-btn btn-secondary btn-icon" onClick={() => setIsCartOpen(true)}>
-            <ShoppingCart size={20} />
-          </button>
+        <div className="header-actions" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
+          <a href="https://www.instagram.com/melburgerrs/" target="_blank" rel="noopener noreferrer" className="action-btn btn-primary" style={{ textDecoration: 'none', width: '100%', height: '54px', minHeight: '54px', fontSize: '15px', borderRadius: '12px', fontWeight: '800' }}>Seguir</a>
+          
+          <div className="quick-actions-grid">
+            <div className="action-card" onClick={() => setIsMyOrdersOpen(true)}>
+              <div className="action-card-icon">
+                <img src="/icone_pedidos_solo.png" alt="Meus Pedidos" />
+              </div>
+              <div className="action-card-info">
+                <h3>Meus Pedidos</h3>
+                <p>Acompanhe seus pedidos e veja o histórico</p>
+              </div>
+              <div className="action-card-arrow">
+                <ArrowRight size={14} color="#ef4444" />
+              </div>
+            </div>
+
+            <div className="action-card" onClick={() => setIsCartOpen(true)}>
+              <div className="action-card-icon">
+                <img src="/icone_carrinho_solo.png" alt="Carrinho" />
+              </div>
+              <div className="action-card-info">
+                <h3>Carrinho</h3>
+                <p>Veja os itens adicionados e finalize seu pedido</p>
+              </div>
+              <div className="action-card-arrow">
+                <ArrowRight size={14} color="#ef4444" />
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -754,6 +828,74 @@ const App = () => {
               <p style={{ color: 'var(--text-light)' }}>Redirecionando para o WhatsApp...</p>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 8. My Orders Modal */}
+      <AnimatePresence>
+        {isMyOrdersOpen && (
+          <div className="cart-modal-overlay" onClick={() => setIsMyOrdersOpen(false)}>
+            <motion.div 
+              className="cart-modal-content" 
+              initial={{ y: '100%' }} 
+              animate={{ y: 0 }} 
+              exit={{ y: '100%' }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: isDarkMode ? '#0C0C0E' : '#FFFFFF' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 950 }}>MEUS PEDIDOS</h2>
+                <button onClick={() => setIsMyOrdersOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-light)' }}>
+                   <ChevronDown size={24} />
+                </button>
+              </div>
+
+              {!address.customerPhone ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  <p style={{ color: 'var(--text-light)', marginBottom: '20px' }}>Faça seu primeiro pedido para ver seu histórico aqui!</p>
+                </div>
+              ) : isMyOrdersLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: 30, height: 30, border: '3px solid #EC942422', borderTopColor: '#EC9424', borderRadius: '50%' }} />
+                </div>
+              ) : myOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  <p style={{ color: 'var(--text-light)' }}>Nenhum pedido encontrado para o número {address.customerPhone}</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {myOrders.map((order, idx) => (
+                    <div key={idx} style={{ background: isDarkMode ? '#18181B' : '#F9F9F9', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <span style={{ fontWeight: 800, fontSize: '14px', color: '#EC9424' }}>{order.order_id}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>{new Date(order.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <div style={{ marginBottom: '16px' }}>
+                        {order.items.map((item, i) => (
+                          <div key={i} style={{ fontSize: '13px', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 700 }}>{item.quantity || 1}x</span> {item.name}
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
+                        <span style={{ fontWeight: 900 }}>R$ {order.total.toFixed(2).replace('.', ',')}</span>
+                        <button 
+                          onClick={() => repeatOrder(order)}
+                          style={{ 
+                            background: '#EC9424', color: 'white', border: 'none', 
+                            padding: '8px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: 900,
+                            display: 'flex', alignItems: 'center', gap: '6px'
+                          }}
+                        >
+                          <Plus size={14} strokeWidth={3} /> REPETIR
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
