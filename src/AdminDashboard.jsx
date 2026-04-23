@@ -1576,41 +1576,36 @@ const AdminDashboard = () => {
                             </motion.div>
                           )}
                         </AnimatePresence>
-                        <input type="file" id="item-image-input-final" hidden accept="image/*" onChange={async (e) => {
+                        <input type="file" id="item-image-input-final" hidden accept="image/*" onChange={(e) => {
                           const file = e.target.files[0];
                           if(file) {
-                             // Mostra feedback de carregamento
-                             const originalLabel = e.target.previousSibling.innerText;
-                             const btn = e.target.parentElement;
-                             btn.style.opacity = '0.5';
-                             btn.style.pointerEvents = 'none';
+                             const reader = new FileReader();
+                             reader.onload = (ev) => {
+                               const img = new Image();
+                               img.onload = () => {
+                                 // 🛠️ COMPRESSÃO AUTOMÁTICA: Redimensiona para max 800px
+                                 const canvas = document.createElement('canvas');
+                                 const MAX_WIDTH = 800;
+                                 let width = img.width;
+                                 let height = img.height;
 
-                             try {
-                               // 1. Gerar nome único para o arquivo
-                               const fileExt = file.name.split('.').pop();
-                               const fileName = `${Date.now()}.${fileExt}`;
-                               const filePath = `menu/${fileName}`;
+                                 if (width > MAX_WIDTH) {
+                                   height *= MAX_WIDTH / width;
+                                   width = MAX_WIDTH;
+                                 }
 
-                               // 2. Upload para o Supabase Storage (Bucket: product-images)
-                               const { error: uploadError } = await supabase.storage
-                                 .from('product-images')
-                                 .upload(filePath, file);
-
-                               if (uploadError) throw uploadError;
-
-                               // 3. Pegar a URL pública
-                               const { data: { publicUrl } } = supabase.storage
-                                 .from('product-images')
-                                 .getPublicUrl(filePath);
-
-                               setEditingItem({...editingItem, image: publicUrl});
-                             } catch (err) {
-                               console.error("Erro no upload:", err);
-                               alert("Erro ao fazer upload da imagem. Verifique se o bucket 'product-images' existe no seu Supabase.");
-                             } finally {
-                               btn.style.opacity = '1';
-                               btn.style.pointerEvents = 'auto';
-                             }
+                                 canvas.width = width;
+                                 canvas.height = height;
+                                 const ctx = canvas.getContext('2d');
+                                 ctx.drawImage(img, 0, 0, width, height);
+                                 
+                                 // Converte para Base64 leve (JPEG 0.7 qualidade)
+                                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                                 setEditingItem({...editingItem, image: compressedBase64});
+                               };
+                               img.src = ev.target.result;
+                             };
+                             reader.readAsDataURL(file);
                           }
                         }} />
                       </div>
