@@ -442,7 +442,7 @@ const App = () => {
     <div className="app-container" style={{ background: isDarkMode ? '#0C0C0E' : '#FFFFFF', transition: 'background 0.3s' }}>
       {/* 1. Banner */}
       <div className="banner-top" style={{ position: 'relative' }}>
-        <img src="/images/MEL Burgers iluminado e convidativo.png" alt="Mel Burgers Banner" />
+        <img src="/images/banner cardapio digital.png" alt="Mel Burgers Banner" />
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
           style={{ 
@@ -465,14 +465,16 @@ const App = () => {
             </div>
           </div>
           <div className="profile-title-area">
-            <div className="username-row">
-              <h2>melburguers</h2>
-              <BadgeCheck size={20} fill="#0095f6" color="white" />
-              <MoreHorizontal size={20} style={{ marginLeft: 'auto', color: '#8e8e8e' }} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+              <MoreHorizontal size={20} style={{ color: '#8e8e8e' }} />
             </div>
           </div>
         </div>
-        <div className="bio-area">
+        <div className="bio-area" style={{ marginTop: '15px' }}>
+          <div className="username-row" style={{ marginBottom: '4px', gap: '6px' }}>
+             <h2 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase' }}>melburguers</h2>
+             <BadgeCheck size={18} fill="#0095f6" color="white" />
+          </div>
           <div className="bio-text">
             Sabor que conquista na primeira mordida ✨ <br />
             <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 

@@ -64,6 +64,19 @@ body {
   height: 200px;
   overflow: hidden;
   background: #333;
+  position: relative;
+}
+
+.banner-top::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  z-index: 5;
+  pointer-events: none;
 }
 
 .banner-top img {
@@ -79,7 +92,7 @@ body {
   background: var(--bg);
   position: relative;
   z-index: 10;
-  margin-top: -40px;
+  margin-top: -30px;
   border-radius: 28px 28px 0 0;
   box-shadow: 0 -10px 20px rgba(0,0,0,0.05);
   color: var(--text);
@@ -97,7 +110,7 @@ body {
   width: 130px;
   height: 130px;
   flex-shrink: 0;
-  margin-top: -75px;
+  margin-top: -45px;
   z-index: 20;
 }
 
