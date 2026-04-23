@@ -1576,12 +1576,41 @@ const AdminDashboard = () => {
                             </motion.div>
                           )}
                         </AnimatePresence>
-                        <input type="file" id="item-image-input-final" hidden accept="image/*" onChange={(e) => {
+                        <input type="file" id="item-image-input-final" hidden accept="image/*" onChange={async (e) => {
                           const file = e.target.files[0];
                           if(file) {
-                             const r = new FileReader();
-                             r.onload = (ev) => setEditingItem({...editingItem, image: ev.target.result});
-                             r.readAsDataURL(file);
+                             // Mostra feedback de carregamento
+                             const originalLabel = e.target.previousSibling.innerText;
+                             const btn = e.target.parentElement;
+                             btn.style.opacity = '0.5';
+                             btn.style.pointerEvents = 'none';
+
+                             try {
+                               // 1. Gerar nome único para o arquivo
+                               const fileExt = file.name.split('.').pop();
+                               const fileName = `${Date.now()}.${fileExt}`;
+                               const filePath = `menu/${fileName}`;
+
+                               // 2. Upload para o Supabase Storage (Bucket: product-images)
+                               const { error: uploadError } = await supabase.storage
+                                 .from('product-images')
+                                 .upload(filePath, file);
+
+                               if (uploadError) throw uploadError;
+
+                               // 3. Pegar a URL pública
+                               const { data: { publicUrl } } = supabase.storage
+                                 .from('product-images')
+                                 .getPublicUrl(filePath);
+
+                               setEditingItem({...editingItem, image: publicUrl});
+                             } catch (err) {
+                               console.error("Erro no upload:", err);
+                               alert("Erro ao fazer upload da imagem. Verifique se o bucket 'product-images' existe no seu Supabase.");
+                             } finally {
+                               btn.style.opacity = '1';
+                               btn.style.pointerEvents = 'auto';
+                             }
                           }
                         }} />
                       </div>
