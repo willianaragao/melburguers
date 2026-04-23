@@ -249,10 +249,16 @@ body {
   mix-blend-mode: multiply; /* Remove o fundo branco em todos os modos */
 }
 
-/* No modo escuro, apenas ajustamos o brilho se necessário, sem resetar o multiply */
+/* No modo escuro, o fundo do círculo será branco para o multiply deixar o ícone "aceso" */
+.app-container[style*="background: rgb(12, 12, 14)"] .action-card-icon,
+.app-container[style*="background: #0C0C0E"] .action-card-icon {
+  background: #ffffff; /* Fundo branco para brilho máximo */
+}
+
 .app-container[style*="background: rgb(12, 12, 14)"] .action-card-icon img,
 .app-container[style*="background: #0C0C0E"] .action-card-icon img {
   filter: brightness(1.1) contrast(1.1);
+  mix-blend-mode: multiply; /* Mantém o multiply para limpar o fundo da imagem */
 }
 
 .action-card-info {
