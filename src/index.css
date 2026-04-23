@@ -227,14 +227,15 @@ body {
 .action-card-icon {
   width: 70px;
   height: 70px;
-  background: #f1f1f1;
+  background: #ffffff !important; /* Branco puro obrigatório para sumir o quadrado */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  padding: 6px;
+  padding: 0; /* Zerado para o ícone preencher melhor */
+  border: 1px solid rgba(0,0,0,0.05); /* Uma bordinha quase invisível apenas para dar forma */
 }
 
 /* Estilo dos ícones com limpeza de fundo branco */
@@ -243,16 +244,17 @@ body {
   height: 100%;
   object-fit: contain;
   mix-blend-mode: multiply;
+  display: block;
 }
 
-/* No modo escuro (Dark Mode), o círculo fica branco para o multiply deixar o ícone "aceso" */
+/* Reforço para garantir que no Dark Mode continue branco */
 .dark-mode .action-card-icon {
   background: #ffffff !important;
 }
 
 .dark-mode .action-card-icon img {
-  filter: brightness(1.1) contrast(1.1);
-  mix-blend-mode: multiply;
+  mix-blend-mode: multiply !important;
+  filter: brightness(1.05);
 }
 
 .action-card-info {
