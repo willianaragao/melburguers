@@ -1583,9 +1583,9 @@ const AdminDashboard = () => {
                              reader.onload = (ev) => {
                                const img = new Image();
                                img.onload = () => {
-                                 // 🛠️ COMPRESSÃO AUTOMÁTICA: Redimensiona para max 800px
+                                 // 🛠️ COMPRESSÃO AGRESSIVA: Redimensiona para max 500px para caber no banco
                                  const canvas = document.createElement('canvas');
-                                 const MAX_WIDTH = 800;
+                                 const MAX_WIDTH = 500; 
                                  let width = img.width;
                                  let height = img.height;
 
@@ -1599,8 +1599,8 @@ const AdminDashboard = () => {
                                  const ctx = canvas.getContext('2d');
                                  ctx.drawImage(img, 0, 0, width, height);
                                  
-                                 // Converte para Base64 leve (JPEG 0.7 qualidade)
-                                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                                 // Converte para Base64 ultra leve (JPEG 0.5 qualidade)
+                                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
                                  setEditingItem({...editingItem, image: compressedBase64});
                                };
                                img.src = ev.target.result;
