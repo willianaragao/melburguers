@@ -167,15 +167,15 @@ const App = () => {
     }
   }, [isDarkMode]);
 
-  // === CARREGAMENTO INICIAL ===
+  // === CARREGAMENTO E SINCRONIZAÇÃO DO MENU ===
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const { data } = await supabase.from('menu_config').select('data').eq('id', 1).single();
+        const { data, error } = await supabase.from('menu_config').select('data').eq('id', 1).single();
         if (data) {
           setAppMenuData(data.data);
           const cats = Object.keys(data.data.menu);
-          if (cats.length > 0) setActiveCategory(cats[0]);
+          if (cats.length > 0 && !activeCategory) setActiveCategory(cats[0]);
         }
       } catch (err) {
         console.error("Erro ao carregar menu:", err);
@@ -183,7 +183,27 @@ const App = () => {
         setIsMenuLoading(false);
       }
     };
+
     fetchMenu();
+
+    // 🚀 SINCRONIZAÇÃO EM TEMPO REAL: Ouve mudanças no banco e atualiza na hora
+    const channel = supabase
+      .channel('menu_realtime_customer')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'menu_config',
+        filter: 'id=eq.1'
+      }, (payload) => {
+        if (payload.new && payload.new.data) {
+          setAppMenuData(payload.new.data);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // === GEOLOCALIZAÇÃO E BUSCA DE ENDEREÇO ===

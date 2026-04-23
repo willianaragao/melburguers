@@ -987,9 +987,12 @@ const AdminDashboard = () => {
     setAppMenuData(newMenu);
     saveMenuData(newMenu);
     try {
-      await supabase.from('menu_config').update({ data: newMenu }).eq('id', 1);
+      const { error } = await supabase.from('menu_config').update({ data: newMenu }).eq('id', 1);
+      if (error) throw error;
+      console.log("Menu sincronizado na nuvem com sucesso!");
     } catch (err) {
-      console.log("Erro ao salvar menu na nuvem:", err);
+      console.error("Erro ao salvar menu na nuvem:", err);
+      alert("⚠️ Erro ao salvar na nuvem! Verifique se a imagem é muito grande ou sua conexão.");
     }
   };
 
