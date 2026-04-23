@@ -442,7 +442,7 @@ const App = () => {
     <div className="app-container" style={{ background: isDarkMode ? '#0C0C0E' : '#FFFFFF', transition: 'background 0.3s' }}>
       {/* 1. Banner */}
       <div className="banner-top" style={{ position: 'relative' }}>
-        <img src="/images/banner cardapio digital.png" alt="Mel Burgers Banner" />
+        <img src="/images/banner-cardapio-digital.png" alt="Mel Burgers Banner" />
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
           style={{ 
