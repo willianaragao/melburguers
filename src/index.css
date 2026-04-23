@@ -433,7 +433,8 @@ body {
 .card-img img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f8fafc; /* Cor de fundo suave para não ficar vazio */
 }
 
 .card-info {

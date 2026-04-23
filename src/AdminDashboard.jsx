@@ -294,7 +294,7 @@ const SortableMenuItem = ({ item, cat, handleEditItem }) => {
 
         <div style={{ width: '80px', height: '80px', borderRadius: '14px', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
           {item.image ? (
-            <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0b' }} />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#27272a' }}>
               <ImageIcon size={24} />
@@ -1647,7 +1647,7 @@ const AdminDashboard = () => {
                         <AnimatePresence mode="wait">
                           {editingItem.image ? (
                             <motion.div key="p" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.25 }} style={{ width: '100%', height: '100%' }}>
-                              <img src={editingItem.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <img src={editingItem.image} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0b' }} />
                               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', display: 'flex', alignItems: 'flex-end', padding: '16px' }}>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'white', fontSize: '12px', fontWeight: 700 }}>
                                   <Camera size={14} /> ALTERAR FOTO
@@ -1809,7 +1809,7 @@ const AdminDashboard = () => {
                         }}
                       >
                         <div style={{ height: '80px', borderRadius: '10px', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                          {item.image ? <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+                          {item.image ? <img src={item.image} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0b' }} /> : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
                         </div>
                         <div style={{ fontWeight: 700, fontSize: '13px', color: 'white', height: '36px', overflow: 'hidden' }}>{item.name}</div>
                         <div style={{ color: '#22c55e', fontWeight: 900, fontSize: '15px' }}>R$ {Number(item.price || 0).toFixed(2).replace('.', ',')}</div>
