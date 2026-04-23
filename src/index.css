@@ -198,9 +198,11 @@ body {
 .quick-actions-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
   margin-top: 10px;
-  padding: 0 4px;
+  padding: 0 10px; /* Aumentado para dar mais distância das bordas */
+  justify-content: center;
+  width: 100%;
 }
 
 .action-card {
