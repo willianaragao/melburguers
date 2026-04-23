@@ -488,7 +488,7 @@ const App = () => {
   );
 
   return (
-    <div className="app-container" style={{ background: isDarkMode ? '#0C0C0E' : '#FFFFFF', transition: 'background 0.3s' }}>
+    <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`} style={{ background: isDarkMode ? '#0C0C0E' : '#FFFFFF', transition: 'background 0.3s' }}>
       {/* 1. Banner */}
       <div className="banner-top" style={{ position: 'relative' }}>
         <img src="/images/banner-cardapio-digital.png" alt="Mel Burgers Banner" />
