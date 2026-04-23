@@ -991,8 +991,8 @@ const AdminDashboard = () => {
       if (error) throw error;
       console.log("Menu sincronizado na nuvem com sucesso!");
     } catch (err) {
-      console.error("Erro ao salvar menu na nuvem:", err);
-      alert("⚠️ Erro ao salvar na nuvem! Verifique se a imagem é muito grande ou sua conexão.");
+      console.error("Erro detalhado:", err);
+      alert(`⚠️ Erro ao salvar: ${err.message || 'Erro desconhecido'} \n\nDetalhes: ${err.details || 'Sem detalhes'}`);
     }
   };
 
