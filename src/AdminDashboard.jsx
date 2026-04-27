@@ -1362,9 +1362,9 @@ const AdminDashboard = () => {
                     style={{ 
                       padding: '0 16px', 
                       height: '40px',
-                      background: 'rgba(236, 148, 36, 0.1)', 
-                      color: '#EC9424', 
-                      border: '1px solid rgba(236, 148, 36, 0.3)', 
+                      background: '#EC9424', 
+                      color: 'white', 
+                      border: '1px solid #ffffff', 
                       borderRadius: '12px', 
                       fontSize: '11px', 
                       fontWeight: 800,
