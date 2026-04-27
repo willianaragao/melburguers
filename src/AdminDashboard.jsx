@@ -1312,7 +1312,7 @@ const AdminDashboard = () => {
                   </>
                 )}
                 {/* 🧹 Botão de Limpeza e Otimização - Apenas Mobile & Tab Cardápio */}
-                {isMobile && activeTab === 'menu' && (
+                {(isMobile && activeTab === 'menu') && (
                   <button 
                     id="btn-opt-all"
                     onClick={async () => {
