@@ -880,14 +880,19 @@ const AdminDashboard = () => {
   };
 
   const handlePrinterConnect = async () => {
-    const characteristic = await connectToPrinter();
-    if (characteristic) {
-      printerRef.current = characteristic;
+    const result = await connectToPrinter();
+    if (result) {
+      printerRef.current = result.characteristic;
       setIsPrinterReady(true);
-      alert("Impressora conectada com sucesso!");
+      // Detecta desconexão e atualiza o status automaticamente
+      result.device.addEventListener('gattserverdisconnected', () => {
+        printerRef.current = null;
+        setIsPrinterReady(false);
+      });
+      alert("Impressora MPT-II conectada com sucesso! ✅");
     } else {
       setIsPrinterReady(false);
-      alert("Não foi possível conectar à impressora.");
+      alert("Não foi possível conectar. Verifique se a impressora está ligada e próxima.");
     }
   };
 
@@ -929,13 +934,17 @@ const AdminDashboard = () => {
     
     try {
       if (printerRef.current) {
-        await sendToPrinter(printerRef.current, printerData);
+        // Já tem conexão ativa — envia direto
+        const ok = await sendToPrinter(printerRef.current, printerData);
+        if (!ok) throw new Error("Falha ao enviar dados");
       } else {
+        // Sem conexão — abre o seletor Bluetooth e imprime
         const success = await printOrder(printerData);
         if (!success) throw new Error("Falha na impressão");
       }
     } catch (err) {
-      alert("Erro ao imprimir. Verifique a conexão com a impressora.");
+      console.error("Erro ao imprimir:", err);
+      alert("Erro ao imprimir. Verifique se a impressora está ligada e pareada.");
     }
   };
 
