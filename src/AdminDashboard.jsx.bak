@@ -1337,22 +1337,18 @@ const AdminDashboard = () => {
                             btn.disabled = false;
                           }
                         }}
-                        style={{
-                          padding: '0 16px',
+                        style={{ 
+                          padding: '0 16px', 
                           height: '40px',
-                          background: 'rgba(255,255,255,0.03)',
-                          color: '#EC9424',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          borderRadius: '12px',
-                          fontSize: '11px',
+                          background: '#ffffff', 
+                          color: '#000000', 
+                          border: '1px solid #ffffff', 
+                          borderRadius: '12px', 
+                          fontSize: '11px', 
                           fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
+                          cursor: 'pointer'
                         }}
                       >
-                        <Sparkles size={16} />
                         OTIMIZAR TODO O CARDÁPIO
                       </button>
                     )}
