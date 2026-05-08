@@ -254,7 +254,7 @@ const MenuSkeleton = () => (
   </div>
 );
 
-const SortableMenuItem = ({ item, cat, handleEditItem }) => {
+const SortableMenuItem = ({ item, category, onEdit, onDelete, isMobile }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   
   const style = {
@@ -280,14 +280,15 @@ const SortableMenuItem = ({ item, cat, handleEditItem }) => {
           alignItems: 'center',
           cursor: 'pointer',
           position: 'relative',
-          minHeight: '130px', // Garante tamanho uniforme
+          minHeight: '130px',
           boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.4)' : 'none'
         }}
-        onClick={() => handleEditItem(cat, item)}
+        onClick={() => onEdit(category, item)}
       >
         <div 
           {...attributes} {...listeners} 
           style={{ width: '24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)', cursor: 'grab' }}
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={16} />
         </div>
@@ -311,18 +312,33 @@ const SortableMenuItem = ({ item, cat, handleEditItem }) => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
             <div style={{ color: '#22c55e', fontSize: '16px', fontWeight: 900 }}>
-              R$ {item.price ? item.price.toFixed(2) : '0.00'}
+              R$ {item.price ? Number(item.price).toFixed(2) : '0.00'}
             </div>
-            <div style={{ 
-              width: '32px', height: '32px', borderRadius: '10px', 
-              background: 'rgba(255,255,255,0.05)', 
-              border: '1px solid rgba(255,255,255,0.1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              color: 'white',
-              boxShadow: '0 0 10px rgba(255,255,255,0.05)',
-              transition: 'all 0.3s ease'
-            }}>
-              <Edit size={14} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ 
+                width: '32px', height: '32px', borderRadius: '10px', 
+                background: 'rgba(255,255,255,0.05)', 
+                border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                color: 'white'
+              }}>
+                <Edit size={14} />
+              </div>
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(category, item.id);
+                }}
+                style={{ 
+                  width: '32px', height: '32px', borderRadius: '10px', 
+                  background: 'rgba(239,68,68,0.1)', 
+                  border: '1px solid rgba(239,68,68,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  color: '#ef4444'
+                }}
+              >
+                <Trash2 size={14} />
+              </div>
             </div>
           </div>
         </div>
@@ -330,6 +346,8 @@ const SortableMenuItem = ({ item, cat, handleEditItem }) => {
     </div>
   );
 };
+
+
 const SettingsIcon = ({ size = 24, className, style, isActive }) => (
   <svg 
     width={size} 
@@ -506,6 +524,9 @@ const AdminDashboard = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [isMenuLoading, setIsMenuLoading] = useState(true);
   const [isSubmittingPos, setIsSubmittingPos] = useState(false);
+  const [showAddChoice, setShowAddChoice] = useState(null); // 'global' ou nome da categoria
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -1037,6 +1058,52 @@ const AdminDashboard = () => {
       const newMenu = {...appMenuData};
       newMenu.menu[category] = newMenu.menu[category].filter(i => i.id !== itemId);
       handleSaveMenu(newMenu);
+      setEditingItem(null);
+      setEditingCategory(null);
+    }
+  };
+
+  const handleCreateNewCategory = () => {
+    if (!newCategoryName.trim()) return;
+    const newMenu = { ...appMenuData };
+    if (!newMenu.menu) newMenu.menu = {};
+    if (newMenu.menu[newCategoryName]) {
+      alert("Esta categoria já existe!");
+      return;
+    }
+    newMenu.menu[newCategoryName] = [];
+    handleSaveMenu(newMenu);
+    setNewCategoryName('');
+    setIsAddingCategory(false);
+  };
+
+  const handleDeleteCategory = (catName) => {
+    if (window.confirm(`Deseja excluir a categoria "${catName}" e todos os seus produtos?`)) {
+      const newMenu = { ...appMenuData };
+      delete newMenu.menu[catName];
+      handleSaveMenu(newMenu);
+    }
+  };
+
+  const handleDragEndMenu = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    let activeCategory = null;
+    Object.keys(appMenuData.menu).forEach(cat => {
+      if (appMenuData.menu[cat].some(i => i.id === active.id)) {
+        activeCategory = cat;
+      }
+    });
+
+    if (activeCategory) {
+      const oldIndex = appMenuData.menu[activeCategory].findIndex(i => i.id === active.id);
+      const newIndex = appMenuData.menu[activeCategory].findIndex(i => i.id === over.id);
+
+      const newItems = arrayMove(appMenuData.menu[activeCategory], oldIndex, newIndex);
+      const newMenu = { ...appMenuData };
+      newMenu.menu[activeCategory] = newItems;
+      handleSaveMenu(newMenu);
     }
   };
 
@@ -1047,9 +1114,11 @@ const AdminDashboard = () => {
     }
     const newMenu = {...appMenuData};
     editingItem.price = parseFloat(editingItem.price);
-    if(editingItem.original_price) {
-        editingItem.original_price = parseFloat(editingItem.original_price);
+    
+    if (!newMenu.menu[editingCategory]) {
+      newMenu.menu[editingCategory] = [];
     }
+
     if (!editingItem.id) {
       editingItem.id = Date.now().toString();
       newMenu.menu[editingCategory].push(editingItem);
@@ -1060,18 +1129,6 @@ const AdminDashboard = () => {
     handleSaveMenu(newMenu);
     setEditingItem(null);
     setEditingCategory(null);
-  };
-
-  const handleDragEndMenu = (event, category) => {
-    const { active, over } = event;
-    if (active.id !== over.id) {
-      const oldIndex = appMenuData.menu[category].findIndex(i => i.id === active.id);
-      const newIndex = appMenuData.menu[category].findIndex(i => i.id === over.id);
-      
-      const newMenu = { ...appMenuData };
-      newMenu.menu[category] = arrayMove(newMenu.menu[category], oldIndex, newIndex);
-      handleSaveMenu(newMenu);
-    }
   };
 
   const handleAddToCartPos = (item) => {
@@ -1298,73 +1355,70 @@ const AdminDashboard = () => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 {isMobile && (
                   <>
-                    {/* 🧹 Botão de Limpeza e Otimização - Apenas Mobile & Tab Cardápio */}
-                    {activeTab === 'menu' && (
-                      <button 
-                        id="btn-opt-all"
-                        onClick={async () => {
-                          if(!window.confirm("Isso vai reduzir o peso de todas as fotos antigas para deixar o sistema rápido. Deseja continuar?")) return;
-                          
-                          const btn = document.getElementById('btn-opt-all');
-                          const originalText = btn.innerText;
-                          btn.innerText = "OTIMIZANDO...";
-                          btn.disabled = true;
+                    <button 
+                      id="btn-opt-all"
+                      onClick={async () => {
+                        if(!window.confirm("Isso vai reduzir o peso de todas as fotos antigas para deixar o sistema rápido. Deseja continuar?")) return;
+                        
+                        const btn = document.getElementById('btn-opt-all');
+                        const originalText = btn.innerText;
+                        btn.innerText = "OTIMIZANDO...";
+                        btn.disabled = true;
 
-                          try {
-                            const newMenu = {...appMenuData};
-                            let optimizedCount = 0;
+                        try {
+                          const newMenu = {...appMenuData};
+                          let optimizedCount = 0;
 
-                            for (const cat of Object.keys(newMenu.menu)) {
-                              for (const item of newMenu.menu[cat]) {
-                                if (item.image && item.image.startsWith('data:image')) {
-                                  const compressed = await new Promise((resolve) => {
-                                    const img = new Image();
-                                    img.onload = () => {
-                                      const canvas = document.createElement('canvas');
-                                      const MAX_WIDTH = 400;
-                                      let w = img.width, h = img.height;
-                                      if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
-                                      canvas.width = w; canvas.height = h;
-                                      const ctx = canvas.getContext('2d');
-                                      ctx.drawImage(img, 0, 0, w, h);
-                                      resolve(canvas.toDataURL('image/jpeg', 0.4));
-                                    };
-                                    img.src = item.image;
-                                  });
-                                  item.image = compressed;
-                                  optimizedCount++;
-                                }
+                          for (const cat of Object.keys(newMenu.menu)) {
+                            for (const item of newMenu.menu[cat]) {
+                              if (item.image && item.image.startsWith('data:image')) {
+                                const compressed = await new Promise((resolve) => {
+                                  const img = new Image();
+                                  img.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    const MAX_WIDTH = 400;
+                                    let w = img.width, h = img.height;
+                                    if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
+                                    canvas.width = w; canvas.height = h;
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.drawImage(img, 0, 0, w, h);
+                                    resolve(canvas.toDataURL('image/jpeg', 0.4));
+                                  };
+                                  img.src = item.image;
+                                });
+                                item.image = compressed;
+                                optimizedCount++;
                               }
                             }
-
-                            await handleSaveMenu(newMenu);
-                            alert(`Sucesso! ${optimizedCount} fotos foram otimizadas. O sistema agora está leve!`);
-                          } catch (err) {
-                            alert("Erro na otimização: " + err.message);
-                          } finally {
-                            btn.innerText = "CARDÁPIO OTIMIZADO";
-                            btn.disabled = false;
                           }
-                        }}
-                        style={{
-                          padding: '0 16px',
-                          height: '40px',
-                          background: 'rgba(255,255,255,0.03)',
-                          color: '#EC9424',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
-                      >
-                        <Sparkles size={16} />
-                        OTIMIZAR TODO O CARDÁPIO
-                      </button>
-                    )}
+
+                          await handleSaveMenu(newMenu);
+                          alert(`Sucesso! ${optimizedCount} fotos foram otimizadas. O sistema agora está leve!`);
+                        } catch (err) {
+                          alert("Erro na otimização: " + err.message);
+                        } finally {
+                          btn.innerText = "CARDÁPIO OTIMIZADO";
+                          btn.disabled = false;
+                        }
+                      }}
+                      style={{
+                        padding: '0 16px',
+                        height: '40px',
+                        background: 'rgba(255,255,255,0.03)',
+                        color: '#EC9424',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <Sparkles size={16} />
+                      OTIMIZAR TODO O CARDÁPIO
+                    </button>
                     <button onClick={() => {
                         const visibleOrders = orders.filter(o => o.status !== 'excluido');
                         if (visibleOrders.length > 0) handlePrint(visibleOrders[0]);
@@ -1386,7 +1440,7 @@ const AdminDashboard = () => {
                   </>
                 )}
 
-                <button onClick={playNotificationSound} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button onClick={playNotificationSound} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Bell size={18} />
                 </button>
               </div>
@@ -1396,7 +1450,7 @@ const AdminDashboard = () => {
               <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', width: 'calc(100% + 40px)', margin: '0 -20px', padding: '0 20px', scrollSnapType: 'x mandatory' }}>
                 {['pendente', 'preparo', 'pronto', 'entrega', 'concluido', 'excluido'].map(f => (
                   <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-<button onClick={() => {
+                    <button onClick={() => {
                         setStatusFilter(f);
                         if (f !== 'excluido') setIsTrashMenuOpen(false);
                       }}
@@ -1469,7 +1523,7 @@ const AdminDashboard = () => {
                 </button>
                 {['pendente', 'preparo', 'pronto', 'entrega', 'concluido', 'excluido'].map(f => (
                   <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-<button onClick={() => {
+                    <button onClick={() => {
                         setStatusFilter(f);
                         if (f !== 'excluido') setIsTrashMenuOpen(false);
                       }}
@@ -1566,7 +1620,6 @@ const AdminDashboard = () => {
             background: '#0a0a0b',
             borderTop: '1px solid rgba(255,255,255,0.08)'
           }}>
-            {/* Barra de endereço */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               background: '#111113',
@@ -1595,8 +1648,6 @@ const AdminDashboard = () => {
                 </svg>
               </button>
             </div>
-
-            {/* iFrame do cardápio */}
             <div style={{ flex: 1, position: 'relative', overflow: 'hidden', padding: '0 8px' }}>
               <iframe
                 src={window.location.origin + '/'}
@@ -1616,119 +1667,197 @@ const AdminDashboard = () => {
 
         {activeTab === 'menu' && appMenuData && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
-            <AnimatePresence mode="wait">
-              {editingItem ? (
+            <AnimatePresence>
+              {editingItem && (
                 <motion.div
-                  key="edit-form"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -30 }}
-                  style={{ 
-                    maxWidth: '600px', 
-                    margin: '0 auto', 
-                    background: '#111113', 
-                    borderRadius: '24px', 
-                    padding: '32px', 
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'fixed', inset: 0, zIndex: 10000,
+                    background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+                    display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', 
+                    justifyContent: 'center', padding: isMobile ? '0' : '20px'
                   }}
+                  onClick={() => setEditingItem(null)}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'white', margin: 0 }}>
-                      {editingItem.id ? 'Editar Produto' : 'Novo Produto'}
-                    </h2>
-                    <button 
-                      onClick={() => setEditingItem(null)}
-                      style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#71717a', cursor: 'pointer' }}
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
+                  <motion.div
+                    initial={isMobile ? { y: '100%' } : { scale: 0.9, y: 30 }}
+                    animate={isMobile ? { y: 0 } : { scale: 1, y: 0 }}
+                    exit={isMobile ? { y: '100%' } : { scale: 0.9, y: 30 }}
+                    transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      width: '100%', maxWidth: isMobile ? '100%' : '500px',
+                      height: isMobile ? '100%' : 'auto',
+                      background: '#111113', 
+                      borderRadius: isMobile ? '0' : '32px',
+                      padding: isMobile ? '20px' : '32px',
+                      border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                      maxHeight: isMobile ? '100%' : '90vh',
+                      overflowY: 'auto',
+                      boxShadow: '0 -20px 60px rgba(0,0,0,0.6)',
+                      position: 'relative'
+                    }}
+                  >
+                    {isMobile && (
+                      <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', margin: '0 auto 24px' }} />
+                    )}
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Imagem do Produto</label>
-                      <div 
-                        onClick={() => document.getElementById('item-image-input-final').click()}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '20px' : '32px' }}>
+                      <div>
+                        <h2 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.5px' }}>
+                          {editingItem.id ? 'Editar Produto' : 'Novo Produto'}
+                        </h2>
+                        <p style={{ fontSize: '12px', color: '#52525b', fontWeight: 600, marginTop: '2px' }}>
+                          Preencha as informações do item
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => setEditingItem(null)}
                         style={{ 
-                          height: '200px', borderRadius: '20px', background: '#0a0a0b', border: '2px dashed rgba(255,255,255,0.06)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', transition: 'all 0.3s ease'
+                          background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', 
+                          width: '40px', height: '40px', display: 'flex', alignItems: 'center', 
+                          justifyContent: 'center', color: 'white', cursor: 'pointer',
+                          transition: 'all 0.2s'
                         }}
                       >
-                        <AnimatePresence mode="wait">
-                          {editingItem.image ? (
-                            <motion.div key="p" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.25 }} style={{ width: '100%', height: '100%' }}>
-                              <img src={editingItem.image} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0b' }} />
-                              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', display: 'flex', alignItems: 'flex-end', padding: '16px' }}>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'white', fontSize: '12px', fontWeight: 700 }}>
-                                  <Camera size={14} /> ALTERAR FOTO
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
+                      <div>
+                        <label style={{ fontSize: '11px', fontWeight: 800, color: '#52525b', textTransform: 'uppercase', marginBottom: '8px', display: 'block', letterSpacing: '1px' }}>Imagem do Produto</label>
+                        <div 
+                          onClick={() => document.getElementById('item-image-input-final').click()}
+                          style={{ 
+                            height: isMobile ? '160px' : '240px', borderRadius: '24px', background: '#0a0a0b', border: '2px dashed rgba(255,255,255,0.06)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <AnimatePresence mode="wait">
+                            {editingItem.image ? (
+                              <motion.div key="p" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.25 }} style={{ width: '100%', height: '100%' }}>
+                                <img src={editingItem.image} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0b' }} />
+                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)', display: 'flex', alignItems: 'flex-end', padding: '20px' }}>
+                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'white', fontSize: '12px', fontWeight: 800 }}>
+                                    <Camera size={16} /> ALTERAR FOTO
+                                  </div>
                                 </div>
-                              </div>
-                            </motion.div>
-                          ) : (
-                            <motion.div key="pl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#3f3f46' }}>
-                              <Upload size={32} /><span style={{ fontSize: '13px', fontWeight: 600 }}>Foto Produto</span>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                        <input type="file" id="item-image-input-final" hidden accept="image/*" onChange={(e) => {
-                          const file = e.target.files[0];
-                          if(file) {
-                             const reader = new FileReader();
-                             reader.onload = (ev) => {
-                               const img = new Image();
-                               img.onload = () => {
-                                 // 🛠️ COMPRESSÃO ULTRA: Redimensiona para max 400px
-                                 const canvas = document.createElement('canvas');
-                                 const MAX_WIDTH = 400; 
-                                 let width = img.width;
-                                 let height = img.height;
-
-                                 if (width > MAX_WIDTH) {
-                                   height *= MAX_WIDTH / width;
-                                   width = MAX_WIDTH;
-                                 }
-
-                                 canvas.width = width;
-                                 canvas.height = height;
-                                 const ctx = canvas.getContext('2d');
-                                 ctx.drawImage(img, 0, 0, width, height);
-                                 
-                                 // Converte para Base64 ultra leve (JPEG 0.4 qualidade)
-                                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.4);
-                                 setEditingItem({...editingItem, image: compressedBase64});
+                              </motion.div>
+                            ) : (
+                              <motion.div key="pl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: '#3f3f46' }}>
+                                <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Upload size={28} />
+                                </div>
+                                <span style={{ fontSize: '14px', fontWeight: 700 }}>Toque para enviar foto</span>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          <input type="file" id="item-image-input-final" hidden accept="image/*" onChange={(e) => {
+                            const file = e.target.files[0];
+                            if(file) {
+                               const reader = new FileReader();
+                               reader.onload = (ev) => {
+                                 const img = new Image();
+                                 img.onload = () => {
+                                   const canvas = document.createElement('canvas');
+                                   const MAX_WIDTH = 400; 
+                                   let width = img.width;
+                                   let height = img.height;
+                                   if (width > MAX_WIDTH) {
+                                     height *= MAX_WIDTH / width;
+                                     width = MAX_WIDTH;
+                                   }
+                                   canvas.width = width;
+                                   canvas.height = height;
+                                   const ctx = canvas.getContext('2d');
+                                   ctx.drawImage(img, 0, 0, width, height);
+                                   const compressedBase64 = canvas.toDataURL('image/jpeg', 0.4);
+                                   setEditingItem({...editingItem, image: compressedBase64});
+                                 };
+                                 img.src = ev.target.result;
                                };
-                               img.src = ev.target.result;
-                             };
-                             reader.readAsDataURL(file);
-                          }
-                        }} />
+                               reader.readAsDataURL(file);
+                            }
+                          }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '6px' : '10px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 800, color: '#52525b', textTransform: 'uppercase', letterSpacing: '1px' }}>Nome do Produto</label>
+                        <input 
+                          placeholder="Ex: Smash Burger Duplo"
+                          value={editingItem.name} 
+                          onChange={e => setEditingItem({...editingItem, name: e.target.value})} 
+                          style={{ padding: isMobile ? '14px 18px' : '20px', borderRadius: '18px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', fontSize: '15px', outline: 'none' }} 
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '6px' : '10px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 800, color: '#52525b', textTransform: 'uppercase', letterSpacing: '1px' }}>Preço de Venda (R$)</label>
+                        <input 
+                          type="number" 
+                          placeholder="0,00"
+                          value={editingItem.price} 
+                          onChange={e => setEditingItem({...editingItem, price: e.target.value})} 
+                          style={{ padding: isMobile ? '14px 18px' : '20px', borderRadius: '18px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', fontSize: '15px', outline: 'none' }} 
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 800, color: '#52525b', textTransform: 'uppercase', letterSpacing: '1px' }}>Descrição / Ingredientes</label>
+                        <textarea 
+                          placeholder="Descreva os ingredientes do produto..."
+                          value={editingItem.description} 
+                          onChange={e => setEditingItem({...editingItem, description: e.target.value})} 
+                          style={{ padding: isMobile ? '14px 18px' : '20px', borderRadius: '18px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', minHeight: isMobile ? '80px' : '120px', fontSize: '15px', outline: 'none', resize: 'none' }} 
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '10px' : '12px', marginTop: isMobile ? '4px' : '12px' }}>
+                        <motion.button 
+                          whileHover={{ scale: 1.02, background: '#f59e0b' }} 
+                          whileTap={{ scale: 0.98 }} 
+                          onClick={handleSaveEdit} 
+                          style={{ padding: isMobile ? '16px' : '20px', background: '#EC9424', color: '#fff', borderRadius: '20px', fontWeight: 900, border: 'none', fontSize: '16px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(236,148,36,0.2)' }}
+                        >
+                          SALVAR ALTERAÇÕES
+                        </motion.button>
+                        
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          {editingItem.id && (
+                            <motion.button 
+                              whileHover={{ scale: 1.02, background: 'rgba(239, 68, 68, 0.1)' }} 
+                              whileTap={{ scale: 0.98 }} 
+                              onClick={() => handleDeleteItem(editingCategory, editingItem.id)} 
+                              style={{ flex: 1, padding: isMobile ? '14px' : '18px', background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', borderRadius: '18px', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.1)', fontSize: '14px' }}
+                            >
+                              EXCLUIR
+                            </motion.button>
+                          )}
+                          <button 
+                            onClick={() => setEditingItem(null)} 
+                            style={{ flex: 1, padding: isMobile ? '14px' : '18px', background: 'rgba(255,255,255,0.04)', color: '#71717a', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.08)', fontWeight: 700, fontSize: '14px' }}
+                          >
+                            CANCELAR
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>Nome</label>
-                      <input value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>Preço</label>
-                      <input type="number" value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#71717a', textTransform: 'uppercase' }}>Descrição</label>
-                      <textarea value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} style={{ padding: '16px', borderRadius: '12px', background: '#0a0a0b', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', minHeight: '100px' }} />
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSaveEdit} style={{ flex: 2, padding: '18px', background: '#EC9424', color: '#fff', borderRadius: '14px', fontWeight: 800, border: 'none' }}>SALVAR</motion.button>
-                      <button onClick={() => setEditingItem(null)} style={{ flex: 1, padding: '18px', background: 'rgba(255,255,255,0.04)', color: '#71717a', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)' }}>CANCELAR</button>
-                    </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
-              ) : (
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence mode="wait">
+              {!editingItem && (
                 <motion.div
                   key="menu-list"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
                 >
                   {isMenuLoading ? (
@@ -1743,45 +1872,276 @@ const AdminDashboard = () => {
                       ))}
                     </div>
                   ) : (
-                    Object.keys(appMenuData.menu).map((cat, catIdx) => (
-                      <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div>
-                            <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: 0 }}>{cat}</h3>
-                            <span style={{ fontSize: '11px', color: '#52525b', fontWeight: 700 }}>{appMenuData.menu[cat].length} PRODUTOS</span>
-                          </div>
-                          <motion.button 
-                            whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }} 
+                    Object.keys(appMenuData?.menu || {}).length === 0 ? (
+                      <div style={{ padding: '80px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '32px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                         <Rows3 size={48} color="#27272a" style={{ marginBottom: '20px' }} />
+                         <h3 style={{ color: 'white', fontSize: '18px', fontWeight: 800 }}>Nenhuma sessão encontrada</h3>
+                         <p style={{ color: '#52525b', fontSize: '14px', marginTop: '8px', marginBottom: '24px' }}>Crie sua primeira sessão para começar o cardápio</p>
+                         <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setIsAddingCategory(true)}
                             style={{ 
-                              padding: '10px 16px', 
-                              background: 'rgba(255,255,255,0.03)', 
-                              color: 'white', 
-                              borderRadius: '12px', 
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              fontSize: '12px',
-                              fontWeight: 800,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              boxShadow: '0 0 15px rgba(255,255,255,0.03)',
-                              cursor: 'pointer'
+                              padding: '16px 32px', background: '#EC9424', color: 'white', 
+                              borderRadius: '16px', border: 'none', fontWeight: 900, cursor: 'pointer' 
                             }}
                           >
-                            <Plus size={14} /> NOVO
+                            + CRIAR PRIMEIRA SESSÃO
                           </motion.button>
-                        </div>
-                        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={(e) => handleDragEndMenu(e, cat)}>
-                          <SortableContext items={appMenuData.menu[cat].map(i => i.id)} strategy={rectSortingStrategy}>
-                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
-                              {appMenuData.menu[cat].map((item) => (
-                                <SortableMenuItem key={item.id} item={item} cat={cat} isMobile={isMobile} handleEditItem={handleEditItem} />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        </DndContext>
                       </div>
-                    ))
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                        {Object.keys(appMenuData?.menu || {}).map((cat, catIdx) => (
+                          <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div>
+                                <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: 0 }}>{cat}</h3>
+                                <span style={{ fontSize: '11px', color: '#52525b', fontWeight: 700 }}>{appMenuData.menu[cat].length} PRODUTOS</span>
+                              </div>
+                              <button 
+                                onClick={() => handleDeleteCategory(cat)}
+                                style={{ 
+                                  background: 'rgba(239, 68, 68, 0.05)', 
+                                  border: '1px solid rgba(239, 68, 68, 0.1)', 
+                                  color: '#ef4444', 
+                                  width: '32px', height: '32px', 
+                                  borderRadius: '8px', 
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  marginTop: '4px'
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <motion.button 
+                              whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }} 
+                              onClick={() => setShowAddChoice(cat)}
+                              style={{ 
+                                padding: '10px 16px', 
+                                background: 'rgba(255,255,255,0.03)', 
+                                color: 'white', 
+                                borderRadius: '12px', 
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                boxShadow: '0 0 15px rgba(255,255,255,0.03)',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Plus size={14} /> NOVO
+                            </motion.button>
+                          </div>
+                          <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEndMenu}>
+                            <SortableContext items={appMenuData.menu[cat].map(i => i.id)} strategy={rectSortingStrategy}>
+                              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+                                {appMenuData.menu[cat].map((item) => (
+                                  <SortableMenuItem key={item.id} item={item} category={cat} onEdit={handleEditItem} onDelete={handleDeleteItem} isMobile={isMobile} />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        </div>
+                        ))}
+                      </div>
+                    )
                   )}
+
+                  <AnimatePresence>
+                    {showAddChoice && !isAddingCategory && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                          position: 'fixed', inset: 0, zIndex: 9999,
+                          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)',
+                          display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', 
+                          justifyContent: 'center', padding: isMobile ? '0' : '20px'
+                        }}
+                        onClick={() => setShowAddChoice(null)}
+                      >
+                        <motion.div
+                          initial={isMobile ? { y: '100%' } : { scale: 0.9, y: 30 }}
+                          animate={isMobile ? { y: 0 } : { scale: 1, y: 0 }}
+                          exit={isMobile ? { y: '100%' } : { scale: 0.9, y: 30 }}
+                          transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            width: '100%', maxWidth: isMobile ? '100%' : '440px', background: '#111113',
+                            borderRadius: isMobile ? '32px 32px 0 0' : '32px', 
+                            padding: isMobile ? '20px 24px 120px 24px' : '40px', 
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            boxShadow: '0 -20px 60px rgba(0,0,0,0.8)',
+                            position: 'relative'
+                          }}
+                        >
+                          {isMobile && (
+                            <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', margin: '0 auto 24px' }} />
+                          )}
+
+                          <h3 style={{ fontSize: '24px', fontWeight: 900, color: 'white', textAlign: isMobile ? 'left' : 'center', marginBottom: '8px', letterSpacing: '-0.5px' }}>
+                            O que deseja adicionar?
+                          </h3>
+                          <p style={{ fontSize: '14px', color: '#52525b', textAlign: isMobile ? 'left' : 'center', marginBottom: '32px', fontWeight: 600 }}>
+                            {showAddChoice === 'global' ? 'Inicie uma nova seção ou adicione um item' : `Adicionando em "${showAddChoice}"`}
+                          </p>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <motion.button
+                              whileHover={{ scale: 1.02, background: 'rgba(236,148,36,0.15)' }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => {
+                                if (showAddChoice === 'global') {
+                                  const cats = Object.keys(appMenuData.menu);
+                                  if (cats.length === 0) {
+                                    setIsAddingCategory(true);
+                                  } else {
+                                    setEditingCategory(cats[0]);
+                                    setEditingItem({ name: '', price: '', description: '', image: '' });
+                                    setShowAddChoice(null);
+                                  }
+                                } else {
+                                  setEditingCategory(showAddChoice);
+                                  setEditingItem({ name: '', price: '', description: '', image: '' });
+                                  setShowAddChoice(null);
+                                }
+                              }}
+                              style={{
+                                padding: '24px', borderRadius: '24px', background: 'rgba(236,148,36,0.08)',
+                                border: '1px solid rgba(236,148,36,0.2)', color: 'white',
+                                display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', textAlign: 'left'
+                              }}
+                            >
+                              <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(236,148,36,0.3)' }}>
+                                <Plus size={24} color="white" strokeWidth={3} />
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 900, fontSize: '17px' }}>Novo Produto</div>
+                                <div style={{ fontSize: '12px', color: '#a1a1aa', marginTop: '2px' }}>Adicionar item a esta categoria</div>
+                              </div>
+                            </motion.button>
+
+                            <motion.button
+                              whileHover={{ scale: 1.02, background: 'rgba(255,255,255,0.05)' }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => setIsAddingCategory(true)}
+                              style={{
+                                padding: '24px', borderRadius: '24px', background: 'rgba(255,255,255,0.02)',
+                                border: '1px solid rgba(255,255,255,0.05)', color: 'white',
+                                display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer', textAlign: 'left'
+                              }}
+                            >
+                              <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Rows3 size={24} color="#71717a" />
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 900, fontSize: '17px' }}>Nova Sessão</div>
+                                <div style={{ fontSize: '12px', color: '#52525b', marginTop: '2px' }}>Criar uma nova categoria</div>
+                              </div>
+                            </motion.button>
+
+                            <button
+                              onClick={() => setShowAddChoice(null)}
+                              style={{ marginTop: '16px', background: 'none', border: 'none', color: '#52525b', fontSize: '14px', fontWeight: 800, cursor: 'pointer', padding: '10px' }}
+                            >
+                              CANCELAR
+                            </button>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {isAddingCategory && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                          position: 'fixed', inset: 0, zIndex: 10000,
+                          background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(15px)',
+                          display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', 
+                          justifyContent: 'center', padding: isMobile ? '0' : '20px'
+                        }}
+                        onClick={() => setIsAddingCategory(false)}
+                      >
+                        <motion.div
+                          initial={isMobile ? { y: '100%' } : { scale: 0.9, y: 30 }}
+                          animate={isMobile ? { y: 0 } : { scale: 1, y: 0 }}
+                          exit={isMobile ? { y: '100%' } : { scale: 0.9, y: 30 }}
+                          transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            width: '100%', maxWidth: isMobile ? '100%' : '440px', background: '#111113',
+                            borderRadius: isMobile ? '32px 32px 0 0' : '32px', 
+                            padding: isMobile ? '20px 24px 120px 24px' : '40px', 
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            boxShadow: '0 -20px 60px rgba(0,0,0,0.9)',
+                            position: 'relative'
+                          }}
+                        >
+                          {isMobile && (
+                            <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', margin: '0 auto 24px' }} />
+                          )}
+
+                          <div style={{ width: '72px', height: '72px', borderRadius: '24px', background: 'rgba(236,148,36,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: isMobile ? '0 0 24px 0' : '0 auto 24px auto' }}>
+                            <Rows3 size={32} color="#EC9424" />
+                          </div>
+                          <h3 style={{ fontSize: '24px', fontWeight: 900, color: 'white', textAlign: isMobile ? 'left' : 'center', marginBottom: '8px', letterSpacing: '-0.5px' }}>
+                            Nome da Nova Sessão
+                          </h3>
+                          <p style={{ fontSize: '14px', color: '#52525b', textAlign: isMobile ? 'left' : 'center', marginBottom: '32px', fontWeight: 600 }}>
+                            Como se chamará a nova categoria?
+                          </p>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            <input
+                              autoFocus
+                              placeholder="Ex: Entradas, Sobremesas..."
+                              value={newCategoryName}
+                              onChange={e => setNewCategoryName(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && handleCreateNewCategory(newCategoryName)}
+                              style={{
+                                width: '100%', padding: '24px', borderRadius: '20px',
+                                background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.1)',
+                                color: 'white', fontSize: '18px', textAlign: isMobile ? 'left' : 'center', outline: 'none'
+                              }}
+                            />
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={handleCreateNewCategory}
+                                style={{
+                                  width: '100%', padding: '20px', background: '#EC9424', color: 'white',
+                                  borderRadius: '20px', border: 'none', fontWeight: 900, fontSize: '16px', cursor: 'pointer',
+                                  boxShadow: '0 10px 20px rgba(236,148,36,0.2)'
+                                }}
+                              >
+                                CRIAR SESSÃO
+                              </motion.button>
+                              <button
+                                onClick={() => setIsAddingCategory(false)}
+                                style={{
+                                  width: '100%', padding: '16px', background: 'none', color: '#71717a',
+                                  borderRadius: '16px', border: 'none', fontWeight: 700, fontSize: '14px', cursor: 'pointer'
+                                }}
+                              >
+                                VOLTAR
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1790,7 +2150,6 @@ const AdminDashboard = () => {
 
         {activeTab === 'pos' && appMenuData && appMenuData.menu && (
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '32px', height: '100%' }}>
-            {/* Lado Esquerdo: Menu de Seleção */}
             <div style={{ flex: 1, overflowY: 'auto', paddingRight: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'white', margin: 0 }}>Lançar Pedido Balcão</h2>
@@ -1830,7 +2189,6 @@ const AdminDashboard = () => {
               ))}
             </div>
 
-            {/* Lado Direito: Carrinho e Cliente */}
             <div style={{ width: isMobile ? '100%' : '380px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ background: '#111113', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px', position: 'sticky', top: 0 }}>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1937,7 +2295,6 @@ const AdminDashboard = () => {
             transition={{ duration: 0.35 }}
             style={{ maxWidth: '760px', margin: '0 auto' }}
           >
-            {/* Header */}
             <div style={{ marginBottom: '36px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
                 <div style={{
@@ -1957,7 +2314,6 @@ const AdminDashboard = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Card: Interface */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1969,7 +2325,6 @@ const AdminDashboard = () => {
                   overflow: 'hidden'
                 }}
               >
-                {/* Section header */}
                 <div style={{ padding: '18px 24px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <LayoutGrid size={14} color="rgba(255,255,255,0.6)" />
@@ -1977,7 +2332,6 @@ const AdminDashboard = () => {
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Interface</span>
                 </div>
 
-                {/* Row */}
                 <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: '16px' }}>
                   <div>
                     <div style={{ fontWeight: 700, color: '#f4f4f5', fontSize: '14px' }}>Visualização Padrão</div>
@@ -2009,7 +2363,6 @@ const AdminDashboard = () => {
                 </div>
               </motion.div>
 
-              {/* Card: Notificações */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -2049,7 +2402,6 @@ const AdminDashboard = () => {
                     </select>
                   </div>
 
-                  {/* Test button */}
                   <button
                     onClick={playNotificationSound}
                     style={{
@@ -2070,7 +2422,6 @@ const AdminDashboard = () => {
                 </div>
               </motion.div>
 
-              {/* Card: Hardware */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -2090,7 +2441,6 @@ const AdminDashboard = () => {
                 </div>
 
                 <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {/* Auto print toggle row */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontWeight: 700, color: '#f4f4f5', fontSize: '14px' }}>Impressão Automática</div>
@@ -2118,7 +2468,6 @@ const AdminDashboard = () => {
                     </button>
                   </div>
 
-                  {/* Printer status row */}
                   <div style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '16px 18px', background: '#0a0a0b',
@@ -2158,15 +2507,14 @@ const AdminDashboard = () => {
                 </div>
               </motion.div>
 
-              {/* Save Button with extra padding for mobile to clear bottom nav */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
                 style={{ 
-                  marginBottom: isMobile ? '180px' : '40px', // Aumentado drasticamente para mobile
+                  marginBottom: isMobile ? '180px' : '40px',
                   position: 'relative',
-                  zIndex: 9999 // Garante que fique acima de quase tudo no fluxo
+                  zIndex: 9999
                 }}
               >
                 <SaveSettingsButton
@@ -2175,11 +2523,9 @@ const AdminDashboard = () => {
                   isAutoPrint={isAutoPrint}
                 />
               </motion.div>
-
             </div>
           </motion.div>
         )}
-
       </main>
 
       {isMobile && (
@@ -2187,25 +2533,8 @@ const AdminDashboard = () => {
           <motion.nav style={{ height: '115px', position: 'relative' }}>
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '166%', transform: 'translateY(-66px)', overflow: 'visible' }} viewBox="0 0 390 115" preserveAspectRatio="none">
-                <defs>
-                  <filter id="neonGlow" x="-100%" y="-400%" width="300%" height="900%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur" />
-                    <feColorMatrix type="matrix" values="0 0 0 0 0  0.8 1 1 0 0  0.8 1 1 0 0  0 0 0 1.5 0" in="blur" result="coloredBlur" />
-                    <feMerge>
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
-
-                {/* 1. Arco preto — fundo */}
                 <path d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102 V115 H0 Z" fill="#121215" />
-
-                {/* 2. Arco cinza — meio */}
                 <path d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z" fill="rgba(5, 5, 7, 0.97)" />
-
-                {/* 3. Barra neon — na frente de tudo */}
                 <motion.path
                   d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
                   fill="none"
@@ -2220,52 +2549,30 @@ const AdminDashboard = () => {
                   transition={{ type: "spring", stiffness: 220, damping: 26 }}
                 />
               </svg>
-
-              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '191%', zIndex: 20, pointerEvents: 'none' }} viewBox="0 0 390 115" preserveAspectRatio="none">
-                <path d="M0,28 C100,20 150,18 195,18 C240,18 290,20 390,28" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />
-              </svg>
-
-
               <div style={{ position: 'absolute', top: '42px', left: 0, right: 0, padding: '0 24px', zIndex: 5 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <LayoutGroup>
-                    {[
-                      { id: 'orders-history', icon: HistoryIcon, size: 24, offset: 8 },
-                      { id: 'menu', icon: MenuIcon, size: 30, offset: 0 },
-                      { id: 'search', icon: SearchIcon, size: 24, offset: -12 },
-                      { id: 'finance', icon: MoneyBagIcon, size: 24, offset: 0 },
-                      { id: 'orders', icon: SettingsIcon, size: 24, offset: 8 }
-                    ].map((item) => {
-                      const isActive = activeTab === item.id;
-                      return (
-                        <motion.button
-                          key={item.id}
-                          onClick={() => setActiveTab(item.id)}
-                          style={{ width: '48px', background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
-                          animate={{ y: item.offset }}
-                        >
-                          <motion.div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} animate={{ opacity: isActive ? 1 : 0.6 }}>
-                            <item.icon size={item.size} isActive={isActive} color="#ffffff" style={{ transform: item.id === 'search' ? 'translateY(7px)' : item.id === 'orders' ? 'translate(4px, 4px)' : item.id === 'orders-history' ? 'translate(-3px, 4px)' : item.id === 'menu' ? 'translateY(2px)' : 'none' }} />
-                          </motion.div>
-                        </motion.button>
-                      );
-                    })}
-                  </LayoutGroup>
+                  {[
+                    { id: 'orders-history', icon: HistoryIcon, size: 24, offset: 8 },
+                    { id: 'menu', icon: MenuIcon, size: 30, offset: 0 },
+                    { id: 'search', icon: SearchIcon, size: 24, offset: -12 },
+                    { id: 'finance', icon: MoneyBagIcon, size: 24, offset: 0 },
+                    { id: 'orders', icon: SettingsIcon, size: 24, offset: 8 }
+                  ].map((item) => {
+                    const isActive = activeTab === item.id;
+                    return (
+                      <motion.button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        style={{ width: '48px', background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+                        animate={{ y: item.offset }}
+                      >
+                        <motion.div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} animate={{ opacity: isActive ? 1 : 0.6 }}>
+                          <item.icon size={item.size} isActive={isActive} color="#ffffff" style={{ transform: item.id === 'search' ? 'translateY(7px)' : item.id === 'orders' ? 'translate(4px, 4px)' : item.id === 'orders-history' ? 'translate(-3px, 4px)' : item.id === 'menu' ? 'translateY(2px)' : 'none' }} />
+                        </motion.div>
+                      </motion.button>
+                    );
+                  })}
                 </div>
-              </div>
-
-              <div style={{ position: 'absolute', bottom: '5px', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    style={{ fontSize: '12px', fontWeight: '500', color: '#ffffff', letterSpacing: '2.5px', textTransform: 'uppercase', textShadow: '0 0 12px rgba(0, 243, 255, 0.6)' }}
-                  >
-                    {activeTab === 'orders-history' ? 'Pedidos' : activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'finance' ? 'Financeiro' : 'Ajustes'}
-                  </motion.span>
-                </AnimatePresence>
               </div>
             </div>
           </motion.nav>
@@ -2274,5 +2581,7 @@ const AdminDashboard = () => {
     </div>
   );
 };
+
+
 
 export default AdminDashboard;
