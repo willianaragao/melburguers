@@ -123,13 +123,13 @@ const App = () => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [address, setAddress] = useState(() => {
-    const saved = localStorage.getItem('melburguers_customer_data');
+    const saved = localStorage.getItem('melburgers_customer_data');
     return saved ? JSON.parse(saved) : {
       street: '', number: '', neighborhood: '', complement: '', zipCode: '', customerName: '', customerPhone: '',
     };
   });
   const [deliveryFee, setDeliveryFee] = useState(() => {
-    const saved = localStorage.getItem('melburguers_delivery_fee');
+    const saved = localStorage.getItem('melburgers_delivery_fee');
     return saved ? parseFloat(saved) : 0;
   });
   const [paymentMethod, setPaymentMethod] = useState('PIX');
@@ -140,7 +140,7 @@ const App = () => {
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [changeNeeded, setChangeNeeded] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('melburguers_theme') === 'dark';
+    return localStorage.getItem('melburgers_theme') === 'dark';
   });
   const [locationError, setLocationError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -151,15 +151,15 @@ const App = () => {
 
   // === PERSISTÊNCIA DE DADOS ===
   useEffect(() => {
-    localStorage.setItem('melburguers_customer_data', JSON.stringify(address));
+    localStorage.setItem('melburgers_customer_data', JSON.stringify(address));
   }, [address]);
 
   useEffect(() => {
-    localStorage.setItem('melburguers_delivery_fee', deliveryFee.toString());
+    localStorage.setItem('melburgers_delivery_fee', deliveryFee.toString());
   }, [deliveryFee]);
 
   useEffect(() => {
-    localStorage.setItem('melburguers_theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('melburgers_theme', isDarkMode ? 'dark' : 'light');
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -442,7 +442,7 @@ const App = () => {
       setIsOrderSuccess(true);
       setIsCartOpen(false);
       
-      const message = `*NOVO PEDIDO MELBURGUERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2).replace('.', ',')}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number}${address.complement ? ` (${address.complement})` : ''} - ${address.neighborhood}`;
+      const message = `*NOVO PEDIDO MELBURGERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2).replace('.', ',')}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number}${address.complement ? ` (${address.complement})` : ''} - ${address.neighborhood}`;
       
       setTimeout(() => {
         window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent(message)}`;
@@ -541,7 +541,7 @@ const App = () => {
         </div>
         <div className="bio-area" style={{ marginTop: '15px' }}>
           <div className="username-row" style={{ marginBottom: '4px', gap: '6px' }}>
-             <h2 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase' }}>melburguers</h2>
+             <h2 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase' }}>melburgers</h2>
              <BadgeCheck size={18} fill="#0095f6" color="white" />
           </div>
           <div className="bio-text">

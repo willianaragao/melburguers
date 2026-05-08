@@ -389,10 +389,10 @@ const SaveSettingsButton = ({ appSettings, viewMode, isAutoPrint }) => {
       try {
         const settings = { ...appSettings, defaultViewMode: viewMode, autoPrint: isAutoPrint };
         try {
-          localStorage.setItem('melburguers_settings', JSON.stringify(settings));
+          localStorage.setItem('melburgers_settings', JSON.stringify(settings));
         } catch (e) {
           localStorage.removeItem('viewMode'); 
-          localStorage.setItem('melburguers_settings', JSON.stringify(settings));
+          localStorage.setItem('melburgers_settings', JSON.stringify(settings));
         }
         setIsSaving(false);
         setShowToast(true);
@@ -487,7 +487,7 @@ const AdminDashboard = () => {
   // System Settings State
   const [appSettings, setAppSettings] = useState(() => {
     try {
-      const saved = localStorage.getItem('melburguers_settings');
+      const saved = localStorage.getItem('melburgers_settings');
       return saved ? JSON.parse(saved) : {
         defaultViewMode: 'grid',
         notificationSound: '/sonido-shopify.mp3',
@@ -600,7 +600,7 @@ const AdminDashboard = () => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     // Check Persistence
-    const savedAuth = localStorage.getItem('melburguers_admin_auth');
+    const savedAuth = localStorage.getItem('melburgers_admin_auth');
     if (savedAuth === 'true') {
       setIsAuthenticated(true);
     }
@@ -613,7 +613,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('melburguers_settings', JSON.stringify(appSettings));
+      localStorage.setItem('melburgers_settings', JSON.stringify(appSettings));
     } catch (e) {
       console.warn("Auto-save settings failed:", e);
     }
@@ -887,7 +887,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     if (password === 'Gatinha08') {
       setIsAuthenticated(true);
-      localStorage.setItem('melburguers_admin_auth', 'true');
+      localStorage.setItem('melburgers_admin_auth', 'true');
     } else {
       alert("Senha incorreta!");
     }
@@ -896,7 +896,7 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     if(window.confirm("Deseja realmente sair?")) {
       setIsAuthenticated(false);
-      localStorage.removeItem('melburguers_admin_auth');
+      localStorage.removeItem('melburgers_admin_auth');
     }
   };
 
@@ -2307,7 +2307,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <h1 style={{ fontSize: isMobile ? '22px' : '26px', fontWeight: 900, color: 'white', margin: 0 }}>Ajustes do Sistema</h1>
-                  <p style={{ color: '#52525b', fontSize: '13px', margin: 0, marginTop: '2px' }}>Preferências globais do painel melburguers</p>
+                  <p style={{ color: '#52525b', fontSize: '13px', margin: 0, marginTop: '2px' }}>Preferências globais do painel melburgers</p>
                 </div>
               </div>
             </div>
