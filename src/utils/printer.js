@@ -56,6 +56,7 @@ const getLogoData = async () => {
 };
 
 export const formatOrderForPrinter = async (cart, total, address, paymentMethod, deliveryFee = 0, subtotal = 0, via = "") => {
+  console.log("[Mel Burguers] Formatando pedido - v2.1 (2 vias + logo)");
   const logo = await getLogoData();
   let text = "\x1B\x40"; // Init
   
@@ -73,6 +74,7 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
   mainText += "\x1B\x21\x30"; // Double height and width
   mainText += "MEL BURGERS\n";
   mainText += "\x1B\x21\x00"; // Normal size
+  mainText += "V.2.1-2VIAS-LOGO\n";
   mainText += "Sabor que conquista!\n";
   mainText += "--------------------------------\n";
   
