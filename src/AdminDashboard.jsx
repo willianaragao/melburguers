@@ -1098,6 +1098,26 @@ const AdminDashboard = () => {
     handleSaveMenu(newMenu);
   };
 
+  const handleRenameCategory = (oldName) => {
+    const newName = window.prompt(`Novo nome para a categoria "${oldName}":`, oldName);
+    if (newName && newName !== oldName && newName.trim() !== "") {
+      if (appMenuData.menu[newName]) {
+        alert("Já existe uma categoria com este nome!");
+        return;
+      }
+      const newMenu = { ...appMenuData };
+      newMenu.menu[newName] = newMenu.menu[oldName];
+      delete newMenu.menu[oldName];
+      
+      // Atualizar categorias ocultas se necessário
+      if (newMenu.hiddenCategories && newMenu.hiddenCategories.includes(oldName)) {
+        newMenu.hiddenCategories = newMenu.hiddenCategories.map(c => c === oldName ? newName : c);
+      }
+      
+      handleSaveMenu(newMenu);
+    }
+  };
+
   const handleDragEndMenu = (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -1927,6 +1947,22 @@ const AdminDashboard = () => {
                                 title={appMenuData?.hiddenCategories?.includes(cat) ? "Sessão Oculta" : "Sessão Visível"}
                               >
                                 {appMenuData?.hiddenCategories?.includes(cat) ? <EyeOff size={14} /> : <Eye size={14} />}
+                              </button>
+                              <button 
+                                onClick={() => handleRenameCategory(cat)}
+                                style={{ 
+                                  background: 'rgba(255, 255, 255, 0.05)', 
+                                  border: '1px solid rgba(255, 255, 255, 0.1)', 
+                                  color: '#71717a', 
+                                  width: '32px', height: '32px', 
+                                  borderRadius: '8px', 
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  marginTop: '4px'
+                                }}
+                                title="Editar Nome"
+                              >
+                                <Edit size={14} />
                               </button>
                               <button 
                                 onClick={() => handleDeleteCategory(cat)}
