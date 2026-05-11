@@ -343,7 +343,11 @@ const App = () => {
 
   // === CÁLCULO DE TOTAIS ===
   const categories = useMemo(() => {
-    if (appMenuData && appMenuData.menu) return Object.keys(appMenuData.menu);
+    if (appMenuData && appMenuData.menu) {
+      const allCats = Object.keys(appMenuData.menu);
+      const hidden = appMenuData.hiddenCategories || [];
+      return allCats.filter(cat => !hidden.includes(cat));
+    }
     return [];
   }, [appMenuData]);
 
@@ -600,6 +604,13 @@ const App = () => {
               <HoneySVG id={cat.replace(/\s+/g, '-')} />
             )}
             <span className="label">{cat}</span>
+            {activeCategory === cat && (
+              <motion.div 
+                layoutId="active-pill-indicator"
+                className="pill-neon-indicator"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
           </button>
         ))}
       </nav>

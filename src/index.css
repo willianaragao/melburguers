@@ -374,6 +374,24 @@ body {
   letter-spacing: 0.01em;
 }
 
+.pill-neon-indicator {
+  position: absolute;
+  bottom: 4px;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: #ffffff !important;
+  border-radius: 999px;
+  z-index: 50;
+  box-shadow: 0 0 10px #ffffff, 
+              0 0 20px #ffffff;
+  pointer-events: none;
+  /* Força renderização via GPU no iOS para evitar cintilação */
+  will-change: transform;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+
 .honey-svg {
   position: absolute;
   top: -6px; /* Ajuste final para sentar na margem superior */

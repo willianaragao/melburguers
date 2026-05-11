@@ -3,7 +3,8 @@ import {
   ShoppingBag, Printer, Bell, CheckCircle, Clock, 
   RefreshCcw, ChevronRight, LayoutDashboard, Settings, Edit, Plus, Trash2, Save, X, Image as ImageIcon, Camera, Upload,
   DollarSign, ArrowUpCircle, ArrowDownCircle, TrendingUp, LogOut, Menu, ChevronLeft, MapPin, MessageSquare,
-  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown, GripVertical, ShoppingCart, Maximize, Sparkles
+  LayoutList, LayoutGrid, Rows3, Search, Home, ClipboardList, ChevronDown, GripVertical, ShoppingCart, Maximize, Sparkles,
+  Eye, EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { 
@@ -64,15 +65,15 @@ const HistoryIcon = ({ size = 24, className, style, isActive }) => (
     className={className}
     style={{
       ...style,
-      filter: isActive ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' : 'opacity(0.6)',
+      filter: isActive ? 'drop-shadow(0 0 12px rgba(255,255,255,0.9))' : 'opacity(0.4)',
       transition: 'all 0.3s ease'
     }}
   >
-    <rect x="6" y="4" width="12" height="16" rx="3" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.8"/>
-    <rect x="9" y="2.5" width="6" height="3" rx="1.2" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.8"/>
-    <line x1="8.5" y1="9" x2="15.5" y2="9" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
-    <line x1="8.5" y1="12" x2="15.5" y2="12" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
-    <line x1="8.5" y1="15" x2="13" y2="15" stroke={isActive ? "#00f3ff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
+    <rect x="6" y="4" width="12" height="16" rx="3" stroke={isActive ? "#ffffff" : "white"} strokeWidth="1.8"/>
+    <rect x="9" y="2.5" width="6" height="3" rx="1.2" stroke={isActive ? "#ffffff" : "white"} strokeWidth="1.8"/>
+    <line x1="8.5" y1="9" x2="15.5" y2="9" stroke={isActive ? "#ffffff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
+    <line x1="8.5" y1="12" x2="15.5" y2="12" stroke={isActive ? "#ffffff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
+    <line x1="8.5" y1="15" x2="13" y2="15" stroke={isActive ? "#ffffff" : "white"} strokeWidth="1.6" strokeLinecap="round"/>
   </svg>
 );
 
@@ -86,23 +87,23 @@ const MenuIcon = ({ size = 30, className, style, isActive }) => (
     className={className}
     style={{
       ...style,
-      filter: isActive ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' : 'opacity(0.6)',
+      filter: isActive ? 'drop-shadow(0 0 12px rgba(255,255,255,0.9))' : 'opacity(0.4)',
       transition: 'all 0.3s ease'
     }}
   >
     {/* Batata ao fundo */}
     <path
       d="M40 16H54L52.2 43C52.1 44.7 50.7 46 49 46H45C43.3 46 41.9 44.7 41.8 43L40 16Z"
-      fill={isActive ? "#00f3ff" : "white"}
+      fill={isActive ? "#ffffff" : "white"}
     />
-    <path d="M41.5 16L40.8 9.5C40.7 8.8 41.3 8.2 42 8.4L45 9.4V16H41.5Z" fill={isActive ? "#00f3ff" : "white"}/>
-    <path d="M46 16V7.5C46 6.9 46.7 6.5 47.2 6.9L49 8.2V16H46Z" fill={isActive ? "#00f3ff" : "white"}/>
-    <path d="M50 16L50.8 8.8C50.9 8.1 51.7 7.8 52.2 8.3L54 10V16H50Z" fill={isActive ? "#00f3ff" : "white"}/>
+    <path d="M41.5 16L40.8 9.5C40.7 8.8 41.3 8.2 42 8.4L45 9.4V16H41.5Z" fill={isActive ? "#ffffff" : "white"}/>
+    <path d="M46 16V7.5C46 6.9 46.7 6.5 47.2 6.9L49 8.2V16H46Z" fill={isActive ? "#ffffff" : "white"}/>
+    <path d="M50 16L50.8 8.8C50.9 8.1 51.7 7.8 52.2 8.3L54 10V16H50Z" fill={isActive ? "#ffffff" : "white"}/>
 
     {/* Burger */}
     <path
       d="M10 26C10 18.8 16.8 14 25 14C33.2 14 40 18.8 40 26V27H10V26Z"
-      fill={isActive ? "#00f3ff" : "white"}
+      fill={isActive ? "#ffffff" : "white"}
     />
     {/* sementes */}
     <ellipse cx="19" cy="19.5" rx="1.1" ry="0.7" fill="#050506"/>
@@ -110,16 +111,16 @@ const MenuIcon = ({ size = 30, className, style, isActive }) => (
     <ellipse cx="30" cy="19.5" rx="1.1" ry="0.7" fill="#050506"/>
 
     {/* recheio 1 */}
-    <rect x="11.5" y="29" width="27" height="2.8" rx="1.4" fill={isActive ? "#00f3ff" : "white"}/>
+    <rect x="11.5" y="29" width="27" height="2.8" rx="1.4" fill={isActive ? "#ffffff" : "white"}/>
     {/* queijo escorrendo */}
     <path
       d="M13 32H37C37.6 32 38 32.4 38 33V34.4C38 35 37.6 35.4 37 35.4 C35.6 35.4 35 36 35 37.2C35 38.8 33.9 40 32.3 40C30.7 40 29.6 38.8 29.6 37.2 C29.6 36 28.9 35.4 27.8 35.4C26.7 35.4 26 36 26 37.2C26 38.8 24.9 40 23.3 40 C21.7 40 20.6 38.8 20.6 37.2C20.6 36 19.9 35.4 18.8 35.4C17.7 35.4 17 36 17 37.2 C17 38.8 15.9 40 14.3 40C12.7 40 11.6 38.8 11.6 37.2V33.4C11.6 32.6 12.2 32 13 32Z"
-      fill={isActive ? "#00f3ff" : "white"}
+      fill={isActive ? "#ffffff" : "white"}
     />
     {/* recheio 2 */}
-    <rect x="12" y="37.5" width="26" height="2.6" rx="1.3" fill={isActive ? "#00f3ff" : "white"}/>
+    <rect x="12" y="37.5" width="26" height="2.6" rx="1.3" fill={isActive ? "#ffffff" : "white"}/>
     {/* pão inferior */}
-    <rect x="10" y="42" width="30" height="7" rx="3.5" fill={isActive ? "#00f3ff" : "white"}/>
+    <rect x="10" y="42" width="30" height="7" rx="3.5" fill={isActive ? "#ffffff" : "white"}/>
   </svg>
 );
 
@@ -134,8 +135,8 @@ const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
       display: 'inline-block',
       verticalAlign: 'middle',
       filter: isActive 
-        ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' 
-        : 'opacity(0.6)',
+        ? 'drop-shadow(0 0 12px rgba(255,255,255,0.9))' 
+        : 'opacity(0.4)',
       transition: 'all 0.3s ease'
     }}
     className={className}
@@ -144,23 +145,23 @@ const MoneyBagIcon = ({ size = 24, className, style, isActive }) => (
     {/* topo do saco */}
     <path
       d="M180 92 L256 58 L332 92 L296 178 L216 178 Z"
-      fill={isActive ? "#00f3ff" : "white"}
+      fill={isActive ? "#ffffff" : "white"}
     />
     {/* laterais do topo */}
     <path
       d="M170 108 C140 120, 126 146, 142 170 L204 236 L230 176 Z"
-      fill={isActive ? "#00f3ff" : "white"}
+      fill={isActive ? "#ffffff" : "white"}
     />
     <path
       d="M342 108 C372 120, 386 146, 370 170 L308 236 L282 176 Z"
-      fill={isActive ? "#00f3ff" : "white"}
+      fill={isActive ? "#ffffff" : "white"}
     />
     {/* amarração */}
     <rect x="190" y="176" width="132" height="18" rx="9" fill="black"/>
     {/* corpo do saco */}
     <path
       d="M198 192 C112 244, 52 338, 52 420 C52 478, 92 506, 162 506 H350 C420 506, 460 478, 460 420 C460 338, 400 244, 314 192 Z"
-      fill={isActive ? "#00f3ff" : "white"}
+      fill={isActive ? "#ffffff" : "white"}
     />
     {/* símbolo de dinheiro */}
     <text
@@ -188,12 +189,12 @@ const SearchIcon = ({ size = 24, className, style, isActive }) => (
     className={className}
     style={{
       ...style,
-      filter: isActive ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' : 'opacity(0.6)',
+      filter: isActive ? 'drop-shadow(0 0 12px rgba(255,255,255,0.9))' : 'opacity(0.4)',
       transition: 'all 0.3s ease'
     }}
   >
     <g 
-      stroke={isActive ? "#00f3ff" : "white"} 
+      stroke={isActive ? "#ffffff" : "white"} 
       strokeWidth={isActive ? "2.5" : "2.2"} 
       strokeLinecap="round" 
       strokeLinejoin="round"
@@ -358,12 +359,12 @@ const SettingsIcon = ({ size = 24, className, style, isActive }) => (
     className={className}
     style={{
       ...style,
-      filter: isActive ? 'drop-shadow(0 0 8px rgba(0,243,255,0.8))' : 'opacity(0.6)',
+      filter: isActive ? 'drop-shadow(0 0 12px rgba(255,255,255,0.9))' : 'opacity(0.4)',
       transition: 'all 0.3s ease'
     }}
   >
     <g 
-      stroke={isActive ? "#00f3ff" : "white"} 
+      stroke={isActive ? "#ffffff" : "white"} 
       strokeWidth={isActive ? "2.2" : "1.8"} 
       strokeLinecap="round" 
       strokeLinejoin="round"
@@ -1085,6 +1086,18 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleCategoryVisibility = (catName) => {
+    const newMenu = { ...appMenuData };
+    if (!newMenu.hiddenCategories) newMenu.hiddenCategories = [];
+    
+    if (newMenu.hiddenCategories.includes(catName)) {
+      newMenu.hiddenCategories = newMenu.hiddenCategories.filter(c => c !== catName);
+    } else {
+      newMenu.hiddenCategories.push(catName);
+    }
+    handleSaveMenu(newMenu);
+  };
+
   const handleDragEndMenu = (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -1299,7 +1312,7 @@ const AdminDashboard = () => {
           <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {[
               { id: 'orders-history', renderIcon: (isActive) => <HistoryIcon size={20} isActive={isActive} />, label: 'Pedidos' },
-              { id: 'pos', renderIcon: (isActive) => <ShoppingBag size={20} color={isActive ? '#00f3ff' : '#a1a1aa'} />, label: 'Lançar Venda' },
+              { id: 'pos', renderIcon: (isActive) => <ShoppingBag size={20} color={isActive ? '#ffffff' : '#a1a1aa'} />, label: 'Lançar Venda' },
               { id: 'search', renderIcon: (isActive) => <SearchIcon size={20} isActive={isActive} />, label: 'Explorar' },
               { id: 'menu', renderIcon: (isActive) => <MenuIcon size={20} isActive={isActive} />, label: 'Cardápio' },
               { id: 'finance', renderIcon: (isActive) => <MoneyBagIcon size={20} isActive={isActive} />, label: 'Financeiro' },
@@ -1899,6 +1912,22 @@ const AdminDashboard = () => {
                                 <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: 0 }}>{cat}</h3>
                                 <span style={{ fontSize: '11px', color: '#52525b', fontWeight: 700 }}>{appMenuData.menu[cat].length} PRODUTOS</span>
                               </div>
+                              <button 
+                                onClick={() => handleToggleCategoryVisibility(cat)}
+                                style={{ 
+                                  background: appMenuData?.hiddenCategories?.includes(cat) ? 'rgba(236, 148, 36, 0.1)' : 'rgba(255, 255, 255, 0.05)', 
+                                  border: `1px solid ${appMenuData?.hiddenCategories?.includes(cat) ? 'rgba(236, 148, 36, 0.2)' : 'rgba(255, 255, 255, 0.1)'}`, 
+                                  color: appMenuData?.hiddenCategories?.includes(cat) ? '#EC9424' : '#71717a', 
+                                  width: '32px', height: '32px', 
+                                  borderRadius: '8px', 
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  marginTop: '4px'
+                                }}
+                                title={appMenuData?.hiddenCategories?.includes(cat) ? "Sessão Oculta" : "Sessão Visível"}
+                              >
+                                {appMenuData?.hiddenCategories?.includes(cat) ? <EyeOff size={14} /> : <Eye size={14} />}
+                              </button>
                               <button 
                                 onClick={() => handleDeleteCategory(cat)}
                                 style={{ 
@@ -2533,13 +2562,19 @@ const AdminDashboard = () => {
           <motion.nav style={{ height: '115px', position: 'relative' }}>
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '166%', transform: 'translateY(-66px)', overflow: 'visible' }} viewBox="0 0 390 115" preserveAspectRatio="none">
+                <defs>
+                  <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
                 <path d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102 V115 H0 Z" fill="#121215" />
                 <path d="M0,72 C100,64 150,62 195,62 C240,62 290,64 390,72 L390,104 C290,96 240,94 195,94 C150,94 100,96 0,104 Z" fill="rgba(5, 5, 7, 0.97)" />
                 <motion.path
                   d="M0,102 C100,94 150,92 195,92 C240,92 290,94 390,102"
                   fill="none"
-                  stroke="#00f3ff"
-                  strokeWidth="2.5"
+                  stroke="#ffffff"
+                  strokeWidth="3.2"
                   strokeLinecap="round"
                   filter="url(#neonGlow)"
                   animate={{
