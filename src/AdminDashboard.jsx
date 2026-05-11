@@ -952,23 +952,33 @@ const AdminDashboard = () => {
   };
 
   const handlePrint = async (order) => {
-    const printerData = formatOrderForPrinter(
-      order.items, 
-      order.total, 
-      order.address, 
-      order.payment_method,
-      order.delivery_fee || 0,
-      order.subtotal || 0
+    const dataOperador = await formatOrderForPrinter(
+      order.items, order.total, order.address, order.payment_method,
+      order.delivery_fee || 0, order.subtotal || 0, "OPERADOR"
+    );
+
+    const dataCliente = await formatOrderForPrinter(
+      order.items, order.total, order.address, order.payment_method,
+      order.delivery_fee || 0, order.subtotal || 0, "CLIENTE"
     );
     
     try {
       if (printerRef.current) {
-        // Já tem conexão ativa — envia direto
-        const ok = await sendToPrinter(printerRef.current, printerData);
-        if (!ok) throw new Error("Falha ao enviar dados");
+        // Via Operador
+        await sendToPrinter(printerRef.current, dataOperador);
+        await new Promise(r => setTimeout(r, 1000)); // Pequena pausa
+        // Via Cliente
+        await sendToPrinter(printerRef.current, dataCliente);
       } else {
-        // Sem conexão — abre o seletor Bluetooth e imprime
-        const success = await printOrder(printerData);
+        // Se não conectado, o printOrder vai abrir o seletor. 
+        // Para 2 vias sem reconectar, o ideal é concatenar os buffers se possível, 
+        // ou garantir a conexão antes. Como o printOrder gerencia a conexão, 
+        // vamos enviar os dois juntos concatenados.
+        const combined = new Uint8Array(dataOperador.length + dataCliente.length);
+        combined.set(dataOperador);
+        combined.set(dataCliente, dataOperador.length);
+        
+        const success = await printOrder(combined);
         if (!success) throw new Error("Falha na impressão");
       }
     } catch (err) {

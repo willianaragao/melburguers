@@ -1,44 +1,102 @@
+// Helper para converter imagem em comandos ESC/POS (Gráficos)
+const getLogoData = async () => {
+  try {
+    const response = await fetch('/images/logo.png');
+    const blob = await response.blob();
+    const img = await createImageBitmap(blob);
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Redimensiona para largura da impressora (máx 384px para 58mm)
+    // Vamos usar 128px para ser rápido via Bluetooth
+    const width = 160; 
+    const height = Math.floor(img.height * (width / img.width));
+    
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    
+    // ESC/POS GS v 0 (Print raster bit image)
+    const xL = (width / 8) % 256;
+    const xH = Math.floor((width / 8) / 256);
+    const yL = height % 256;
+    const yH = Math.floor(height / 256);
+    
+    const header = new Uint8Array([0x1D, 0x76, 0x30, 0, xL, xH, yL, yH]);
+    const bitmap = new Uint8Array(header.length + (width / 8) * height);
+    bitmap.set(header);
+    
+    let offset = header.length;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x += 8) {
+        let byte = 0;
+        for (let b = 0; b < 8; b++) {
+          const idx = ((y * width) + (x + b)) * 4;
+          // Grayscale + Threshold (Luminance > 128 = White, else Black)
+          const r = pixels[idx];
+          const g = pixels[idx + 1];
+          const bVal = pixels[idx + 2];
+          const brightness = (r * 0.299 + g * 0.587 + bVal * 0.114);
+          if (brightness < 128) {
+            byte |= (1 << (7 - b));
+          }
+        }
+        bitmap[offset++] = byte;
+      }
+    }
+    return bitmap;
+  } catch (e) {
+    console.error("Erro ao processar logo:", e);
+    return null;
+  }
+};
 
-// ─────────────────────────────────────────────────────────────────
-//  printer.js — Mel Burguers
-//  Compatível com: MPT-II, Bluefy (iOS), Web Bluetooth API
-// ─────────────────────────────────────────────────────────────────
+export const formatOrderForPrinter = async (cart, total, address, paymentMethod, deliveryFee = 0, subtotal = 0, via = "") => {
+  const logo = await getLogoData();
+  let text = "\x1B\x40"; // Init
+  
+  // Alinhamento central para o logo
+  text += "\x1B\x61\x01";
+  
+  const encoder = new TextEncoder();
+  const textBefore = encoder.encode(text);
+  
+  let mainText = "";
+  if (via) {
+    mainText += `*** VIA ${via.toUpperCase()} ***\n`;
+  }
 
-// Delay helper para dar tempo ao buffer da impressora entre chunks
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-export const formatOrderForPrinter = (cart, total, address, paymentMethod, deliveryFee = 0, subtotal = 0) => {
-  let text = "\x1B\x40"; // Initialize printer
-  text += "\x1B\x61\x01"; // Center align
-  text += "\x1B\x21\x30"; // Double height and width
-  text += "MEL BURGERS\n";
-  text += "\x1B\x21\x00"; // Normal size
-  text += "Sabor que conquista!\n";
-  text += "--------------------------------\n";
+  mainText += "\x1B\x21\x30"; // Double height and width
+  mainText += "MEL BURGERS\n";
+  mainText += "\x1B\x21\x00"; // Normal size
+  mainText += "Sabor que conquista!\n";
+  mainText += "--------------------------------\n";
   
   if (address) {
-    text += "\x1B\x61\x01";
-    text += "DADOS PARA ENTREGA\n";
-    text += "\x1B\x61\x00";
-    text += `${address.customerName || 'Cliente'}\n`;
-    if (address.street) text += `${address.street}, ${address.number || ''}\n`;
-    if (address.neighborhood) text += `Bairro: ${address.neighborhood}\n`;
-    if (address.complement) text += `Ref: ${address.complement}\n`;
-    text += "--------------------------------\n";
+    mainText += "\x1B\x61\x01";
+    mainText += "DADOS PARA ENTREGA\n";
+    mainText += "\x1B\x61\x00";
+    mainText += `${address.customerName || 'Cliente'}\n`;
+    if (address.street) mainText += `${address.street}, ${address.number || ''}\n`;
+    if (address.neighborhood) mainText += `Bairro: ${address.neighborhood}\n`;
+    if (address.complement) mainText += `Ref: ${address.complement}\n`;
+    mainText += "--------------------------------\n";
   }
 
   const parsePrice = (val) => {
     if (typeof val === 'number') return val;
     if (!val) return 0;
-    // Remove R$, espaços e troca vírgula por ponto
     const clean = val.toString().replace('R$', '').replace(/\s/g, '').replace(',', '.');
     const num = parseFloat(clean);
     return isNaN(num) ? 0 : num;
   };
 
-  text += "\x1B\x61\x00"; // Left align
+  mainText += "\x1B\x61\x00"; // Left align
   
-  // Agrupar itens caso não tenham quantidade (vindo do Checkout Web)
   const groupedItems = [];
   const cartArr = Array.isArray(cart) ? cart : [];
   cartArr.forEach((item) => {
@@ -57,19 +115,18 @@ export const formatOrderForPrinter = (cart, total, address, paymentMethod, deliv
     const qtyName = `${item.quantity}x ${item.name}`;
     const priceStr = `R$ ${itemTotal.toFixed(2).replace('.', ',')}`;
     
-    // Tenta colocar na mesma linha se couber (32 colunas)
     if (qtyName.length + priceStr.length < 31) {
       const spaces = 32 - qtyName.length - priceStr.length;
-      text += `${qtyName}${" ".repeat(spaces)}${priceStr}\n`;
+      mainText += `${qtyName}${" ".repeat(spaces)}${priceStr}\n`;
     } else {
-      text += `${qtyName}\n`;
+      mainText += `${qtyName}\n`;
       const spaces = 32 - priceStr.length;
-      text += `${" ".repeat(spaces)}${priceStr}\n`;
+      mainText += `${" ".repeat(spaces)}${priceStr}\n`;
     }
   });
   
-  text += "--------------------------------\n";
-  text += "\x1B\x61\x02"; // Right align
+  mainText += "--------------------------------\n";
+  mainText += "\x1B\x61\x02"; // Right align
   
   const safeSubtotal = subtotal || (total - (deliveryFee || 0));
   
@@ -80,28 +137,43 @@ export const formatOrderForPrinter = (cart, total, address, paymentMethod, deliv
   };
 
   if (safeSubtotal > 0) {
-    text += formatRight("SUBTOTAL:", safeSubtotal);
+    mainText += formatRight("SUBTOTAL:", safeSubtotal);
   }
   
   if (deliveryFee > 0) {
-    text += formatRight("FRETE:", deliveryFee);
+    mainText += formatRight("FRETE:", deliveryFee);
   }
 
-  text += "\x1B\x21\x01"; // Select bold or just slightly bigger
-  text += formatRight("TOTAL:", total);
-  text += "\x1B\x21\x00"; // Normal
+  mainText += "\x1B\x21\x01"; // Bold
+  mainText += formatRight("TOTAL:", total);
+  mainText += "\x1B\x21\x00"; // Normal
   
   if (paymentMethod) {
-    text += "\x1B\x61\x00"; // Left align
-    text += `PAGTO: ${paymentMethod}\n`;
+    mainText += "\x1B\x61\x00"; // Left
+    mainText += `PAGTO: ${paymentMethod}\n`;
   }
 
-  text += "\x1B\x61\x01"; // Center align
-  text += "\nObrigado pela preferencia!\n";
-  text += "Documento sem valor fiscal\n";
-  text += "\n\n\n\n\x1D\x56\x00"; // Paper cut
+  mainText += "\x1B\x61\x01"; // Center
+  mainText += "\nObrigado pela preferencia!\n";
+  mainText += "Documento sem valor fiscal\n";
   
-  return new TextEncoder().encode(text);
+  if (via === "OPERADOR") {
+    text += "--------------------------------\n";
+    text += "RECIBO DO ESTABELECIMENTO\n";
+  }
+
+  mainText += "\n\n\n\n\x1D\x56\x00"; // Cut
+  
+  const textAfter = encoder.encode(mainText);
+  
+  if (!logo) return new Uint8Array([...textBefore, ...textAfter]);
+  
+  const finalBuffer = new Uint8Array(textBefore.length + logo.length + textAfter.length);
+  finalBuffer.set(textBefore);
+  finalBuffer.set(logo, textBefore.length);
+  finalBuffer.set(textAfter, textBefore.length + logo.length);
+  
+  return finalBuffer;
 };
 
 
