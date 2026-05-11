@@ -2399,7 +2399,7 @@ const AdminDashboard = () => {
             transition={{ duration: 0.35 }}
             style={{ maxWidth: '760px', margin: '0 auto' }}
           >
-            <div style={{ marginBottom: '36px' }}>
+            <div style={{ marginBottom: '36px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
                 <div style={{
                   width: '42px', height: '42px', borderRadius: '14px',
@@ -2413,6 +2413,9 @@ const AdminDashboard = () => {
                   <h1 style={{ fontSize: isMobile ? '22px' : '26px', fontWeight: 900, color: 'white', margin: 0 }}>Ajustes do Sistema</h1>
                   <p style={{ color: '#52525b', fontSize: '13px', margin: 0, marginTop: '2px' }}>Preferências globais do painel melburgers</p>
                 </div>
+              </div>
+              <div style={{ fontSize: '9px', color: '#52525b', background: 'rgba(255,255,255,0.03)', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)', letterSpacing: '0.5px' }}>
+                V2.2-BLUEFY-STABLE
               </div>
             </div>
 
