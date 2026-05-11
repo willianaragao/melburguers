@@ -1471,11 +1471,31 @@ const AdminDashboard = () => {
                       <Sparkles size={16} />
                       OTIMIZAR TODO O CARDÁPIO
                     </button>
-                    <button onClick={() => {
-                        const visibleOrders = orders.filter(o => o.status !== 'excluido');
-                        if (visibleOrders.length > 0) handlePrint(visibleOrders[0]);
+                    <button 
+                      title="Imprimir Pedido Mais Recente"
+                      onClick={async () => {
+                        const visibleOrders = orders
+                          .filter(o => o.status !== 'excluido')
+                          .sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp));
+                        
+                        if (visibleOrders.length > 0) {
+                          await handlePrint(visibleOrders[0]);
+                        } else {
+                          alert("Nenhum pedido visível para imprimir.");
+                        }
                       }} 
-                      style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#EC9424', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '12px', 
+                        background: 'rgba(255,255,255,0.03)', 
+                        border: '1px solid rgba(255,255,255,0.06)', 
+                        color: '#EC9424', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                      }}
                     >
                       <Printer size={18} />
                     </button>
