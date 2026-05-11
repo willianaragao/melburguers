@@ -1395,9 +1395,14 @@ const AdminDashboard = () => {
           <header style={{ marginBottom: isMobile ? '24px' : '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc' }}>
-                  {activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'pos' ? 'Lançar Venda' : 'Pedidos'}
-                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h1 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                    {activeTab === 'menu' ? 'Cardápio' : activeTab === 'search' ? 'Explorar' : activeTab === 'pos' ? 'Lançar Venda' : 'Pedidos'}
+                  </h1>
+                  <span style={{ fontSize: '8px', color: 'rgba(236,148,36,0.4)', background: 'rgba(236,148,36,0.05)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(236,148,36,0.1)' }}>
+                    V2.2-BLUEFY-STABLE
+                  </span>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%' }}></div>
                   <span style={{ fontSize: '11px', color: '#71717a' }}>Online • {lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
