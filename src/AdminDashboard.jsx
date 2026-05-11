@@ -1407,98 +1407,101 @@ const AdminDashboard = () => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 {isMobile && (
                   <>
-                    <button 
-                      id="btn-opt-all"
-                      onClick={async () => {
-                        if(!window.confirm("Isso vai reduzir o peso de todas as fotos antigas para deixar o sistema rápido. Deseja continuar?")) return;
-                        
-                        const btn = document.getElementById('btn-opt-all');
-                        const originalText = btn.innerText;
-                        btn.innerText = "OTIMIZANDO...";
-                        btn.disabled = true;
+                    {activeTab === 'menu' && (
+                      <button 
+                        id="btn-opt-all"
+                        onClick={async () => {
+                          if(!window.confirm("Isso vai reduzir o peso de todas as fotos antigas para deixar o sistema rápido. Deseja continuar?")) return;
+                          
+                          const btn = document.getElementById('btn-opt-all');
+                          btn.innerText = "OTIMIZANDO...";
+                          btn.disabled = true;
 
-                        try {
-                          const newMenu = {...appMenuData};
-                          let optimizedCount = 0;
+                          try {
+                            const newMenu = {...appMenuData};
+                            let optimizedCount = 0;
 
-                          for (const cat of Object.keys(newMenu.menu)) {
-                            for (const item of newMenu.menu[cat]) {
-                              if (item.image && item.image.startsWith('data:image')) {
-                                const compressed = await new Promise((resolve) => {
-                                  const img = new Image();
-                                  img.onload = () => {
-                                    const canvas = document.createElement('canvas');
-                                    const MAX_WIDTH = 400;
-                                    let w = img.width, h = img.height;
-                                    if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
-                                    canvas.width = w; canvas.height = h;
-                                    const ctx = canvas.getContext('2d');
-                                    ctx.drawImage(img, 0, 0, w, h);
-                                    resolve(canvas.toDataURL('image/jpeg', 0.4));
-                                  };
-                                  img.src = item.image;
-                                });
-                                item.image = compressed;
-                                optimizedCount++;
+                            for (const cat of Object.keys(newMenu.menu)) {
+                              for (const item of newMenu.menu[cat]) {
+                                if (item.image && item.image.startsWith('data:image')) {
+                                  const compressed = await new Promise((resolve) => {
+                                    const img = new Image();
+                                    img.onload = () => {
+                                      const canvas = document.createElement('canvas');
+                                      const MAX_WIDTH = 400;
+                                      let w = img.width, h = img.height;
+                                      if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
+                                      canvas.width = w; canvas.height = h;
+                                      const ctx = canvas.getContext('2d');
+                                      ctx.drawImage(img, 0, 0, w, h);
+                                      resolve(canvas.toDataURL('image/jpeg', 0.4));
+                                    };
+                                    img.src = item.image;
+                                  });
+                                  item.image = compressed;
+                                  optimizedCount++;
+                                }
                               }
                             }
-                          }
 
-                          await handleSaveMenu(newMenu);
-                          alert(`Sucesso! ${optimizedCount} fotos foram otimizadas. O sistema agora está leve!`);
-                        } catch (err) {
-                          alert("Erro na otimização: " + err.message);
-                        } finally {
-                          btn.innerText = "CARDÁPIO OTIMIZADO";
-                          btn.disabled = false;
-                        }
-                      }}
-                      style={{
-                        padding: '0 16px',
-                        height: '40px',
-                        background: 'rgba(255,255,255,0.03)',
-                        color: '#EC9424',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <Sparkles size={16} />
-                      OTIMIZAR TODO O CARDÁPIO
-                    </button>
-                    <button 
-                      title="Imprimir Pedido Mais Recente"
-                      onClick={async () => {
-                        const visibleOrders = orders
-                          .filter(o => o.status !== 'excluido')
-                          .sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp));
-                        
-                        if (visibleOrders.length > 0) {
-                          await handlePrint(visibleOrders[0]);
-                        } else {
-                          alert("Nenhum pedido visível para imprimir.");
-                        }
-                      }} 
-                      style={{ 
-                        width: '40px', 
-                        height: '40px', 
-                        borderRadius: '12px', 
-                        background: 'rgba(255,255,255,0.03)', 
-                        border: '1px solid rgba(255,255,255,0.06)', 
-                        color: '#EC9424', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <Printer size={18} />
-                    </button>
+                            await handleSaveMenu(newMenu);
+                            alert(`Sucesso! ${optimizedCount} fotos foram otimizadas. O sistema agora está leve!`);
+                          } catch (err) {
+                            alert("Erro na otimização: " + err.message);
+                          } finally {
+                            btn.innerText = "CARDÁPIO OTIMIZADO";
+                            btn.disabled = false;
+                          }
+                        }}
+                        style={{
+                          padding: '0 16px',
+                          height: '40px',
+                          background: 'rgba(255,255,255,0.03)',
+                          color: '#EC9424',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <Sparkles size={16} />
+                        OTIMIZAR TODO O CARDÁPIO
+                      </button>
+                    )}
+                    {activeTab === 'dashboard' && (
+                      <button 
+                        title="Imprimir Pedido Mais Recente"
+                        onClick={async () => {
+                          const visibleOrders = orders
+                            .filter(o => o.status !== 'excluido')
+                            .sort((a, b) => new Date(b.created_at || b.timestamp) - new Date(a.created_at || a.timestamp));
+                          
+                          if (visibleOrders.length > 0) {
+                            await handlePrint(visibleOrders[0]);
+                          } else {
+                            alert("Nenhum pedido visível para imprimir.");
+                          }
+                        }} 
+                        style={{ 
+                          width: '40px', 
+                          height: '40px', 
+                          borderRadius: '12px', 
+                          background: 'rgba(255,255,255,0.03)', 
+                          border: '1px solid rgba(255,255,255,0.06)', 
+                          color: '#EC9424', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Printer size={18} />
+                      </button>
+                    )}
                     <button onClick={() => {
                         const modes = ['list', 'grid', 'compact'];
                         const nextMode = modes[(modes.indexOf(viewMode) + 1) % modes.length];
