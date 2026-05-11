@@ -1,56 +1,59 @@
-// Helper para converter imagem em comandos ESC/POS (Gráficos)
 const getLogoData = async () => {
   try {
-    const response = await fetch('/images/logo.png');
-    const blob = await response.blob();
-    const img = await createImageBitmap(blob);
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Redimensiona para largura da impressora (máx 384px para 58mm)
-    // Vamos usar 128px para ser rápido via Bluetooth
-    const width = 160; 
-    const height = Math.floor(img.height * (width / img.width));
-    
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(img, 0, 0, width, height);
-    
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const pixels = imageData.data;
-    
-    // ESC/POS GS v 0 (Print raster bit image)
-    const xL = (width / 8) % 256;
-    const xH = Math.floor((width / 8) / 256);
-    const yL = height % 256;
-    const yH = Math.floor(height / 256);
-    
-    const header = new Uint8Array([0x1D, 0x76, 0x30, 0, xL, xH, yL, yH]);
-    const bitmap = new Uint8Array(header.length + (width / 8) * height);
-    bitmap.set(header);
-    
-    let offset = header.length;
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x += 8) {
-        let byte = 0;
-        for (let b = 0; b < 8; b++) {
-          const idx = ((y * width) + (x + b)) * 4;
-          // Grayscale + Threshold (Luminance > 128 = White, else Black)
-          const r = pixels[idx];
-          const g = pixels[idx + 1];
-          const bVal = pixels[idx + 2];
-          const brightness = (r * 0.299 + g * 0.587 + bVal * 0.114);
-          if (brightness < 128) {
-            byte |= (1 << (7 - b));
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Reduzimos para 128px para ser muito seguro no Bluefy/Bluetooth
+        const width = 128; 
+        const height = Math.floor(img.height * (width / img.width));
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const pixels = imageData.data;
+        
+        const xL = (width / 8) % 256;
+        const xH = Math.floor((width / 8) / 256);
+        const yL = height % 256;
+        const yH = Math.floor(height / 256);
+        
+        const header = new Uint8Array([0x1D, 0x76, 0x30, 0, xL, xH, yL, yH]);
+        const bitmap = new Uint8Array(header.length + (width / 8) * height);
+        bitmap.set(header);
+        
+        let offset = header.length;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x += 8) {
+            let byte = 0;
+            for (let b = 0; b < 8; b++) {
+              const idx = ((y * width) + (x + b)) * 4;
+              const r = pixels[idx];
+              const g = pixels[idx + 1];
+              const bVal = pixels[idx + 2];
+              // Threshold simples
+              const brightness = (r + g + bVal) / 3;
+              if (brightness < 128) {
+                byte |= (1 << (7 - b));
+              }
+            }
+            bitmap[offset++] = byte;
           }
         }
-        bitmap[offset++] = byte;
-      }
-    }
-    return bitmap;
+        resolve(bitmap);
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/images/logo.png';
+    });
   } catch (e) {
-    console.error("Erro ao processar logo:", e);
+    console.error("Erro logo:", e);
     return null;
   }
 };
@@ -234,22 +237,20 @@ export const sendToPrinter = async (characteristic, orderData) => {
   try {
     console.log("[Mel Burguers] Enviando dados para a impressora...");
 
-    // Chunk de 100 bytes: compatível com MPT-II e seguro para BLE
-    const chunkSize = 100;
+    // Chunk menor e delay maior para Bluefy (iOS) ser mais estável
+    const chunkSize = 50;
+    const chunkDelay = 50;
 
     for (let i = 0; i < orderData.length; i += chunkSize) {
       const chunk = orderData.slice(i, i + chunkSize);
 
-      // Usa writeValueWithoutResponse para compatibilidade com Bluefy/iOS
-      // Fallback para writeValue em navegadores mais antigos
       if (characteristic.writeValueWithoutResponse) {
         await characteristic.writeValueWithoutResponse(chunk);
       } else {
         await characteristic.writeValue(chunk);
       }
 
-      // Pausa entre chunks para não saturar o buffer da MPT-II
-      await delay(30);
+      await delay(chunkDelay);
     }
 
     console.log("[Mel Burguers] ✅ Impressão concluída!");
