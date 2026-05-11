@@ -75,6 +75,8 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
   mainText += "MEL BURGERS\n";
   mainText += "\x1B\x21\x00"; // Normal size
   mainText += "V.2.1-2VIAS-LOGO\n";
+  const nowStr = new Date().toLocaleString('pt-BR');
+  mainText += `${nowStr}\n`;
   mainText += "Sabor que conquista!\n";
   mainText += "--------------------------------\n";
   

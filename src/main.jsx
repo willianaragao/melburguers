@@ -5,6 +5,7 @@ import App from './App.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
 
 const Root = () => {
+  window.MEL_VERSION = "2.2";
   const isAdmin = window.location.pathname === '/admin' || new URLSearchParams(window.location.search).has('admin');
   return isAdmin ? <AdminDashboard /> : <App />;
 };

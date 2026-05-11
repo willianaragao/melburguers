@@ -1335,7 +1335,7 @@ const AdminDashboard = () => {
                   <span style={{ fontWeight: 900, fontSize: '18px', color: 'white' }}>M</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>MELBURGERS</span>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: '#ffffff' }}>MELBURGERS V2.2</span>
                   <span style={{ fontSize: '10px', color: '#52525b', fontWeight: 600 }}>ADMIN PANEL</span>
                 </div>
               </div>
