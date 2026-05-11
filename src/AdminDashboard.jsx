@@ -952,7 +952,14 @@ const AdminDashboard = () => {
   };
 
   const handlePrint = async (order) => {
-    const printerData = formatOrderForPrinter(order.items, order.total, order.address, order.payment_method);
+    const printerData = formatOrderForPrinter(
+      order.items, 
+      order.total, 
+      order.address, 
+      order.payment_method,
+      order.delivery_fee || 0,
+      order.subtotal || 0
+    );
     
     try {
       if (printerRef.current) {
@@ -1207,6 +1214,8 @@ const AdminDashboard = () => {
     const orderData = {
       order_id: formattedId,
       items: posCart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+      subtotal: subtotal,
+      delivery_fee: 0,
       total: subtotal,
       status: 'pendente',
       payment_method: posCustomer.payment === 'Dinheiro' && posCustomer.change ? `Dinheiro (Troco para R$ ${posCustomer.change})` : posCustomer.payment,

@@ -7,7 +7,7 @@
 // Delay helper para dar tempo ao buffer da impressora entre chunks
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const formatOrderForPrinter = (cart, total, address, paymentMethod) => {
+export const formatOrderForPrinter = (cart, total, address, paymentMethod, deliveryFee = 0, subtotal = 0) => {
   let text = "\x1B\x40"; // Initialize printer
   text += "\x1B\x61\x01"; // Center align
   text += "\x1B\x21\x30"; // Double height and width
@@ -27,16 +27,69 @@ export const formatOrderForPrinter = (cart, total, address, paymentMethod) => {
     text += "--------------------------------\n";
   }
 
+  const parsePrice = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Remove R$, espaços e troca vírgula por ponto
+    const clean = val.toString().replace('R$', '').replace(/\s/g, '').replace(',', '.');
+    const num = parseFloat(clean);
+    return isNaN(num) ? 0 : num;
+  };
+
   text += "\x1B\x61\x00"; // Left align
-  cart.forEach((item) => {
-    const priceStr = `R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}`;
-    text += `${item.quantity}x ${item.name}\n`;
-    text += `                   ${priceStr}\n`;
+  
+  // Agrupar itens caso não tenham quantidade (vindo do Checkout Web)
+  const groupedItems = [];
+  const cartArr = Array.isArray(cart) ? cart : [];
+  cartArr.forEach((item) => {
+    const existing = groupedItems.find(i => i.name === item.name);
+    const qty = Number(item.quantity) || 1;
+    if (existing) {
+      existing.quantity += qty;
+    } else {
+      groupedItems.push({ ...item, quantity: qty });
+    }
+  });
+
+  groupedItems.forEach((item) => {
+    const itemPrice = parsePrice(item.price);
+    const itemTotal = itemPrice * item.quantity;
+    const qtyName = `${item.quantity}x ${item.name}`;
+    const priceStr = `R$ ${itemTotal.toFixed(2).replace('.', ',')}`;
+    
+    // Tenta colocar na mesma linha se couber (32 colunas)
+    if (qtyName.length + priceStr.length < 31) {
+      const spaces = 32 - qtyName.length - priceStr.length;
+      text += `${qtyName}${" ".repeat(spaces)}${priceStr}\n`;
+    } else {
+      text += `${qtyName}\n`;
+      const spaces = 32 - priceStr.length;
+      text += `${" ".repeat(spaces)}${priceStr}\n`;
+    }
   });
   
   text += "--------------------------------\n";
   text += "\x1B\x61\x02"; // Right align
-  text += `TOTAL: R$ ${total.toFixed(2).replace('.', ',')}\n`;
+  
+  const safeSubtotal = subtotal || (total - (deliveryFee || 0));
+  
+  const formatRight = (label, value) => {
+    const valStr = `R$ ${value.toFixed(2).replace('.', ',')}`;
+    const spaces = 32 - label.length - valStr.length;
+    return `${label}${" ".repeat(Math.max(1, spaces))}${valStr}\n`;
+  };
+
+  if (safeSubtotal > 0) {
+    text += formatRight("SUBTOTAL:", safeSubtotal);
+  }
+  
+  if (deliveryFee > 0) {
+    text += formatRight("FRETE:", deliveryFee);
+  }
+
+  text += "\x1B\x21\x01"; // Select bold or just slightly bigger
+  text += formatRight("TOTAL:", total);
+  text += "\x1B\x21\x00"; // Normal
   
   if (paymentMethod) {
     text += "\x1B\x61\x00"; // Left align
