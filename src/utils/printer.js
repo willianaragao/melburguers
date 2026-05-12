@@ -5,14 +5,16 @@ const getLogoData = async () => {
       img.crossOrigin = "Anonymous";
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         
-        // Reduzimos para 128px para ser muito seguro no Bluefy/Bluetooth
+        // Largura múltipla de 8 para alinhamento perfeito (16 bytes)
         const width = 128; 
         const height = Math.floor(img.height * (width / img.width));
         
         canvas.width = width;
         canvas.height = height;
+        
+        // Fundo branco explícito para evitar problemas com transparência
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
@@ -25,6 +27,7 @@ const getLogoData = async () => {
         const yL = height % 256;
         const yH = Math.floor(height / 256);
         
+        // GS v 0 (Raster image)
         const header = new Uint8Array([0x1D, 0x76, 0x30, 0, xL, xH, yL, yH]);
         const bitmap = new Uint8Array(header.length + (width / 8) * height);
         bitmap.set(header);
@@ -37,11 +40,18 @@ const getLogoData = async () => {
               const idx = ((y * width) + (x + b)) * 4;
               const r = pixels[idx];
               const g = pixels[idx + 1];
-              const bVal = pixels[idx + 2];
-              // Threshold simples
-              const brightness = (r + g + bVal) / 3;
-              if (brightness < 128) {
-                byte |= (1 << (7 - b));
+              const bl = pixels[idx + 2];
+              const a = pixels[idx + 3];
+
+              // Se o pixel for muito transparente, tratamos como branco (0)
+              if (a < 50) {
+                // Branco (bit 0)
+              } else {
+                // Cálculo de luminância para preto e branco
+                const brightness = (r * 0.299 + g * 0.587 + bl * 0.114);
+                if (brightness < 160) { // Threshold um pouco mais alto para garantir logo nítida
+                  byte |= (1 << (7 - b)); // Preto (bit 1)
+                }
               }
             }
             bitmap[offset++] = byte;
@@ -50,7 +60,8 @@ const getLogoData = async () => {
         resolve(bitmap);
       };
       img.onerror = () => resolve(null);
-      img.src = '/images/logo.png';
+      // Tentamos o caminho absoluto da logo principal
+      img.src = '/perfil-logo.png';
     });
   } catch (e) {
     console.error("Erro logo:", e);
@@ -239,10 +250,13 @@ export const sendToPrinter = async (characteristic, orderData) => {
 
     // Chunk menor e delay maior para Bluefy (iOS) ser mais estável
     const chunkSize = 50;
-    const chunkDelay = 50;
+    const chunkDelay = 60; // Aumentado para 60ms para máxima estabilidade
 
     for (let i = 0; i < orderData.length; i += chunkSize) {
       const chunk = orderData.slice(i, i + chunkSize);
+      
+      // Se detectarmos o cabeçalho do logo (GS v 0), damos um fôlego extra
+      const isLogoHeader = chunk[0] === 0x1D && chunk[1] === 0x76;
 
       if (characteristic.writeValueWithoutResponse) {
         await characteristic.writeValueWithoutResponse(chunk);
@@ -250,7 +264,7 @@ export const sendToPrinter = async (characteristic, orderData) => {
         await characteristic.writeValue(chunk);
       }
 
-      await delay(chunkDelay);
+      await new Promise(r => setTimeout(r, isLogoHeader ? 150 : chunkDelay));
     }
 
     console.log("[Mel Burguers] ✅ Impressão concluída!");
