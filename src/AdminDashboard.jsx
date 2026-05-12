@@ -255,7 +255,7 @@ const MenuSkeleton = () => (
   </div>
 );
 
-const SortableMenuItem = ({ item, category, onEdit, onDelete, isMobile }) => {
+const SortableMenuItem = ({ item, category, onEdit, onDelete, onToggleVisibility, isHidden, isMobile }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   
   const style = {
@@ -273,9 +273,9 @@ const SortableMenuItem = ({ item, category, onEdit, onDelete, isMobile }) => {
         whileHover={{ y: -4, background: 'rgba(255,255,255,0.05)' }}
         style={{ 
           padding: '16px', 
-          background: 'rgba(255,255,255,0.02)', 
+          background: isHidden ? 'rgba(236, 148, 36, 0.05)' : 'rgba(255,255,255,0.02)', 
           borderRadius: '20px', 
-          border: '1px solid rgba(255,255,255,0.05)',
+          border: `1px solid ${isHidden ? 'rgba(236, 148, 36, 0.2)' : 'rgba(255,255,255,0.05)'}`,
           display: 'flex', 
           gap: '16px',
           alignItems: 'center',
@@ -288,13 +288,13 @@ const SortableMenuItem = ({ item, category, onEdit, onDelete, isMobile }) => {
       >
         <div 
           {...attributes} {...listeners} 
-          style={{ width: '24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)', cursor: 'grab' }}
+          style={{ width: '24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', cursor: 'grab' }}
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={16} />
         </div>
 
-        <div style={{ width: '80px', height: '80px', borderRadius: '14px', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ width: '80px', height: '80px', borderRadius: '14px', background: '#0a0a0b', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0, opacity: isHidden ? 0.4 : 1 }}>
           {item.image ? (
             <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0b' }} />
           ) : (
@@ -304,9 +304,9 @@ const SortableMenuItem = ({ item, category, onEdit, onDelete, isMobile }) => {
           )}
         </div>
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignSelf: 'stretch', justifyContent: 'center' }}>
-          <div style={{ fontWeight: 800, fontSize: '15px', color: 'white', marginBottom: '4px', wordBreak: 'break-word', lineHeight: '1.2' }}>
-            {item.name}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignSelf: 'stretch', justifyContent: 'center', opacity: isHidden ? 0.6 : 1 }}>
+          <div style={{ fontWeight: 800, fontSize: '15px', color: isHidden ? '#EC9424' : 'white', marginBottom: '4px', wordBreak: 'break-word', lineHeight: '1.2' }}>
+            {item.name} {isHidden && <span style={{ fontSize: '10px', opacity: 0.8 }}>(Oculto)</span>}
           </div>
           <div style={{ color: '#52525b', fontSize: '11px', marginBottom: '8px', lineHeight: '1.4', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
             {item.description || 'Sem descrição definida'}
@@ -316,6 +316,22 @@ const SortableMenuItem = ({ item, category, onEdit, onDelete, isMobile }) => {
               R$ {item.price ? Number(item.price).toFixed(2) : '0.00'}
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleVisibility(category, item.id);
+                }}
+                style={{ 
+                  width: '32px', height: '32px', borderRadius: '10px', 
+                  background: isHidden ? 'rgba(236,148,36,0.15)' : 'rgba(255,255,255,0.05)', 
+                  border: `1px solid ${isHidden ? 'rgba(236,148,36,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  color: isHidden ? '#EC9424' : 'white'
+                }}
+                title={isHidden ? "Mostrar Item" : "Ocultar Item"}
+              >
+                {isHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+              </div>
               <div style={{ 
                 width: '32px', height: '32px', borderRadius: '10px', 
                 background: 'rgba(255,255,255,0.05)', 
@@ -344,6 +360,116 @@ const SortableMenuItem = ({ item, category, onEdit, onDelete, isMobile }) => {
           </div>
         </div>
       </motion.div>
+    </div>
+  );
+};
+
+const SortableCategoryItem = ({ 
+  cat, 
+  itemCount, 
+  isHidden, 
+  onToggleVisibility, 
+  onRename, 
+  onDelete, 
+  onNewItem, 
+  isMobile,
+  children 
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', background: isDragging ? 'rgba(255,255,255,0.02)' : 'transparent', padding: isDragging ? '10px' : '0', borderRadius: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div 
+              {...attributes} {...listeners} 
+              style={{ width: '24px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', cursor: 'grab' }}
+            >
+              <GripVertical size={16} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: 0 }}>{cat}</h3>
+              <span style={{ fontSize: '11px', color: '#52525b', fontWeight: 700 }}>{itemCount} PRODUTOS</span>
+            </div>
+            <button 
+              onClick={() => onToggleVisibility(cat)}
+              style={{ 
+                background: isHidden ? 'rgba(236, 148, 36, 0.1)' : 'rgba(255, 255, 255, 0.05)', 
+                border: `1px solid ${isHidden ? 'rgba(236, 148, 36, 0.2)' : 'rgba(255, 255, 255, 0.1)'}`, 
+                color: isHidden ? '#EC9424' : '#71717a', 
+                width: '32px', height: '32px', 
+                borderRadius: '8px', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                marginTop: '4px'
+              }}
+              title={isHidden ? "Sessão Oculta" : "Sessão Visível"}
+            >
+              {isHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+            <button 
+              onClick={() => onRename(cat)}
+              style={{ 
+                background: 'rgba(255, 255, 255, 0.05)', 
+                border: '1px solid rgba(255, 255, 255, 0.1)', 
+                color: '#71717a', 
+                width: '32px', height: '32px', 
+                borderRadius: '8px', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                marginTop: '4px'
+              }}
+              title="Editar Nome"
+            >
+              <Edit size={14} />
+            </button>
+            <button 
+              onClick={() => onDelete(cat)}
+              style={{ 
+                background: 'rgba(239, 68, 68, 0.05)', 
+                border: '1px solid rgba(239, 68, 68, 0.1)', 
+                color: '#ef4444', 
+                width: '32px', height: '32px', 
+                borderRadius: '8px', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                marginTop: '4px'
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+          <motion.button 
+            whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }} 
+            onClick={() => onNewItem(cat)}
+            style={{ 
+              padding: '10px 16px', 
+              background: 'rgba(255,255,255,0.03)', 
+              color: 'white', 
+              borderRadius: '12px', 
+              border: '1px solid rgba(255,255,255,0.1)',
+              fontSize: '12px',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 0 15px rgba(255,255,255,0.03)',
+              cursor: 'pointer'
+            }}
+          >
+            <Plus size={14} /> NOVO
+          </motion.button>
+        </div>
+        {children}
+      </div>
     </div>
   );
 };
@@ -1124,6 +1250,11 @@ const AdminDashboard = () => {
       return;
     }
     newMenu.menu[newCategoryName] = [];
+    
+    // Atualizar ordem das categorias
+    const currentOrder = newMenu.categoriesOrder || Object.keys(newMenu.menu).filter(c => c !== newCategoryName);
+    newMenu.categoriesOrder = [...currentOrder, newCategoryName];
+    
     handleSaveMenu(newMenu);
     setNewCategoryName('');
     setIsAddingCategory(false);
@@ -1133,6 +1264,12 @@ const AdminDashboard = () => {
     if (window.confirm(`Deseja excluir a categoria "${catName}" e todos os seus produtos?`)) {
       const newMenu = { ...appMenuData };
       delete newMenu.menu[catName];
+      
+      // Remover da ordem
+      if (newMenu.categoriesOrder) {
+        newMenu.categoriesOrder = newMenu.categoriesOrder.filter(c => c !== catName);
+      }
+      
       handleSaveMenu(newMenu);
     }
   };
@@ -1160,11 +1297,43 @@ const AdminDashboard = () => {
       newMenu.menu[newName] = newMenu.menu[oldName];
       delete newMenu.menu[oldName];
       
+      // Atualizar ordem das categorias
+      if (newMenu.categoriesOrder) {
+        newMenu.categoriesOrder = newMenu.categoriesOrder.map(c => c === oldName ? newName : c);
+      }
+      
       // Atualizar categorias ocultas se necessário
       if (newMenu.hiddenCategories && newMenu.hiddenCategories.includes(oldName)) {
         newMenu.hiddenCategories = newMenu.hiddenCategories.map(c => c === oldName ? newName : c);
       }
       
+      handleSaveMenu(newMenu);
+    }
+  };
+
+  const handleToggleItemVisibility = (category, itemId) => {
+    const newMenu = { ...appMenuData };
+    if (!newMenu.hiddenItems) newMenu.hiddenItems = [];
+    
+    if (newMenu.hiddenItems.includes(itemId)) {
+      newMenu.hiddenItems = newMenu.hiddenItems.filter(id => id !== itemId);
+    } else {
+      newMenu.hiddenItems.push(itemId);
+    }
+    handleSaveMenu(newMenu);
+  };
+
+  const handleDragEndCategories = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const currentOrder = appMenuData.categoriesOrder || Object.keys(appMenuData.menu);
+    const oldIndex = currentOrder.indexOf(active.id);
+    const newIndex = currentOrder.indexOf(over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
+      const newMenu = { ...appMenuData, categoriesOrder: newOrder };
       handleSaveMenu(newMenu);
     }
   };
@@ -2005,96 +2174,47 @@ const AdminDashboard = () => {
                           </motion.button>
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                        {Object.keys(appMenuData?.menu || {}).map((cat, catIdx) => (
-                          <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div>
-                                <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'white', margin: 0 }}>{cat}</h3>
-                                <span style={{ fontSize: '11px', color: '#52525b', fontWeight: 700 }}>{appMenuData.menu[cat].length} PRODUTOS</span>
-                              </div>
-                              <button 
-                                onClick={() => handleToggleCategoryVisibility(cat)}
-                                style={{ 
-                                  background: appMenuData?.hiddenCategories?.includes(cat) ? 'rgba(236, 148, 36, 0.1)' : 'rgba(255, 255, 255, 0.05)', 
-                                  border: `1px solid ${appMenuData?.hiddenCategories?.includes(cat) ? 'rgba(236, 148, 36, 0.2)' : 'rgba(255, 255, 255, 0.1)'}`, 
-                                  color: appMenuData?.hiddenCategories?.includes(cat) ? '#EC9424' : '#71717a', 
-                                  width: '32px', height: '32px', 
-                                  borderRadius: '8px', 
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  cursor: 'pointer',
-                                  marginTop: '4px'
-                                }}
-                                title={appMenuData?.hiddenCategories?.includes(cat) ? "Sessão Oculta" : "Sessão Visível"}
+                      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEndCategories}>
+                        <SortableContext 
+                          items={appMenuData.categoriesOrder || Object.keys(appMenuData?.menu || {})} 
+                          strategy={verticalSortingStrategy}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                            {(appMenuData.categoriesOrder || Object.keys(appMenuData?.menu || {})).map((cat) => (
+                              <SortableCategoryItem 
+                                key={cat}
+                                cat={cat}
+                                itemCount={appMenuData.menu[cat]?.length || 0}
+                                isHidden={appMenuData?.hiddenCategories?.includes(cat)}
+                                onToggleVisibility={handleToggleCategoryVisibility}
+                                onRename={handleRenameCategory}
+                                onDelete={handleDeleteCategory}
+                                onNewItem={() => setShowAddChoice(cat)}
+                                isMobile={isMobile}
                               >
-                                {appMenuData?.hiddenCategories?.includes(cat) ? <EyeOff size={14} /> : <Eye size={14} />}
-                              </button>
-                              <button 
-                                onClick={() => handleRenameCategory(cat)}
-                                style={{ 
-                                  background: 'rgba(255, 255, 255, 0.05)', 
-                                  border: '1px solid rgba(255, 255, 255, 0.1)', 
-                                  color: '#71717a', 
-                                  width: '32px', height: '32px', 
-                                  borderRadius: '8px', 
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  cursor: 'pointer',
-                                  marginTop: '4px'
-                                }}
-                                title="Editar Nome"
-                              >
-                                <Edit size={14} />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteCategory(cat)}
-                                style={{ 
-                                  background: 'rgba(239, 68, 68, 0.05)', 
-                                  border: '1px solid rgba(239, 68, 68, 0.1)', 
-                                  color: '#ef4444', 
-                                  width: '32px', height: '32px', 
-                                  borderRadius: '8px', 
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  cursor: 'pointer',
-                                  marginTop: '4px'
-                                }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                            <motion.button 
-                              whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }} 
-                              onClick={() => setShowAddChoice(cat)}
-                              style={{ 
-                                padding: '10px 16px', 
-                                background: 'rgba(255,255,255,0.03)', 
-                                color: 'white', 
-                                borderRadius: '12px', 
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                boxShadow: '0 0 15px rgba(255,255,255,0.03)',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <Plus size={14} /> NOVO
-                            </motion.button>
+                                <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEndMenu}>
+                                  <SortableContext items={appMenuData.menu[cat].map(i => i.id)} strategy={rectSortingStrategy}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+                                      {(appMenuData.menu[cat] || []).map((item) => (
+                                        <SortableMenuItem 
+                                          key={item.id} 
+                                          item={item} 
+                                          category={cat} 
+                                          onEdit={handleEditItem} 
+                                          onDelete={handleDeleteItem} 
+                                          onToggleVisibility={handleToggleItemVisibility}
+                                          isHidden={appMenuData?.hiddenItems?.includes(item.id)}
+                                          isMobile={isMobile} 
+                                        />
+                                      ))}
+                                    </div>
+                                  </SortableContext>
+                                </DndContext>
+                              </SortableCategoryItem>
+                            ))}
                           </div>
-                          <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEndMenu}>
-                            <SortableContext items={appMenuData.menu[cat].map(i => i.id)} strategy={rectSortingStrategy}>
-                              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
-                                {appMenuData.menu[cat].map((item) => (
-                                  <SortableMenuItem key={item.id} item={item} category={cat} onEdit={handleEditItem} onDelete={handleDeleteItem} isMobile={isMobile} />
-                                ))}
-                              </div>
-                            </SortableContext>
-                          </DndContext>
-                        </div>
-                        ))}
-                      </div>
+                        </SortableContext>
+                      </DndContext>
                     )
                   )}
 

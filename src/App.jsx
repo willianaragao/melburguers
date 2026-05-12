@@ -174,8 +174,8 @@ const App = () => {
         const { data, error } = await supabase.from('menu_config').select('data').eq('id', 1).single();
         if (data) {
           setAppMenuData(data.data);
-          const cats = Object.keys(data.data.menu);
-          if (cats.length > 0 && !activeCategory) setActiveCategory(cats[0]);
+          const catsOrder = data.data.categoriesOrder || Object.keys(data.data.menu || {});
+          if (catsOrder.length > 0 && !activeCategory) setActiveCategory(catsOrder[0]);
         }
       } catch (err) {
         console.error("Erro ao carregar menu:", err);
@@ -344,9 +344,11 @@ const App = () => {
   // === CÁLCULO DE TOTAIS ===
   const categories = useMemo(() => {
     if (appMenuData && appMenuData.menu) {
-      const allCats = Object.keys(appMenuData.menu);
+      // Usar ordem personalizada se disponível
+      const allCats = appMenuData.categoriesOrder || Object.keys(appMenuData.menu);
       const hidden = appMenuData.hiddenCategories || [];
-      return allCats.filter(cat => !hidden.includes(cat));
+      // Filtrar categorias ocultas ou inexistentes no menu
+      return allCats.filter(cat => !hidden.includes(cat) && appMenuData.menu[cat]);
     }
     return [];
   }, [appMenuData]);
@@ -620,7 +622,9 @@ const App = () => {
           <section id={`category-${cat}`} key={cat} style={{ marginBottom: '48px' }}>
             <h2 className="section-title">{cat}</h2>
             <div className="items-grid">
-              {appMenuData.menu[cat].map((item, i) => (
+              {(appMenuData.menu[cat] || [])
+                .filter(item => !(appMenuData.hiddenItems || []).includes(item.id))
+                .map((item, i) => (
                 <motion.div key={i} className="menu-card" initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <div className="card-info">
                     <div className="card-header"><h3>{item.name}</h3><p>{item.description}</p></div>
