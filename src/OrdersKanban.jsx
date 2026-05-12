@@ -422,14 +422,12 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
               </div>
             )}
             
-            {!isMobile && (
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', fontSize: '12px', fontWeight: 600 }}>
-                  <Printer size={16} /> Imprimir
-                </button>
-                <DeleteButton order={order} updateStatus={updateStatus} />
-              </div>
-            )}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', fontSize: '12px', fontWeight: 600 }}>
+                <Printer size={16} /> Imprimir
+              </button>
+              {!isMobile && <DeleteButton order={order} updateStatus={updateStatus} />}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -578,6 +576,7 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
+        <div style={{ fontSize: '9px', color: 'rgba(236,148,36,0.3)', textAlign: 'center', marginBottom: '-4px', fontWeight: 700, letterSpacing: '1px' }}>V2.2-BLUEFY-STABLE</div>
         {COLUMNS.filter(col => statusFilter === 'all' || statusFilter === col.id).map(column => {
           const colOrders = localOrders.filter(o => o.status === column.id || (column.id === 'pendente' && (o.status === 'pago' || !o.status)));
           if (colOrders.length === 0 && statusFilter !== column.id) return null;
@@ -617,7 +616,8 @@ export const OrdersKanban = ({ orders, updateStatus, handlePrint, statusFilter, 
   }
 
   return (
-    <div className="kanban-board-scroll" style={{ width: '100%', height: 'calc(100vh - 180px)', background: '#050506', overflowX: 'auto', padding: '30px' }}>
+    <div className="kanban-board-scroll" style={{ width: '100%', height: 'calc(100vh - 180px)', background: '#050506', overflowX: 'auto', padding: '30px', position: 'relative' }}>
+      <div style={{ position: 'absolute', top: '10px', right: '30px', fontSize: '9px', color: 'rgba(236,148,36,0.2)', fontWeight: 700 }}>V2.2-BLUEFY-STABLE</div>
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div style={{ display: 'flex', gap: '20px', height: '100%' }}>
           {COLUMNS.map(column => (

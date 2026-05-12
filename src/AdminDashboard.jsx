@@ -995,6 +995,29 @@ const AdminDashboard = () => {
     try {
       const orderToUpdate = orders.find(o => o.id === id || String(o.original_db_id) === String(id));
       if (!orderToUpdate) return;
+
+      // 📲 NOTIFICAÇÃO AUTOMÁTICA: Quando o pedido sai para entrega
+      if (newStatus === 'entrega') {
+        try {
+          // Garante que temos um objeto de endereço (algumas versões do DB podem retornar string)
+          let addr = orderToUpdate.address;
+          if (typeof addr === 'string') {
+            try { addr = JSON.parse(addr); } catch(e) { console.error("Erro parse address:", e); }
+          }
+          
+          const clientPhone = (addr?.phone || addr?.customerPhone || orderToUpdate.customer_phone || orderToUpdate.phone)?.replace(/\D/g, '');
+          const clientName = addr?.customerName?.split(' ')[0] || orderToUpdate.customer_name?.split(' ')[0] || 'Cliente';
+          const orderId = orderToUpdate.order_id || `#${String(orderToUpdate.original_db_id).slice(-4)}`;
+          
+          if (clientPhone && clientPhone.length >= 8) {
+            const message = `Olá ${clientName}, seu pedido ${orderId} da Mel Burgers já está em rota de entrega! 🛵💨`;
+            const waLink = `https://wa.me/55${clientPhone}?text=${encodeURIComponent(message)}`;
+            window.open(waLink, '_blank');
+          }
+        } catch (e) {
+          console.error("Erro ao abrir WhatsApp:", e);
+        }
+      }
       
       const dbId = orderToUpdate.original_db_id;
       const isCurrentlyDeleted = orderToUpdate._isDeleted;
@@ -1421,6 +1444,7 @@ const AdminDashboard = () => {
                           const btn = document.getElementById('btn-opt-all');
                           btn.innerText = "OTIMIZANDO...";
                           btn.disabled = true;
+                          btn.style.opacity = '0.5';
 
                           try {
                             const newMenu = {...appMenuData};
