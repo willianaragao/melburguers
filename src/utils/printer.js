@@ -184,16 +184,21 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
 
   // Combina todos os buffers
   const init = new Uint8Array([0x1B, 0x40]);
+  const centerAlign = new Uint8Array([0x1B, 0x61, 0x01]);
   const mainTextData = encoder.encode(mainText);
   
-  const totalLength = init.length + (logoData ? logoData.length : 0) + mainTextData.length;
+  const totalLength = init.length + (logoData ? logoData.length + centerAlign.length : 0) + mainTextData.length;
   const combined = new Uint8Array(totalLength);
   
   let pos = 0;
   combined.set(init, pos); pos += init.length;
+  
   if (logoData) {
+    // Centraliza antes de imprimir a logo
+    combined.set(centerAlign, pos); pos += centerAlign.length;
     combined.set(logoData, pos); pos += logoData.length;
   }
+  
   combined.set(mainTextData, pos);
   
   return combined;
