@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { 
   SortableContext, arrayMove, sortableKeyboardCoordinates, 
-  rectSortingStrategy, useSortable 
+  rectSortingStrategy, verticalSortingStrategy, useSortable 
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getMenuData, saveMenuData } from './utils/menuStore';
@@ -1327,6 +1327,7 @@ const AdminDashboard = () => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    if (!appMenuData?.menu) return;
     const currentOrder = appMenuData.categoriesOrder || Object.keys(appMenuData.menu);
     const oldIndex = currentOrder.indexOf(active.id);
     const newIndex = currentOrder.indexOf(over.id);
@@ -1342,9 +1343,10 @@ const AdminDashboard = () => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    if (!appMenuData?.menu) return;
     let activeCategory = null;
     Object.keys(appMenuData.menu).forEach(cat => {
-      if (appMenuData.menu[cat].some(i => i.id === active.id)) {
+      if (Array.isArray(appMenuData.menu[cat]) && appMenuData.menu[cat].some(i => i.id === active.id)) {
         activeCategory = cat;
       }
     });
@@ -2180,7 +2182,9 @@ const AdminDashboard = () => {
                           strategy={verticalSortingStrategy}
                         >
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                            {(appMenuData.categoriesOrder || Object.keys(appMenuData?.menu || {})).map((cat) => (
+                            {(appMenuData.categoriesOrder || Object.keys(appMenuData?.menu || {}))
+                              .filter(cat => appMenuData?.menu && appMenuData.menu[cat])
+                              .map((cat) => (
                               <SortableCategoryItem 
                                 key={cat}
                                 cat={cat}
@@ -2193,7 +2197,7 @@ const AdminDashboard = () => {
                                 isMobile={isMobile}
                               >
                                 <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEndMenu}>
-                                  <SortableContext items={appMenuData.menu[cat].map(i => i.id)} strategy={rectSortingStrategy}>
+                                  <SortableContext items={(appMenuData.menu[cat] || []).map(i => i.id)} strategy={rectSortingStrategy}>
                                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
                                       {(appMenuData.menu[cat] || []).map((item) => (
                                         <SortableMenuItem 
