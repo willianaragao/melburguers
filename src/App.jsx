@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Plus, Clock, ArrowRight, MapPin, Sun, Moon,
   BadgeCheck, ShoppingBag, Truck, ShoppingCart,
-  Trash2, ChevronDown, CheckCircle2, MoreHorizontal, UserPlus
+  Trash2, ChevronDown, CheckCircle2, MoreHorizontal, UserPlus, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -117,6 +117,21 @@ const SobremesaHoneySVG = ({ id }) => (
   </span>
 );
 
+const ADD_ONS = [
+  { id: 'carne_picanha', name: 'Carne de picanha', price: 6.00, icon: '🥩' },
+  { id: 'cheddar', name: 'Cheddar', price: 3.00, icon: '🧀' },
+  { id: 'bacon', name: 'Bacon', price: 3.00, icon: '🥓' },
+  { id: 'calabresa', name: 'Calabresa', price: 2.99, icon: '🌭' },
+  { id: 'batata_pequena', name: 'Batata Pequena', price: 4.99, icon: '🍟' },
+  { 
+    id: 'piscina_cheddar', 
+    name: 'Piscininha de Cheddar', 
+    price: 4.99,
+    description: 'Adicional cremoso de cheddar para deixar tudo ainda melhor!',
+    image: '/fotos cardapio/piscininha de chedar mel.png'
+  }
+];
+
 const App = () => {
   const [appMenuData, setAppMenuData] = useState(getMenuData());
   const [activeCategory, setActiveCategory] = useState(null);
@@ -148,6 +163,18 @@ const App = () => {
   const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false);
   const [myOrders, setMyOrders] = useState([]);
   const [isMyOrdersLoading, setIsMyOrdersLoading] = useState(false);
+  const [configuringItem, setConfiguringItem] = useState(null);
+  const [selectedAddOns, setSelectedAddOns] = useState([]);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  const handleAnimatedAddToCart = async () => {
+    if (isAddingToCart) return;
+    setIsAddingToCart(true);
+    // Tempo total da animação coreográfica cinematográfica (3.0s + margem)
+    await new Promise(resolve => setTimeout(resolve, 3100));
+    addToCart(configuringItem, selectedAddOns);
+    setIsAddingToCart(false);
+  };
 
   // === PERSISTÊNCIA DE DADOS ===
   useEffect(() => {
@@ -353,13 +380,20 @@ const App = () => {
     return [];
   }, [appMenuData]);
 
-  const cartSubtotal = cart.reduce((acc, item) => acc + item.price, 0);
+  const cartSubtotal = cart.reduce((acc, item) => acc + (item.totalPrice || item.price), 0);
   const cartTotal = cartSubtotal + deliveryFee;
 
   // === AÇÕES DO CARRINHO ===
-  const addToCart = (item) => {
-    setCart([...cart, item]);
+  const addToCart = (item, addOns = []) => {
+    const itemWithAddOns = {
+      ...item,
+      addOns,
+      totalPrice: item.price + addOns.reduce((acc, addOn) => acc + addOn.price, 0)
+    };
+    setCart([...cart, itemWithAddOns]);
     if (navigator.vibrate) navigator.vibrate(50); 
+    setConfiguringItem(null);
+    setSelectedAddOns([]);
   };
 
   const removeFromCart = (index) => {
@@ -448,7 +482,7 @@ const App = () => {
       setIsOrderSuccess(true);
       setIsCartOpen(false);
       
-      const message = `*NOVO PEDIDO MELBURGERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2).replace('.', ',')}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number}${address.complement ? ` (${address.complement})` : ''} - ${address.neighborhood}`;
+      const message = `*NOVO PEDIDO MELBURGERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}${i.addOns && i.addOns.length > 0 ? `\n   + ${i.addOns.map(a => a.name).join(', ')}` : ''}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2).replace('.', ',')}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number}${address.complement ? ` (${address.complement})` : ''} - ${address.neighborhood}`;
       
       setTimeout(() => {
         window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent(message)}`;
@@ -630,7 +664,14 @@ const App = () => {
                     <div className="card-header"><h3>{item.name}</h3><p>{item.description}</p></div>
                     <div className="card-footer">
                       <span className="price-tag">R$ {item.price.toFixed(2).replace('.', ',')}</span>
-                      <button className="add-btn" onClick={() => addToCart(item)}><Plus size={22} strokeWidth={3} /></button>
+                      <button className="add-btn" onClick={() => {
+                        if (cat === 'Bebidas') {
+                          addToCart(item);
+                        } else {
+                          setConfiguringItem({ ...item, category: cat });
+                          setSelectedAddOns([]);
+                        }
+                      }}><Plus size={22} strokeWidth={3} /></button>
                     </div>
                   </div>
                   <div className="card-img"><img src={item.image} alt={item.name} /></div>
@@ -642,6 +683,331 @@ const App = () => {
       </main>
 
       {/* 5. Floating Cart */}
+      <AnimatePresence>
+        {configuringItem && (
+          <motion.div 
+            className="cart-modal-overlay" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            style={{ zIndex: 4000 }}
+            onClick={() => setConfiguringItem(null)}
+          >
+            <motion.div 
+              className="cart-modal-content" 
+              initial={{ y: '100%' }} 
+              animate={{ y: 0 }} 
+              exit={{ y: '100%' }} 
+              onClick={e => e.stopPropagation()}
+              style={{ padding: '0', borderRadius: '24px 24px 0 0', overflow: 'hidden' }}
+            >
+              <div style={{ position: 'relative', height: '180px' }}>
+                <img src={configuringItem.image} alt={configuringItem.name} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#f8fafc' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }} />
+                <button 
+                  onClick={() => setConfiguringItem(null)}
+                  style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Plus size={20} style={{ transform: 'rotate(45deg)' }} />
+                </button>
+                <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'white', marginBottom: '2px' }}>{configuringItem.name}</h2>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', lineClamp: 1, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{configuringItem.description}</p>
+                </div>
+              </div>
+
+              <div style={{ padding: '20px', background: isDarkMode ? '#18181b' : 'white' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '12px', display: 'flex', justifyContent: 'space-between', color: isDarkMode ? 'white' : '#18181b' }}>
+                    Turbine seu pedido
+                    <span style={{ fontSize: '11px', fontWeight: 500, color: '#8e8e8e' }}>OPCIONAL</span>
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {ADD_ONS.map(addOn => {
+                      const isSelected = selectedAddOns.find(a => a.id === addOn.id);
+                      
+                      if (addOn.id === 'piscina_cheddar') {
+                        return (
+                          <div 
+                            key={addOn.id} 
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedAddOns(selectedAddOns.filter(a => a.id !== addOn.id));
+                              } else {
+                                setSelectedAddOns([...selectedAddOns, addOn]);
+                              }
+                            }}
+                            style={{ 
+                              position: 'relative',
+                              display: 'flex', gap: '16px', alignItems: 'center',
+                              padding: '16px', borderRadius: '20px', 
+                              background: isDarkMode ? '#111113' : '#fcfcfd',
+                              border: `2px solid ${isSelected ? '#EC9424' : (isDarkMode ? 'rgba(255,255,255,0.05)' : '#e2e8f0')}`,
+                              cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                              boxShadow: isSelected ? '0 10px 30px rgba(236,148,36,0.15)' : 'none',
+                              marginTop: '8px'
+                            }}
+                          >
+                            <div style={{ 
+                              width: '80px', height: '80px', borderRadius: '16px', 
+                              overflow: 'hidden', flexShrink: 0,
+                              background: '#f8fafc', border: '1px solid rgba(0,0,0,0.05)'
+                            }}>
+                              <img src={addOn.image} alt={addOn.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                            
+                            <div style={{ flex: 1, zIndex: 2 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '15px', fontWeight: 800, color: isDarkMode ? 'white' : '#18181b' }}>{addOn.name}</span>
+                                <span style={{ fontSize: '14px', fontWeight: 900, color: '#22c55e' }}>R$ {addOn.price.toFixed(2).replace('.', ',')}</span>
+                              </div>
+                              <p style={{ fontSize: '12px', color: '#8e8e8e', lineHeight: 1.4, margin: 0, maxWidth: '80%' }}>{addOn.description}</p>
+                            </div>
+
+                            {/* Animação Ultra-Realista de Cheddar (Gooey Effect + Fluid Physics) */}
+                            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, pointerEvents: 'none', overflow: 'hidden', borderRadius: '18px' }}>
+                              <svg width="100%" height="100%" viewBox="0 0 400 100" preserveAspectRatio="none" style={{ filter: 'url(#gooey-cheddar)' }}>
+                                <defs>
+                                  <filter id="gooey-cheddar">
+                                    <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+                                    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
+                                  </filter>
+                                  <linearGradient id="cheddar-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#FDB931" />
+                                    <stop offset="100%" stopColor="#EC9424" />
+                                  </linearGradient>
+                                </defs>
+
+                                {/* Massa Principal no Topo */}
+                                <motion.path
+                                  d="M330,0 C340,25 385,25 400,0 L400,0 L330,0 Z"
+                                  fill="url(#cheddar-grad)"
+                                  animate={{ 
+                                    d: [
+                                      "M330,0 C340,25 385,25 400,0 L400,0 L330,0 Z",
+                                      "M330,0 C350,45 390,45 400,0 L400,0 L330,0 Z",
+                                      "M330,0 C340,25 385,25 400,0 L400,0 L330,0 Z"
+                                    ]
+                                  }}
+                                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                />
+
+                                {/* Gotas com Física de Estiramento */}
+                                {[0, 1.8, 3.6].map((delay, i) => (
+                                  <motion.circle
+                                    key={i}
+                                    cx={365 + (i * 8)}
+                                    cy="0"
+                                    r="8"
+                                    fill="url(#cheddar-grad)"
+                                    initial={{ y: 0, scale: 0 }}
+                                    animate={{ 
+                                      y: [0, 20, 120],
+                                      scale: [0, 1.2, 1, 0.8],
+                                      opacity: [0, 1, 1, 0]
+                                    }}
+                                    transition={{ 
+                                      duration: 4, 
+                                      repeat: Infinity, 
+                                      ease: [0.4, 0, 0.6, 1],
+                                      delay: delay 
+                                    }}
+                                  />
+                                ))}
+                              </svg>
+                            </div>
+
+                            {isSelected && (
+                              <motion.div 
+                                initial={{ scale: 0 }} 
+                                animate={{ scale: 1 }} 
+                                style={{ 
+                                  position: 'absolute', top: '-10px', right: '-10px', 
+                                  background: '#EC9424', color: 'white', 
+                                  width: '28px', height: '28px', borderRadius: '50%', 
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  boxShadow: '0 4px 12px rgba(236,148,36,0.3)',
+                                  zIndex: 2
+                                }}
+                              >
+                                <BadgeCheck size={18} />
+                              </motion.div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div 
+                          key={addOn.id} 
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedAddOns(selectedAddOns.filter(a => a.id !== addOn.id));
+                            } else {
+                              setSelectedAddOns([...selectedAddOns, addOn]);
+                            }
+                          }}
+                          style={{ 
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                            padding: '12px', borderRadius: '14px', 
+                            background: isSelected ? (isDarkMode ? 'rgba(236,148,36,0.1)' : '#fff9f2') : (isDarkMode ? 'rgba(255,255,255,0.03)' : '#f8fafc'),
+                            border: `1px solid ${isSelected ? '#EC9424' : (isDarkMode ? 'rgba(255,255,255,0.05)' : '#e2e8f0')}`,
+                            cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ 
+                              width: '18px', height: '18px', borderRadius: '5px', 
+                              border: `2px solid ${isSelected ? '#EC9424' : '#cbd5e1'}`, 
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                              background: isSelected ? '#EC9424' : 'transparent' 
+                            }}>
+                              {isSelected && <BadgeCheck size={12} color="white" />}
+                            </div>
+                            {addOn.icon && <span style={{ fontSize: '18px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{addOn.icon}</span>}
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: isDarkMode ? 'white' : '#18181b' }}>{addOn.name}</span>
+                          </div>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#22c55e' }}>+ R$ {addOn.price.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button 
+                  className="checkout-btn" 
+                  onClick={isAddingToCart ? null : handleAnimatedAddToCart}
+                  style={{ 
+                    width: '100%', height: '64px', borderRadius: '24px', 
+                    fontSize: '17px', fontWeight: 900,
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: '#EC9424',
+                    color: 'white',
+                    fontFamily: "'Outfit', sans-serif"
+                  }}
+                >
+                  <AnimatePresence mode="wait">
+                    {!isAddingToCart ? (
+                      <motion.div
+                        key="static"
+                        initial={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 200 }}
+                        transition={{ duration: 0.5, ease: "backIn" }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                      >
+                        <ShoppingCart size={24} strokeWidth={3} />
+                        <span>Adicionar • R$ {(configuringItem.price + selectedAddOns.reduce((acc, a) => acc + a.price, 0)).toFixed(2).replace('.', ',')}</span>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="anim"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <motion.div
+                          initial={{ x: -150, scale: 1, rotate: 0 }}
+                          animate={{ 
+                            x: [ -150, 0, 0, 400 ], 
+                            scale: [1, 1.3, 1.3, 1],
+                            rotate: [0, 0, 0, 0, -40]
+                          }}
+                          transition={{ 
+                            times: [0, 0.15, 0.6, 0.95, 1],
+                            duration: 3.0, 
+                            ease: "easeInOut" 
+                          }}
+                          style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <div style={{ position: 'relative', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {/* SVG Customizado para preenchimento preciso */}
+                            <motion.svg
+                              width="36"
+                              height="36"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              style={{ zIndex: 5 }}
+                            >
+                              <circle cx="8" cy="21" r="1" />
+                              <circle cx="19" cy="21" r="1" />
+                              <motion.path 
+                                d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" 
+                                animate={{ 
+                                  fill: [ "rgba(139, 69, 19, 0)", "rgba(139, 69, 19, 0)", "rgba(139, 69, 19, 1)" ]
+                                }}
+                                transition={{ 
+                                  delay: 0.6,
+                                  times: [0, 0.6, 1],
+                                  duration: 0.8,
+                                  ease: "easeOut"
+                                }}
+                              />
+                            </motion.svg>
+                            
+                            {/* Check no meio do carrinho - Ajustado para ser proporcional */}
+                            <motion.div
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ 
+                                scale: [0, 0, 1],
+                                opacity: [0, 0, 1]
+                              }}
+                              transition={{ 
+                                delay: 0.6,
+                                times: [0, 0.8, 1],
+                                duration: 1.2,
+                                ease: "backOut"
+                              }}
+                              style={{ 
+                                position: 'absolute', 
+                                top: '8px', 
+                                left: '10px', 
+                                width: '20px', 
+                                height: '16px', 
+                                zIndex: 10, 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                              }}
+                            >
+                              <Check size={14} color="white" strokeWidth={6} />
+                            </motion.div>
+                          </div>
+                          
+                          {/* Hamburger Saindo do Botão e DESAPARECENDO dentro do carrinho */}
+                          <motion.div
+                            initial={{ y: 60, opacity: 0, scale: 0.2 }}
+                            animate={{ 
+                              y: [60, -40, 0], 
+                              opacity: [0, 1, 1, 0],
+                              scale: [0.2, 1.5, 0.8, 0] 
+                            }}
+                            transition={{ 
+                              delay: 0.6, 
+                              duration: 0.8, 
+                              times: [0, 0.4, 0.8, 1],
+                              ease: "easeInOut"
+                            }}
+                            style={{ position: 'absolute', fontSize: '24px', zIndex: 6 }}
+                          >
+                            🍔
+                          </motion.div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {cart.length > 0 && !isCartOpen && (
         <div style={{ position: 'fixed', bottom: '30px', left: 0, right: 0, zIndex: 1000, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
           <motion.div 
@@ -721,13 +1087,18 @@ const App = () => {
                         <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'contain', background: '#f8fafc' }} />
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '15px', fontWeight: 700 }}>{item.name}</div>
-                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#22c55e', marginTop: '2px' }}>R$ {item.price.toFixed(2).replace('.', ',')}</div>
+                          {item.addOns && item.addOns.length > 0 && (
+                            <div style={{ fontSize: '11px', color: '#EC9424', fontWeight: 600 }}>
+                              + {item.addOns.map(a => a.name).join(', ')}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#22c55e', marginTop: '2px' }}>R$ {(item.totalPrice || item.price).toFixed(2).replace('.', ',')}</div>
                         </div>
                         <button onClick={() => removeFromCart(i)} style={{ background: '#fff0f0', border: 'none', padding: '8px', borderRadius: '10px', color: '#f43f5e' }}><Trash2 size={18}/></button>
                       </div>
                     ))}
                   </div>
-                  <button onClick={() => setCheckoutStep('address')} style={{ width: '100%', height: '62px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900 }}>CONTINUAR PARA ENTREGA</button>
+                  <button className="checkout-btn" onClick={() => setCheckoutStep('address')}>CONTINUAR PARA ENTREGA</button>
                 </>
               )}
 
@@ -813,7 +1184,7 @@ const App = () => {
                         <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Complemento / Referência (opcional)" value={address.complement} onChange={e => setAddress({...address, complement: e.target.value})} />
                      </div>
                   </div>
-                  <button onClick={() => { if(!address.customerName || !address.customerPhone || !address.street || !address.number) return alert("Preencha tudo!"); setCheckoutStep('payment'); }} style={{ width: '100%', height: '62px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 900 }}>IR PARA PAGAMENTO</button>
+                  <button className="checkout-btn" onClick={() => { if(!address.customerName || !address.customerPhone || !address.street || !address.number) return alert("Preencha tudo!"); setCheckoutStep('payment'); }}>IR PARA PAGAMENTO</button>
                   <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: '#71717A', fontSize: '13px' }}>Voltar ao carrinho</button>
                 </div>
               )}
@@ -845,7 +1216,7 @@ const App = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}><span style={{ color: '#71717A' }}>Entrega</span><span style={{ fontWeight: 800, color: '#22c55e' }}>{deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`}</span></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '24px', fontWeight: 950 }}><span>Total</span><span>R$ {cartTotal.toFixed(2).replace('.', ',')}</span></div>
                   </div>
-                  <button onClick={handleCheckout} style={{ width: '100%', height: '70px', background: '#EC9424', color: 'white', border: 'none', borderRadius: '24px', fontWeight: 900 }}>FINALIZAR PEDIDO</button>
+                  <button className="checkout-btn" onClick={handleCheckout} style={{ height: '70px', borderRadius: '24px' }}>FINALIZAR PEDIDO</button>
                   <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: '#71717A', fontSize: '13px', marginTop: '10px' }}>Voltar ao endereço</button>
                 </div>
               )}

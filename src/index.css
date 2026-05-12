@@ -486,8 +486,8 @@ body {
 }
 
 .add-btn {
-  background: var(--accent);
-  color: var(--primary);
+  background: var(--primary);
+  color: white;
   border: none;
   width: 38px;
   height: 38px;
@@ -561,4 +561,34 @@ body {
   padding: 35px 24px;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.checkout-btn {
+  background: var(--primary) !important;
+  color: white !important;
+  border: none !important;
+  width: 100%;
+  height: 56px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(236,148,36,0.2);
+}
+
+.checkout-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(236,148,36,0.1);
+}
+
+.checkout-btn:disabled {
+  background: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed;
+  box-shadow: none;
 }

@@ -393,9 +393,16 @@ const OrderCard = ({ order, handlePrint, updateStatus, isDragging, viewMode = 'l
             }}>
               <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em', fontWeight: 800 }}>Itens do Pedido</div>
               {(order.items || []).map((item, i) => (
-                <div key={i} style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '6px', fontWeight: 600, display: 'flex', gap: '8px' }}>
-                  <span style={{ color: '#52525b' }}>{item.quantity}x</span>
-                  {item.product_name || item.name}
+                <div key={i} style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '6px', fontWeight: 600, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <span style={{ color: '#52525b' }}>{item.quantity}x</span>
+                    {item.product_name || item.name}
+                  </div>
+                  {item.addOns && item.addOns.length > 0 && (
+                    <div style={{ fontSize: '11px', color: '#EC9424', marginLeft: '26px' }}>
+                      + {item.addOns.map(a => a.name).join(', ')}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

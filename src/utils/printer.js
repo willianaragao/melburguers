@@ -118,17 +118,18 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
   const groupedItems = [];
   const cartArr = Array.isArray(cart) ? cart : [];
   cartArr.forEach((item) => {
-    const existing = groupedItems.find(i => i.name === item.name);
+    const addOnsKey = (item.addOns || []).map(a => a.id).sort().join(',');
+    const existing = groupedItems.find(i => i.name === item.name && i.addOnsKey === addOnsKey);
     const qty = Number(item.quantity) || 1;
     if (existing) {
       existing.quantity += qty;
     } else {
-      groupedItems.push({ ...item, quantity: qty });
+      groupedItems.push({ ...item, quantity: qty, addOnsKey });
     }
   });
 
   groupedItems.forEach((item) => {
-    const itemPrice = parsePrice(item.price);
+    const itemPrice = parsePrice(item.totalPrice || item.price);
     const itemTotal = itemPrice * item.quantity;
     const qtyName = `${item.quantity}x ${item.name}`;
     const priceStr = `R$ ${itemTotal.toFixed(2).replace('.', ',')}`;
@@ -140,6 +141,21 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
       mainText += `${qtyName}\n`;
       const spaces = 32 - priceStr.length;
       mainText += `${" ".repeat(spaces)}${priceStr}\n`;
+    }
+
+    if (item.addOns && item.addOns.length > 0) {
+      const addOnsStr = `   + ${item.addOns.map(a => a.name).join(', ')}`;
+      // Quebrar linha se o adicional for muito longo
+      if (addOnsStr.length > 32) {
+        mainText += addOnsStr.substring(0, 32) + '\n';
+        if (addOnsStr.length > 64) {
+           mainText += addOnsStr.substring(32, 64) + '\n';
+        } else {
+           mainText += addOnsStr.substring(32) + '\n';
+        }
+      } else {
+        mainText += `${addOnsStr}\n`;
+      }
     }
   });
   
