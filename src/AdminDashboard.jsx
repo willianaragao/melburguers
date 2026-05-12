@@ -996,10 +996,9 @@ const AdminDashboard = () => {
       const orderToUpdate = orders.find(o => o.id === id || String(o.original_db_id) === String(id));
       if (!orderToUpdate) return;
 
-      // 📲 NOTIFICAÇÃO AUTOMÁTICA: Quando o pedido sai para entrega
-      if (newStatus === 'entrega') {
+      // 📲 NOTIFICAÇÕES AUTOMÁTICAS
+      if (newStatus === 'preparo' || newStatus === 'entrega') {
         try {
-          // Garante que temos um objeto de endereço (algumas versões do DB podem retornar string)
           let addr = orderToUpdate.address;
           if (typeof addr === 'string') {
             try { addr = JSON.parse(addr); } catch(e) { console.error("Erro parse address:", e); }
@@ -1010,9 +1009,21 @@ const AdminDashboard = () => {
           const orderId = orderToUpdate.order_id || `#${String(orderToUpdate.original_db_id).slice(-4)}`;
           
           if (clientPhone && clientPhone.length >= 8) {
-            const message = `Olá ${clientName}, seu pedido ${orderId} da Mel Burgers já está em rota de entrega! 🛵💨`;
+            let message = "";
+            if (newStatus === 'preparo') {
+              message = `Olá ${clientName}, seu pedido ${orderId} da Mel Burgers já está sendo preparado! 👨‍🍳🔥`;
+            } else {
+              message = `Olá ${clientName}, seu pedido ${orderId} da Mel Burgers já está em rota de entrega! 🛵💨`;
+            }
+            
             const waLink = `https://wa.me/55${clientPhone}?text=${encodeURIComponent(message)}`;
-            window.open(waLink, '_blank');
+            
+            // Tentativa de evitar bloqueio de pop-up: abrir em nova aba imediatamente
+            const win = window.open(waLink, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+              console.warn("Pop-up bloqueado pelo navegador.");
+              // Opcional: mostrar um pequeno aviso ou botão para o usuário clicar
+            }
           }
         } catch (e) {
           console.error("Erro ao abrir WhatsApp:", e);
