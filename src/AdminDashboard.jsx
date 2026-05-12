@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { 
   SortableContext, arrayMove, sortableKeyboardCoordinates, 
-  rectSortingStrategy, verticalSortingStrategy, useSortable 
+  rectSortingStrategy, verticalListSortingStrategy, useSortable 
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getMenuData, saveMenuData } from './utils/menuStore';
@@ -2179,7 +2179,7 @@ const AdminDashboard = () => {
                       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEndCategories}>
                         <SortableContext 
                           items={appMenuData.categoriesOrder || Object.keys(appMenuData?.menu || {})} 
-                          strategy={verticalSortingStrategy}
+                          strategy={verticalListSortingStrategy}
                         >
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
                             {(appMenuData.categoriesOrder || Object.keys(appMenuData?.menu || {}))
