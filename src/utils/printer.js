@@ -61,7 +61,7 @@ const getLogoData = async () => {
       };
       img.onerror = () => resolve(null);
       // Tentamos o caminho absoluto da logo principal
-      img.src = '/perfil-logo.png';
+      img.src = '/logo impressao termica.png';
     });
   } catch (e) {
     console.error("Erro logo:", e);
@@ -70,13 +70,17 @@ const getLogoData = async () => {
 };
 
 export const formatOrderForPrinter = async (cart, total, address, paymentMethod, deliveryFee = 0, subtotal = 0, via = "") => {
-  console.log("[Mel Burguers] Formatando pedido - v2.2 (Sem Logo)");
-  let text = "\x1B\x40"; // Init
+  console.log("[Mel Burguers] Formatando pedido - v2.2 (Com Logo)");
   
-  // Alinhamento central
-  text += "\x1B\x61\x01";
+  // 📸 Obtém os dados binários da logo
+  const logoData = await getLogoData();
   
+  const encoder = new TextEncoder();
   let mainText = "";
+  
+  // Alinhamento central para o cabeçalho
+  mainText += "\x1B\x61\x01";
+  
   if (via) {
     mainText += `*** VIA ${via.toUpperCase()} ***\n`;
   }
@@ -176,10 +180,23 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
     mainText += "RECIBO DO ESTABELECIMENTO\n";
   }
 
-  mainText += "\n\n\n\n\x1D\x56\x00"; // Cut
+  mainText += "\n\n\n\n\x1D\x56\x00"; // Cut (GS V 0)
+
+  // Combina todos os buffers
+  const init = new Uint8Array([0x1B, 0x40]);
+  const mainTextData = encoder.encode(mainText);
   
-  const encoder = new TextEncoder();
-  return encoder.encode(text + mainText);
+  const totalLength = init.length + (logoData ? logoData.length : 0) + mainTextData.length;
+  const combined = new Uint8Array(totalLength);
+  
+  let pos = 0;
+  combined.set(init, pos); pos += init.length;
+  if (logoData) {
+    combined.set(logoData, pos); pos += logoData.length;
+  }
+  combined.set(mainTextData, pos);
+  
+  return combined;
 };
 
 
