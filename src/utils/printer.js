@@ -70,15 +70,11 @@ const getLogoData = async () => {
 };
 
 export const formatOrderForPrinter = async (cart, total, address, paymentMethod, deliveryFee = 0, subtotal = 0, via = "") => {
-  console.log("[Mel Burguers] Formatando pedido - v2.1 (2 vias + logo)");
-  const logo = await getLogoData();
+  console.log("[Mel Burguers] Formatando pedido - v2.2 (Sem Logo)");
   let text = "\x1B\x40"; // Init
   
-  // Alinhamento central para o logo
+  // Alinhamento central
   text += "\x1B\x61\x01";
-  
-  const encoder = new TextEncoder();
-  const textBefore = encoder.encode(text);
   
   let mainText = "";
   if (via) {
@@ -88,7 +84,7 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
   mainText += "\x1B\x21\x30"; // Double height and width
   mainText += "MEL BURGERS\n";
   mainText += "\x1B\x21\x00"; // Normal size
-  mainText += "V.2.1-2VIAS-LOGO\n";
+  mainText += "V.2.2-STABLE\n";
   const nowStr = new Date().toLocaleString('pt-BR');
   mainText += `${nowStr}\n`;
   mainText += "Sabor que conquista!\n";
@@ -164,7 +160,7 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
 
   mainText += "\x1B\x21\x01"; // Bold
   mainText += formatRight("TOTAL:", total);
-  mainText += "\x1B\x21\x00"; // Normal
+  mainText += "\x1B\x21\x00"; // Normal size
   
   if (paymentMethod) {
     mainText += "\x1B\x61\x00"; // Left
@@ -176,22 +172,14 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
   mainText += "Documento sem valor fiscal\n";
   
   if (via === "OPERADOR") {
-    text += "--------------------------------\n";
-    text += "RECIBO DO ESTABELECIMENTO\n";
+    mainText += "--------------------------------\n";
+    mainText += "RECIBO DO ESTABELECIMENTO\n";
   }
 
   mainText += "\n\n\n\n\x1D\x56\x00"; // Cut
   
-  const textAfter = encoder.encode(mainText);
-  
-  if (!logo) return new Uint8Array([...textBefore, ...textAfter]);
-  
-  const finalBuffer = new Uint8Array(textBefore.length + logo.length + textAfter.length);
-  finalBuffer.set(textBefore);
-  finalBuffer.set(logo, textBefore.length);
-  finalBuffer.set(textAfter, textBefore.length + logo.length);
-  
-  return finalBuffer;
+  const encoder = new TextEncoder();
+  return encoder.encode(text + mainText);
 };
 
 
@@ -250,13 +238,10 @@ export const sendToPrinter = async (characteristic, orderData) => {
 
     // Chunk menor e delay maior para Bluefy (iOS) ser mais estável
     const chunkSize = 50;
-    const chunkDelay = 60; // Aumentado para 60ms para máxima estabilidade
+    const chunkDelay = 60; // Mantido para estabilidade no Bluefy
 
     for (let i = 0; i < orderData.length; i += chunkSize) {
       const chunk = orderData.slice(i, i + chunkSize);
-      
-      // Se detectarmos o cabeçalho do logo (GS v 0), damos um fôlego extra
-      const isLogoHeader = chunk[0] === 0x1D && chunk[1] === 0x76;
 
       if (characteristic.writeValueWithoutResponse) {
         await characteristic.writeValueWithoutResponse(chunk);
@@ -264,7 +249,7 @@ export const sendToPrinter = async (characteristic, orderData) => {
         await characteristic.writeValue(chunk);
       }
 
-      await new Promise(r => setTimeout(r, isLogoHeader ? 150 : chunkDelay));
+      await new Promise(r => setTimeout(r, chunkDelay));
     }
 
     console.log("[Mel Burguers] ✅ Impressão concluída!");
