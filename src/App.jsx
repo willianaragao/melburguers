@@ -132,6 +132,189 @@ const ADD_ONS = [
   }
 ];
 
+const FidelityCard = ({ fidelityPoints, address, isDarkMode }) => {
+  const currentProgress = fidelityPoints % 6;
+  const hasDiscount = fidelityPoints > 0 && fidelityPoints % 6 === 5;
+  const activeStamps = currentProgress;
+  
+  return (
+    <div 
+      style={{ 
+        background: isDarkMode ? '#1F1510' : '#FFF9F5', 
+        border: `2px solid ${hasDiscount ? '#22c55e' : '#EC9424'}`, 
+        borderRadius: '20px', 
+        padding: '18px', 
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 8px 24px rgba(236,148,36,0.06)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
+        marginBottom: '16px'
+      }}
+    >
+      {hasDiscount && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          background: '#22c55e',
+          color: 'white',
+          fontSize: '9px',
+          fontWeight: 900,
+          padding: '5px 10px',
+          borderRadius: '0 0 0 12px',
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase'
+        }}>
+          ATIVADO
+        </div>
+      )}
+
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <span style={{ fontSize: '18px' }}>🎁</span>
+          <h3 style={{ 
+            fontSize: '14px', 
+            fontWeight: 800, 
+            color: hasDiscount ? '#22c55e' : '#EC9424',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            margin: 0
+          }}>
+            Programa de fidelidade
+          </h3>
+        </div>
+        <p style={{ 
+          fontSize: '12px', 
+          lineHeight: '1.4', 
+          color: isDarkMode ? '#D4D4D8' : '#4b5563',
+          fontWeight: 500,
+          margin: 0
+        }}>
+          A cada 5 pedidos concluídos e entregues no <strong>mesmo endereço</strong>, você recebe <strong>30% de desconto</strong> (sem contar o frete) no seu 6º pedido!
+        </p>
+      </div>
+
+      <div style={{ 
+        background: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
+        borderRadius: '14px',
+        padding: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '10px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '290px' }}>
+          {[1, 2, 3, 4, 5, 6].map((slot) => {
+            const isStamped = slot <= activeStamps;
+            const isSlot6 = slot === 6;
+            
+            // Custom styling for the green slot 6
+            const borderStyle = isSlot6
+              ? (hasDiscount 
+                  ? '2.5px solid #22c55e' 
+                  : `2px dashed ${isDarkMode ? 'rgba(34, 197, 94, 0.4)' : 'rgba(34, 197, 94, 0.5)'}`)
+              : (isStamped 
+                  ? `2.5px solid ${hasDiscount ? '#22c55e' : '#EC9424'}` 
+                  : `2px dashed ${isDarkMode ? '#3f3f46' : '#d1d5db'}`);
+                  
+            const bgStyle = isSlot6
+              ? (hasDiscount ? 'rgba(34, 197, 94, 0.15)' : 'transparent')
+              : (isStamped 
+                  ? (hasDiscount ? 'rgba(34, 197, 94, 0.1)' : 'rgba(236, 148, 36, 0.1)') 
+                  : 'transparent');
+                  
+            const textColor = isSlot6
+              ? (isDarkMode ? '#4ade80' : '#22c55e')
+              : (isStamped 
+                  ? (hasDiscount ? '#22c55e' : '#EC9424') 
+                  : (isDarkMode ? '#71717a' : '#9ca3af'));
+
+            const shadowStyle = isSlot6 && hasDiscount
+              ? (isDarkMode ? '0 0 14px rgba(74, 222, 128, 0.5)' : '0 0 12px rgba(34, 197, 94, 0.4)')
+              : 'none';
+              
+            const scaleStyle = isSlot6 && hasDiscount ? 'scale(1.1)' : 'scale(1)';
+
+            return (
+              <div 
+                key={slot}
+                style={{ 
+                  width: '38px', 
+                  height: '38px', 
+                  borderRadius: '50%', 
+                  border: borderStyle,
+                  background: bgStyle,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '900',
+                  fontSize: '13px',
+                  color: textColor,
+                  boxShadow: shadowStyle,
+                  transform: scaleStyle,
+                  transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}
+              >
+                {isSlot6 ? (
+                  hasDiscount ? '🎁' : '6'
+                ) : (
+                  isStamped ? '✓' : slot
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ 
+          fontSize: '11px', 
+          fontWeight: 700, 
+          color: isDarkMode ? '#a1a1aa' : '#4b5563',
+          textAlign: 'center',
+          width: '100%'
+        }}>
+          {hasDiscount ? (
+            <span style={{ color: '#22c55e', fontWeight: 900 }}>
+              🎉 Parabéns! 30% de desconto ativado no pedido atual!
+            </span>
+          ) : (
+            <span>
+              Você tem <strong style={{ color: '#EC9424', fontSize: '13px' }}>{fidelityPoints}</strong> {fidelityPoints === 1 ? 'ponto' : 'pontos'}
+              {fidelityPoints > 0 && ` (${currentProgress}/5 para o desconto)`}
+            </span>
+          )}
+          
+          <div style={{ 
+            marginTop: '8px',
+            padding: '8px 10px',
+            background: isDarkMode ? 'rgba(236,148,36,0.08)' : 'rgba(236,148,36,0.04)',
+            borderRadius: '10px',
+            fontSize: '10px',
+            lineHeight: '1.4',
+            textAlign: 'left',
+            color: '#EC9424',
+            border: `1px solid ${isDarkMode ? 'rgba(236,148,36,0.15)' : 'rgba(236,148,36,0.1)'}`
+          }}>
+            {address && address.street && address.number ? (
+              <div>
+                <strong>📍 Endereço Ativo:</strong> {address.street}, {address.number}
+                <div style={{ fontSize: '9px', opacity: 0.8, marginTop: '2px', color: isDarkMode ? '#a1a1aa' : '#6b7280' }}>
+                  *Os pontos acumulam e são válidos apenas para este exato endereço de pagamento.
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: '#ef4444', fontWeight: 600 }}>
+                ⚠️ Preencha rua e número no checkout para validar e exibir seus pontos de fidelidade.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const [appMenuData, setAppMenuData] = useState(getMenuData());
   const [activeCategory, setActiveCategory] = useState(null);
@@ -163,6 +346,38 @@ const App = () => {
   const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false);
   const [myOrders, setMyOrders] = useState([]);
   const [isMyOrdersLoading, setIsMyOrdersLoading] = useState(false);
+  const [fidelityPoints, setFidelityPoints] = useState(0);
+  const [isFidelityLoading, setIsFidelityLoading] = useState(false);
+
+  const fetchFidelityPoints = async () => {
+    if (!address.customerPhone) {
+      setFidelityPoints(0);
+      return;
+    }
+    // Se não tiver preenchido rua ou número, não podemos contabilizar os pontos para esse endereço
+    if (!address.street || !address.number) {
+      setFidelityPoints(0);
+      return;
+    }
+    
+    setIsFidelityLoading(true);
+    try {
+      const { count, error } = await supabase
+        .from('pedidos')
+        .select('*', { count: 'exact', head: true })
+        .eq('address->>customerPhone', address.customerPhone)
+        .eq('address->>street', address.street)
+        .eq('address->>number', address.number)
+        .eq('status', 'concluido');
+      
+      if (error) throw error;
+      setFidelityPoints(count || 0);
+    } catch (err) {
+      console.error("Erro ao buscar pontos de fidelidade:", err);
+    } finally {
+      setIsFidelityLoading(false);
+    }
+  };
   const [configuringItem, setConfiguringItem] = useState(null);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -180,6 +395,14 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('melburgers_customer_data', JSON.stringify(address));
   }, [address]);
+
+  useEffect(() => {
+    if (address.customerPhone && address.street && address.number) {
+      fetchFidelityPoints();
+    } else {
+      setFidelityPoints(0);
+    }
+  }, [address.customerPhone, address.street, address.number]);
 
   useEffect(() => {
     localStorage.setItem('melburgers_delivery_fee', deliveryFee.toString());
@@ -381,7 +604,9 @@ const App = () => {
   }, [appMenuData]);
 
   const cartSubtotal = cart.reduce((acc, item) => acc + (item.totalPrice || item.price), 0);
-  const cartTotal = cartSubtotal + deliveryFee;
+  const hasFidelityDiscount = fidelityPoints > 0 && fidelityPoints % 6 === 5;
+  const fidelityDiscountAmount = hasFidelityDiscount ? cartSubtotal * 0.3 : 0;
+  const cartTotal = cartSubtotal - fidelityDiscountAmount + deliveryFee;
 
   // === AÇÕES DO CARRINHO ===
   const addToCart = (item, addOns = []) => {
@@ -482,7 +707,16 @@ const App = () => {
       setIsOrderSuccess(true);
       setIsCartOpen(false);
       
-      const message = `*NOVO PEDIDO MELBURGERS #${orderId}*\n\n*Cliente:* ${address.customerName}\n*Tel:* ${address.customerPhone}\n\n*Items:*\n${cart.map(i => `\u2022 ${i.name}${i.addOns && i.addOns.length > 0 ? `\n   + ${i.addOns.map(a => a.name).join(', ')}` : ''}`).join('\n')}\n\n*Total:* R$ ${cartTotal.toFixed(2).replace('.', ',')}\n*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n*Endereço:* ${address.street}, ${address.number}${address.complement ? ` (${address.complement})` : ''} - ${address.neighborhood}`;
+      const message = `*NOVO PEDIDO MELBURGERS #${orderId}*\n\n` +
+        `*Cliente:* ${address.customerName}\n` +
+        `*Tel:* ${address.customerPhone}\n\n` +
+        `*Items:*\n${cart.map(i => `\u2022 ${i.name}${i.addOns && i.addOns.length > 0 ? `\n   + ${i.addOns.map(a => a.name).join(', ')}` : ''}`).join('\n')}\n\n` +
+        `*Subtotal:* R$ ${cartSubtotal.toFixed(2).replace('.', ',')}\n` +
+        (hasFidelityDiscount ? `*Desconto Fidelidade (30%):* - R$ ${fidelityDiscountAmount.toFixed(2).replace('.', ',')}\n` : '') +
+        `*Entrega:* ${deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`}\n` +
+        `*Total:* R$ ${cartTotal.toFixed(2).replace('.', ',')}\n` +
+        `*Pagamento:* ${paymentMethod}${paymentMethod === 'Dinheiro' && changeNeeded ? ` (Troco para R$ ${changeNeeded})` : ''}\n\n` +
+        `*Endereço:* ${address.street}, ${address.number}${address.complement ? ` (${address.complement})` : ''} - ${address.neighborhood}`;
       
       setTimeout(() => {
         window.location.href = `https://wa.me/5522996153138?text=${encodeURIComponent(message)}`;
@@ -538,7 +772,10 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (isMyOrdersOpen) fetchMyOrders();
+    if (isMyOrdersOpen) {
+      fetchMyOrders();
+      fetchFidelityPoints();
+    }
   }, [isMyOrdersOpen]);
 
   if (isMenuLoading) return (
@@ -1184,13 +1421,15 @@ const App = () => {
                         <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Complemento / Referência (opcional)" value={address.complement} onChange={e => setAddress({...address, complement: e.target.value})} />
                      </div>
                   </div>
-                  <button className="checkout-btn" onClick={() => { if(!address.customerName || !address.customerPhone || !address.street || !address.number) return alert("Preencha tudo!"); setCheckoutStep('payment'); }}>IR PARA PAGAMENTO</button>
+                  <button className="checkout-btn" onClick={() => { if(!address.customerName || !address.customerPhone || !address.street || !address.number) return alert("Preencha tudo!"); fetchFidelityPoints(); setCheckoutStep('payment'); }}>IR PARA PAGAMENTO</button>
                   <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: '#71717A', fontSize: '13px' }}>Voltar ao carrinho</button>
                 </div>
               )}
 
               {checkoutStep === 'payment' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <FidelityCard fidelityPoints={fidelityPoints} address={address} isDarkMode={isDarkMode} />
+                  
                   <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><ShoppingCart size={18} color="#EC9424" /><span style={{ fontSize: '14px', fontWeight: 700 }}>Pagamento</span></div>
                      <div style={{ display: 'flex', gap: '10px' }}>
@@ -1213,6 +1452,14 @@ const App = () => {
 
                   <div style={{ padding: '24px 4px', borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#71717A' }}>Produtos</span><span style={{ fontWeight: 800 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</span></div>
+                    
+                    {hasFidelityDiscount && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#22c55e', fontWeight: 800 }}>
+                        <span>Desconto Fidelidade (30%)</span>
+                        <span>- R$ {fidelityDiscountAmount.toFixed(2).replace('.', ',')}</span>
+                      </div>
+                    )}
+                    
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}><span style={{ color: '#71717A' }}>Entrega</span><span style={{ fontWeight: 800, color: '#22c55e' }}>{deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`}</span></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '24px', fontWeight: 950 }}><span>Total</span><span>R$ {cartTotal.toFixed(2).replace('.', ',')}</span></div>
                   </div>
@@ -1255,6 +1502,12 @@ const App = () => {
                    <ChevronDown size={24} />
                 </button>
               </div>
+
+              {address.customerPhone && (
+                <div style={{ marginBottom: '20px' }}>
+                  <FidelityCard fidelityPoints={fidelityPoints} address={address} isDarkMode={isDarkMode} />
+                </div>
+              )}
 
               {!address.customerPhone ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px' }}>
