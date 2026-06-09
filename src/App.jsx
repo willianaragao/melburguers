@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
+import {
   Plus, Clock, ArrowRight, MapPin, Sun, Moon,
   BadgeCheck, ShoppingBag, Truck, ShoppingCart,
-  Trash2, ChevronDown, CheckCircle2, MoreHorizontal, UserPlus, Check
+  Trash2, ChevronDown, CheckCircle2, MoreHorizontal, UserPlus, Check,
+  Gift, AlertCircle, Copy, CreditCard, Banknote, QrCode, Star, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { supabase } from './utils/supabase';
 import { getMenuData } from './utils/menuStore';
+
 
 const HoneySVG = ({ id }) => (
   <span className="honey-svg" aria-hidden="true">
@@ -136,183 +138,160 @@ const FidelityCard = ({ fidelityPoints, address, isDarkMode }) => {
   const currentProgress = fidelityPoints % 6;
   const hasDiscount = fidelityPoints > 0 && fidelityPoints % 6 === 5;
   const activeStamps = currentProgress;
-  
-  return (
-    <div 
-      style={{ 
-        background: isDarkMode ? '#1F1510' : '#FFF9F5', 
-        border: `2px solid ${hasDiscount ? '#22c55e' : '#EC9424'}`, 
-        borderRadius: '20px', 
-        padding: '18px', 
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: '0 8px 24px rgba(236,148,36,0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px',
-        marginBottom: '16px'
-      }}
-    >
-      {hasDiscount && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          background: '#22c55e',
-          color: 'white',
-          fontSize: '9px',
-          fontWeight: 900,
-          padding: '5px 10px',
-          borderRadius: '0 0 0 12px',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase'
-        }}>
-          ATIVADO
-        </div>
-      )}
 
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <span style={{ fontSize: '18px' }}>🎁</span>
-          <h3 style={{ 
-            fontSize: '14px', 
-            fontWeight: 800, 
-            color: hasDiscount ? '#22c55e' : '#EC9424',
-            textTransform: 'uppercase',
-            letterSpacing: '0.02em',
-            margin: 0
+  return (
+    <div style={{
+      background: isDarkMode
+        ? 'linear-gradient(135deg, #1a0f00 0%, #1F1510 100%)'
+        : 'linear-gradient(135deg, #fffbf5 0%, #fff7ed 100%)',
+      border: `1.5px solid ${hasDiscount ? 'rgba(34,197,94,0.4)' : 'rgba(236,148,36,0.3)'}`,
+      borderRadius: '24px',
+      padding: '20px',
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: hasDiscount
+        ? '0 4px 24px rgba(34,197,94,0.08)'
+        : '0 4px 24px rgba(236,148,36,0.06)',
+    }}>
+      {/* Decorative background glow */}
+      <div style={{
+        position: 'absolute', top: -40, right: -40,
+        width: 120, height: 120, borderRadius: '50%',
+        background: hasDiscount ? 'rgba(34,197,94,0.06)' : 'rgba(236,148,36,0.08)',
+        pointerEvents: 'none'
+      }} />
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: '10px',
+            background: hasDiscount ? 'rgba(34,197,94,0.12)' : 'rgba(236,148,36,0.12)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            Programa de fidelidade
-          </h3>
+            <Gift size={16} color={hasDiscount ? '#22c55e' : '#EC9424'} strokeWidth={2} />
+          </div>
+          <span style={{
+            fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: hasDiscount ? '#22c55e' : '#EC9424'
+          }}>
+            Fidelidade
+          </span>
         </div>
-        <p style={{ 
-          fontSize: '12px', 
-          lineHeight: '1.4', 
-          color: isDarkMode ? '#D4D4D8' : '#4b5563',
-          fontWeight: 500,
-          margin: 0
-        }}>
-          A cada 5 pedidos concluídos e entregues no <strong>mesmo endereço</strong>, você recebe <strong>30% de desconto</strong> (sem contar o frete) no seu 6º pedido!
-        </p>
+        {hasDiscount && (
+          <span style={{
+            background: 'rgba(34,197,94,0.12)', color: '#22c55e',
+            fontSize: '9px', fontWeight: 800, padding: '4px 10px',
+            borderRadius: '20px', letterSpacing: '0.06em', textTransform: 'uppercase',
+            border: '1px solid rgba(34,197,94,0.25)'
+          }}>
+            Ativo
+          </span>
+        )}
       </div>
 
-      <div style={{ 
-        background: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
-        borderRadius: '14px',
-        padding: '12px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '10px'
+      <p style={{
+        fontSize: '12px', lineHeight: 1.5,
+        color: isDarkMode ? '#a1a1aa' : '#6b7280',
+        margin: '0 0 16px',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '290px' }}>
-          {[1, 2, 3, 4, 5, 6].map((slot) => {
-            const isStamped = slot <= activeStamps;
-            const isSlot6 = slot === 6;
-            
-            // Custom styling for the green slot 6
-            const borderStyle = isSlot6
-              ? (hasDiscount 
-                  ? '2.5px solid #22c55e' 
-                  : `2px dashed ${isDarkMode ? 'rgba(34, 197, 94, 0.4)' : 'rgba(34, 197, 94, 0.5)'}`)
-              : (isStamped 
-                  ? `2.5px solid ${hasDiscount ? '#22c55e' : '#EC9424'}` 
-                  : `2px dashed ${isDarkMode ? '#3f3f46' : '#d1d5db'}`);
-                  
-            const bgStyle = isSlot6
-              ? (hasDiscount ? 'rgba(34, 197, 94, 0.15)' : 'transparent')
-              : (isStamped 
-                  ? (hasDiscount ? 'rgba(34, 197, 94, 0.1)' : 'rgba(236, 148, 36, 0.1)') 
-                  : 'transparent');
-                  
-            const textColor = isSlot6
-              ? (isDarkMode ? '#4ade80' : '#22c55e')
-              : (isStamped 
-                  ? (hasDiscount ? '#22c55e' : '#EC9424') 
-                  : (isDarkMode ? '#71717a' : '#9ca3af'));
+        A cada 5 pedidos no <strong style={{ color: isDarkMode ? '#d4d4d8' : '#374151' }}>mesmo endereço</strong>, você ganha <strong style={{ color: '#EC9424' }}>30% de desconto</strong> no 6º pedido.
+      </p>
 
-            const shadowStyle = isSlot6 && hasDiscount
-              ? (isDarkMode ? '0 0 14px rgba(74, 222, 128, 0.5)' : '0 0 12px rgba(34, 197, 94, 0.4)')
-              : 'none';
-              
-            const scaleStyle = isSlot6 && hasDiscount ? 'scale(1.1)' : 'scale(1)';
+      {/* Slots */}
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between', marginBottom: '14px' }}>
+        {[1, 2, 3, 4, 5, 6].map((slot) => {
+          const isStamped = slot <= activeStamps;
+          const isSlot6 = slot === 6;
+          const active = isStamped || (isSlot6 && hasDiscount);
+          const color = isSlot6
+            ? (hasDiscount ? '#22c55e' : (isDarkMode ? 'rgba(34,197,94,0.35)' : 'rgba(34,197,94,0.45)'))
+            : (active ? '#EC9424' : (isDarkMode ? '#3f3f46' : '#d1d5db'));
 
-            return (
-              <div 
-                key={slot}
-                style={{ 
-                  width: '38px', 
-                  height: '38px', 
-                  borderRadius: '50%', 
-                  border: borderStyle,
-                  background: bgStyle,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '900',
-                  fontSize: '13px',
-                  color: textColor,
-                  boxShadow: shadowStyle,
-                  transform: scaleStyle,
-                  transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                }}
-              >
-                {isSlot6 ? (
-                  hasDiscount ? '🎁' : '6'
-                ) : (
-                  isStamped ? '✓' : slot
-                )}
-              </div>
-            );
-          })}
-        </div>
+          return (
+            <div key={slot} style={{
+              flex: 1, height: '40px', borderRadius: '12px',
+              border: `1.5px solid ${color}`,
+              background: active
+                ? (isSlot6 ? (hasDiscount ? 'rgba(34,197,94,0.12)' : 'transparent') : 'rgba(236,148,36,0.1)')
+                : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.25s ease',
+              boxShadow: (isSlot6 && hasDiscount) ? '0 0 12px rgba(34,197,94,0.25)' : 'none',
+            }}>
+              {isSlot6 ? (
+                <Gift size={14} color={hasDiscount ? '#22c55e' : (isDarkMode ? 'rgba(34,197,94,0.45)' : 'rgba(34,197,94,0.5)')} strokeWidth={2} />
+              ) : isStamped ? (
+                <Check size={14} color="#EC9424" strokeWidth={2.5} />
+              ) : (
+                <span style={{ fontSize: '11px', fontWeight: 700, color: isDarkMode ? '#52525b' : '#9ca3af' }}>{slot}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-        <div style={{ 
-          fontSize: '11px', 
-          fontWeight: 700, 
-          color: isDarkMode ? '#a1a1aa' : '#4b5563',
-          textAlign: 'center',
-          width: '100%'
+      {/* Progress text */}
+      <div style={{ marginBottom: address && address.street ? '12px' : 0 }}>
+        {hasDiscount ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Star size={12} color="#22c55e" fill="#22c55e" />
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#22c55e' }}>
+              30% de desconto ativado neste pedido!
+            </span>
+          </div>
+        ) : (
+          <span style={{ fontSize: '12px', color: isDarkMode ? '#71717a' : '#9ca3af' }}>
+            <strong style={{ color: '#EC9424' }}>{fidelityPoints}</strong> {fidelityPoints === 1 ? 'ponto' : 'pontos'}
+            {fidelityPoints > 0 && <span style={{ color: isDarkMode ? '#52525b' : '#d1d5db' }}> · {currentProgress}/5 para o desconto</span>}
+          </span>
+        )}
+      </div>
+
+      {/* Address info */}
+      {address && address.street && address.number ? (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '10px',
+          padding: '10px 12px', borderRadius: '12px',
+          background: isDarkMode ? 'rgba(236,148,36,0.06)' : 'rgba(236,148,36,0.04)',
+          border: `1px solid ${isDarkMode ? 'rgba(236,148,36,0.12)' : 'rgba(236,148,36,0.1)'}`
         }}>
-          {hasDiscount ? (
-            <span style={{ color: '#22c55e', fontWeight: 900 }}>
-              🎉 Parabéns! 30% de desconto ativado no pedido atual!
+          <MapPin size={11} color="#EC9424" style={{ marginTop: 1, flexShrink: 0 }} />
+          <div>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#EC9424' }}>
+              {address.street}, {address.number}
             </span>
-          ) : (
-            <span>
-              Você tem <strong style={{ color: '#EC9424', fontSize: '13px' }}>{fidelityPoints}</strong> {fidelityPoints === 1 ? 'ponto' : 'pontos'}
-              {fidelityPoints > 0 && ` (${currentProgress}/5 para o desconto)`}
-            </span>
-          )}
-          
-          <div style={{ 
-            marginTop: '8px',
-            padding: '8px 10px',
-            background: isDarkMode ? 'rgba(236,148,36,0.08)' : 'rgba(236,148,36,0.04)',
-            borderRadius: '10px',
-            fontSize: '10px',
-            lineHeight: '1.4',
-            textAlign: 'left',
-            color: '#EC9424',
-            border: `1px solid ${isDarkMode ? 'rgba(236,148,36,0.15)' : 'rgba(236,148,36,0.1)'}`
-          }}>
-            {address && address.street && address.number ? (
-              <div>
-                <strong>📍 Endereço Ativo:</strong> {address.street}, {address.number}
-                <div style={{ fontSize: '9px', opacity: 0.8, marginTop: '2px', color: isDarkMode ? '#a1a1aa' : '#6b7280' }}>
-                  *Os pontos acumulam e são válidos apenas para este exato endereço de pagamento.
-                </div>
-              </div>
-            ) : (
-              <div style={{ color: '#ef4444', fontWeight: 600 }}>
-                ⚠️ Preencha rua e número no checkout para validar e exibir seus pontos de fidelidade.
-              </div>
-            )}
+            <p style={{ fontSize: '10px', color: isDarkMode ? '#52525b' : '#9ca3af', margin: '2px 0 0', lineHeight: 1.4 }}>
+              Pontos válidos apenas para este endereço
+            </p>
           </div>
         </div>
-      </div>
+      ) : (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px',
+          padding: '10px 12px', borderRadius: '12px',
+          background: isDarkMode ? 'rgba(239,68,68,0.06)' : 'rgba(239,68,68,0.04)',
+          border: `1px solid ${isDarkMode ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)'}`
+        }}>
+          <AlertCircle size={11} color="#ef4444" style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 500 }}>
+            Preencha o endereço para validar seus pontos
+          </span>
+        </div>
+      )}
     </div>
   );
+};
+
+// ── Store hours: Tue–Sun 19:00–00:00 ──────────────────
+const getStoreStatus = () => {
+  const now = new Date();
+  const day  = now.getDay();   // 0=Sun 1=Mon 2=Tue … 6=Sat
+  const hour = now.getHours();
+
+  if (day === 1) return { open: false, reason: 'monday' };   // closed Monday
+  if (hour < 19) return { open: false, reason: 'early' };    // not open yet
+  return { open: true };
 };
 
 const App = () => {
@@ -333,6 +312,7 @@ const App = () => {
   const [paymentMethod, setPaymentMethod] = useState('PIX');
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [isMenuLoading, setIsMenuLoading] = useState(true);
+  const [storeClosedWarning, setStoreClosedWarning] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState('cart');
@@ -381,13 +361,17 @@ const App = () => {
   const [configuringItem, setConfiguringItem] = useState(null);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartAnimPhase, setCartAnimPhase] = useState('idle'); // 'idle' | 'pop' | 'success'
 
   const handleAnimatedAddToCart = async () => {
     if (isAddingToCart) return;
     setIsAddingToCart(true);
-    // Tempo total da animação coreográfica cinematográfica (3.0s + margem)
-    await new Promise(resolve => setTimeout(resolve, 3100));
+    setCartAnimPhase('pop');
+    await new Promise(r => setTimeout(r, 400));
+    setCartAnimPhase('success');
     addToCart(configuringItem, selectedAddOns);
+    await new Promise(r => setTimeout(r, 900));
+    setCartAnimPhase('idle');
     setIsAddingToCart(false);
   };
 
@@ -823,12 +807,26 @@ const App = () => {
           </div>
           <div className="bio-text">
             Sabor que conquista na primeira mordida ✨ <br />
-            <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
+            <Truck size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
             Somente Delivery <br />
-            <MapPin size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
+            <MapPin size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
             Tamoios • Cabo Frio 🌴 <br />
-            <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> 
-            Seg a Seg • 19h às 01h
+            <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+            Ter a Dom • 19h às 00h &nbsp;
+            {(() => {
+              const s = getStoreStatus();
+              return s.open ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(34,197,94,0.12)', color: '#22c55e', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: 20, letterSpacing: '0.05em', verticalAlign: 'middle' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                  ABERTO
+                </span>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.10)', color: '#ef4444', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: 20, letterSpacing: '0.05em', verticalAlign: 'middle' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                  FECHADO
+                </span>
+              );
+            })()}
           </div>
         </div>
         <div className="header-actions" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
@@ -865,9 +863,9 @@ const App = () => {
       </header>
 
       <nav className="category-nav">
-        {categories.map(cat => (
-          <button 
-            key={cat} 
+        {categories.map((cat) => (
+          <button
+            key={cat}
             className={`categoria-pill ${activeCategory === cat ? 'active' : ''}`}
             onClick={() => scrollToCategory(cat)}
           >
@@ -876,9 +874,9 @@ const App = () => {
             ) : (
               <HoneySVG id={cat.replace(/\s+/g, '-')} />
             )}
-            <span className="label">{cat}</span>
+<span className="label">{cat}</span>
             {activeCategory === cat && (
-              <motion.div 
+              <motion.div
                 layoutId="active-pill-indicator"
                 className="pill-neon-indicator"
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
@@ -1128,113 +1126,87 @@ const App = () => {
                   <AnimatePresence mode="wait">
                     {!isAddingToCart ? (
                       <motion.div
-                        key="static"
-                        initial={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 200 }}
-                        transition={{ duration: 0.5, ease: "backIn" }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                        key="idle"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
                       >
-                        <ShoppingCart size={24} strokeWidth={3} />
+                        <ShoppingCart size={22} strokeWidth={2.5} />
                         <span>Adicionar • R$ {(configuringItem.price + selectedAddOns.reduce((acc, a) => acc + a.price, 0)).toFixed(2).replace('.', ',')}</span>
+                      </motion.div>
+                    ) : cartAnimPhase === 'pop' ? (
+                      <motion.div
+                        key="pop"
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: [0.5, 1.25, 1], opacity: 1 }}
+                        transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <ShoppingCart size={26} strokeWidth={2.5} />
                       </motion.div>
                     ) : (
                       <motion.div
-                        key="anim"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        key="success"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}
                       >
+                        {/* Ripple ring */}
                         <motion.div
-                          initial={{ x: -150, scale: 1, rotate: 0 }}
-                          animate={{ 
-                            x: [ -150, 0, 0, 400 ], 
-                            scale: [1, 1.3, 1.3, 1],
-                            rotate: [0, 0, 0, 0, -40]
+                          initial={{ scale: 0.6, opacity: 0.7 }}
+                          animate={{ scale: 2.2, opacity: 0 }}
+                          transition={{ duration: 0.6, ease: 'easeOut' }}
+                          style={{
+                            position: 'absolute', inset: 0,
+                            borderRadius: '50%',
+                            border: '2px solid rgba(255,255,255,0.6)',
+                            pointerEvents: 'none'
                           }}
-                          transition={{ 
-                            times: [0, 0.15, 0.6, 0.95, 1],
-                            duration: 3.0, 
-                            ease: "easeInOut" 
+                        />
+                        {/* Success circle + check */}
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                          style={{
+                            width: 30, height: 30, borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.22)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
                           }}
-                          style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          <div style={{ position: 'relative', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {/* SVG Customizado para preenchimento preciso */}
-                            <motion.svg
-                              width="36"
-                              height="36"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              style={{ zIndex: 5 }}
-                            >
-                              <circle cx="8" cy="21" r="1" />
-                              <circle cx="19" cy="21" r="1" />
-                              <motion.path 
-                                d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" 
-                                animate={{ 
-                                  fill: [ "rgba(139, 69, 19, 0)", "rgba(139, 69, 19, 0)", "rgba(139, 69, 19, 1)" ]
-                                }}
-                                transition={{ 
-                                  delay: 0.6,
-                                  times: [0, 0.6, 1],
-                                  duration: 0.8,
-                                  ease: "easeOut"
-                                }}
-                              />
-                            </motion.svg>
-                            
-                            {/* Check no meio do carrinho - Ajustado para ser proporcional */}
-                            <motion.div
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ 
-                                scale: [0, 0, 1],
-                                opacity: [0, 0, 1]
-                              }}
-                              transition={{ 
-                                delay: 0.6,
-                                times: [0, 0.8, 1],
-                                duration: 1.2,
-                                ease: "backOut"
-                              }}
-                              style={{ 
-                                position: 'absolute', 
-                                top: '8px', 
-                                left: '10px', 
-                                width: '20px', 
-                                height: '16px', 
-                                zIndex: 10, 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center' 
-                              }}
-                            >
-                              <Check size={14} color="white" strokeWidth={6} />
-                            </motion.div>
-                          </div>
-                          
-                          {/* Hamburger Saindo do Botão e DESAPARECENDO dentro do carrinho */}
                           <motion.div
-                            initial={{ y: 60, opacity: 0, scale: 0.2 }}
-                            animate={{ 
-                              y: [60, -40, 0], 
-                              opacity: [0, 1, 1, 0],
-                              scale: [0.2, 1.5, 0.8, 0] 
-                            }}
-                            transition={{ 
-                              delay: 0.6, 
-                              duration: 0.8, 
-                              times: [0, 0.4, 0.8, 1],
-                              ease: "easeInOut"
-                            }}
-                            style={{ position: 'absolute', fontSize: '24px', zIndex: 6 }}
+                            initial={{ pathLength: 0, opacity: 0 }}
+                            animate={{ pathLength: 1, opacity: 1 }}
+                            transition={{ delay: 0.1, duration: 0.3, ease: 'easeOut' }}
                           >
-                            🍔
+                            <Check size={17} color="white" strokeWidth={3} />
                           </motion.div>
                         </motion.div>
+                        <span style={{ fontWeight: 800 }}>Adicionado!</span>
+                        {/* Micro-particles */}
+                        {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
+                            animate={{
+                              x: Math.cos((deg * Math.PI) / 180) * 28,
+                              y: Math.sin((deg * Math.PI) / 180) * 28,
+                              scale: 0,
+                              opacity: 0
+                            }}
+                            transition={{ duration: 0.5, delay: i * 0.03, ease: 'easeOut' }}
+                            style={{
+                              position: 'absolute',
+                              width: 5, height: 5,
+                              borderRadius: '50%',
+                              background: i % 2 === 0 ? 'rgba(255,255,255,0.9)' : 'rgba(255,220,100,0.9)',
+                              pointerEvents: 'none'
+                            }}
+                          />
+                        ))}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1311,162 +1283,331 @@ const App = () => {
         {isCartOpen && (
           <motion.div className="cart-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCartOpen(false)}>
             <motion.div className="cart-modal-content" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} onClick={e => e.stopPropagation()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-                <h2 style={{ fontSize: '22px', fontWeight: 900 }}>Seu Carrinho</h2>
-                <button onClick={() => setIsCartOpen(false)} style={{ background: isDarkMode ? '#2A2A2E' : '#f5f5f7', color: 'var(--text)', border: 'none', padding: '10px', borderRadius: '50%' }}><ChevronDown size={24}/></button>
+              {/* Handle bar */}
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: isDarkMode ? '#3f3f46' : '#e4e4e7', margin: '0 auto 24px' }} />
+
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div>
+                  <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
+                    {checkoutStep === 'cart' ? 'Seu Carrinho' : checkoutStep === 'address' ? 'Entrega' : 'Pagamento'}
+                  </h2>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                    {['cart','address','payment'].map((s, idx) => (
+                      <div key={s} style={{
+                        height: 3, width: checkoutStep === s ? 20 : 8, borderRadius: 2,
+                        background: checkoutStep === s ? '#EC9424' : (isDarkMode ? '#3f3f46' : '#e4e4e7'),
+                        transition: 'all 0.25s ease'
+                      }} />
+                    ))}
+                  </div>
+                </div>
+                <button onClick={() => setIsCartOpen(false)} style={{
+                  background: isDarkMode ? '#27272a' : '#f4f4f5', color: 'var(--text)',
+                  border: 'none', width: 40, height: 40, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+                }}>
+                  <ChevronDown size={20} />
+                </button>
               </div>
 
               {checkoutStep === 'cart' && (
                 <>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '35px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '28px' }}>
                     {cart.map((item, i) => (
-                      <div key={i} className="cart-item" style={{ display: 'flex', gap: '14px', alignItems: 'center', padding: '12px', borderRadius: '18px' }}>
-                        <img src={item.image} alt={item.name} style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'contain', background: '#f8fafc' }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '15px', fontWeight: 700 }}>{item.name}</div>
+                      <div key={i} style={{
+                        display: 'flex', gap: '12px', alignItems: 'center',
+                        padding: '14px 0',
+                        borderBottom: i < cart.length - 1 ? `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}` : 'none'
+                      }}>
+                        <div style={{
+                          width: 52, height: 52, borderRadius: '14px', flexShrink: 0,
+                          background: isDarkMode ? '#27272a' : '#f9fafb',
+                          overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                          <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
                           {item.addOns && item.addOns.length > 0 && (
-                            <div style={{ fontSize: '11px', color: '#EC9424', fontWeight: 600 }}>
+                            <div style={{ fontSize: '11px', color: '#EC9424', fontWeight: 500, marginBottom: 2 }}>
                               + {item.addOns.map(a => a.name).join(', ')}
                             </div>
                           )}
-                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#22c55e', marginTop: '2px' }}>R$ {(item.totalPrice || item.price).toFixed(2).replace('.', ',')}</div>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#EC9424' }}>
+                            R$ {(item.totalPrice || item.price).toFixed(2).replace('.', ',')}
+                          </div>
                         </div>
-                        <button onClick={() => removeFromCart(i)} style={{ background: '#fff0f0', border: 'none', padding: '8px', borderRadius: '10px', color: '#f43f5e' }}><Trash2 size={18}/></button>
+                        <button onClick={() => removeFromCart(i)} style={{
+                          background: 'transparent', border: 'none', padding: '8px',
+                          color: isDarkMode ? '#52525b' : '#d1d5db', cursor: 'pointer',
+                          borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'color 0.2s'
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#f43f5e'}
+                          onMouseLeave={e => e.currentTarget.style.color = isDarkMode ? '#52525b' : '#d1d5db'}
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     ))}
                   </div>
-                  <button className="checkout-btn" onClick={() => setCheckoutStep('address')}>CONTINUAR PARA ENTREGA</button>
+
+                  {/* Subtotal preview */}
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '14px 16px', borderRadius: '16px', marginBottom: '20px',
+                    background: isDarkMode ? '#18181b' : '#f9fafb',
+                    border: `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}`
+                  }}>
+                    <span style={{ fontSize: '13px', color: isDarkMode ? '#71717a' : '#9ca3af' }}>Subtotal</span>
+                    <span style={{ fontSize: '15px', fontWeight: 800 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</span>
+                  </div>
+
+                  <button className="checkout-btn" onClick={() => {
+                    if (!getStoreStatus().open) { setStoreClosedWarning(true); return; }
+                    setCheckoutStep('address');
+                  }}>
+                    Continuar para entrega
+                    <ChevronRight size={18} style={{ marginLeft: 4 }} />
+                  </button>
                 </>
               )}
 
               {checkoutStep === 'address' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}><UserPlus size={18} color="#EC9424" /><span style={{ fontSize: '14px', fontWeight: 700 }}>Seus Dados</span></div>
-                     <input style={{ width: '100%', background: 'var(--card-bg)', border: '1px solid var(--border)', padding: '14px', borderRadius: '14px', color: 'var(--text)', marginBottom: '12px' }} placeholder="Seu Nome Completo" value={address.customerName} onChange={e => setAddress({...address, customerName: e.target.value})} />
-                     <input style={{ width: '100%', background: 'var(--card-bg)', border: '1px solid var(--border)', padding: '14px', borderRadius: '14px', color: 'var(--text)' }} placeholder="WhatsApp" value={address.customerPhone} onChange={e => setAddress({...address, customerPhone: e.target.value})} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ background: isDarkMode ? '#18181b' : '#f9fafb', padding: '16px', borderRadius: '20px', border: `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}` }}>
+                     <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: isDarkMode ? '#71717a' : '#9ca3af', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                       <UserPlus size={13} /> Seus dados
+                     </p>
+                     <input style={{ width: '100%', background: isDarkMode ? '#0f0f11' : 'white', border: `1.5px solid ${isDarkMode ? '#3f3f46' : '#e4e4e7'}`, padding: '13px 14px', borderRadius: '13px', color: 'var(--text)', marginBottom: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} placeholder="Seu nome completo" value={address.customerName} onChange={e => setAddress({...address, customerName: e.target.value})} />
+                     <input style={{ width: '100%', background: isDarkMode ? '#0f0f11' : 'white', border: `1.5px solid ${isDarkMode ? '#3f3f46' : '#e4e4e7'}`, padding: '13px 14px', borderRadius: '13px', color: 'var(--text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} placeholder="WhatsApp" value={address.customerPhone} onChange={e => setAddress({...address, customerPhone: e.target.value})} />
                   </div>
-                  <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                         <MapPin size={18} color="#EC9424" />
-                         <span style={{ fontSize: '14px', fontWeight: 700 }}>Endereço</span>
-                       </div>
-                       <button 
-                         onClick={handleUseCurrentLocation}
-                         style={{ 
-                           background: isDarkMode ? 'rgba(236,148,36,0.1)' : 'rgba(236,148,36,0.05)', 
-                           backdropFilter: 'blur(10px)',
-                           border: `1px solid ${isDarkMode ? 'rgba(236,148,36,0.2)' : 'rgba(236,148,36,0.15)'}`, 
-                           padding: '8px 14px', borderRadius: '12px', 
-                           color: '#EC9424', fontSize: '10px', fontWeight: 900, 
-                           display: 'flex', alignItems: 'center', gap: '6px',
-                           letterSpacing: '0.05em',
-                           boxShadow: '0 2px 10px rgba(236,148,36,0.08)',
-                           transition: 'all 0.3s ease'
-                         }}
-                       >
-                         <MapPin size={12} fill="#EC9424" strokeWidth={3} />
-                         LOCALIZAÇÃO ATUAL
+                  <div style={{ background: isDarkMode ? '#18181b' : '#f9fafb', padding: '16px', borderRadius: '20px', border: `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}` }}>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                       <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: isDarkMode ? '#71717a' : '#9ca3af', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                         <MapPin size={13} /> Endereço
+                       </p>
+                       <button onClick={handleUseCurrentLocation} style={{
+                         background: 'rgba(236,148,36,0.08)',
+                         border: '1px solid rgba(236,148,36,0.2)',
+                         padding: '6px 12px', borderRadius: '10px',
+                         color: '#EC9424', fontSize: '10px', fontWeight: 800,
+                         display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
+                         letterSpacing: '0.05em'
+                       }}>
+                         <MapPin size={11} fill="#EC9424" strokeWidth={0} />
+                         Localização atual
                        </button>
                      </div>
-                      <div style={{ position: 'relative' }}>
-                        <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '14px', borderRadius: '14px' }} placeholder="Nome da rua..." value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
-                        {addressSuggestions.length > 0 && (
-                          <div style={{ 
-                            position: 'absolute', 
-                            top: '58px', 
-                            bottom: 'auto',
-                            left: 0, 
-                            right: 0, 
-                            background: 'var(--card-bg)', 
-                            borderRadius: '16px', 
-                            boxShadow: '0 12px 40px rgba(0,0,0,0.15)', 
-                            zIndex: 3500, 
-                            marginTop: '8px',
-                            maxHeight: '220px',
-                            overflowY: 'auto',
-                            border: '1px solid var(--border)',
-                            overflow: 'hidden'
-                          }} className="hide-scrollbar">
-                            {addressSuggestions.map((f, i) => (
-                              <div 
-                                key={i} 
-                                onPointerDown={(e) => {
-                                   e.preventDefault(); 
-                                   handleSelectSuggestion(f);
-                                }} 
-                                style={{ 
-                                  padding: '14px 18px', 
-                                  fontSize: '13px', 
-                                  borderBottom: i === addressSuggestions.length - 1 ? 'none' : '1px solid var(--border)', 
-                                  cursor: 'pointer',
-                                  color: 'var(--text)',
-                                  transition: 'background 0.2s'
-                                }}
-                                onMouseEnter={(e) => e.target.style.background = 'rgba(236,148,36,0.05)'}
-                                onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                              >
-                                {f.properties.street || f.properties.name}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                     <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                        <input style={{ flex: 1, border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
-                        <input style={{ flex: 2, border: '1px solid var(--border)', background: isDarkMode ? '#121215' : '#fcfcfd', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Bairro" value={address.neighborhood} readOnly />
+                     <div style={{ position: 'relative' }}>
+                       <input style={{ width: '100%', background: isDarkMode ? '#0f0f11' : 'white', border: `1.5px solid ${isDarkMode ? '#3f3f46' : '#e4e4e7'}`, padding: '13px 14px', borderRadius: '13px', color: 'var(--text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} placeholder="Nome da rua..." value={address.street} onChange={e => setAddress({...address, street: e.target.value})} />
+                       {addressSuggestions.length > 0 && (
+                         <div style={{
+                           position: 'absolute', top: '54px', left: 0, right: 0,
+                           background: isDarkMode ? '#18181b' : 'white',
+                           borderRadius: '14px', boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                           zIndex: 3500, marginTop: '4px', border: `1px solid ${isDarkMode ? '#27272a' : '#e4e4e7'}`,
+                           overflow: 'hidden'
+                         }} className="hide-scrollbar">
+                           {addressSuggestions.map((f, i) => (
+                             <div key={i} onPointerDown={(e) => { e.preventDefault(); handleSelectSuggestion(f); }} style={{
+                               padding: '13px 16px', fontSize: '13px',
+                               borderBottom: i < addressSuggestions.length - 1 ? `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}` : 'none',
+                               cursor: 'pointer', color: 'var(--text)', transition: 'background 0.15s'
+                             }}
+                               onMouseEnter={e => e.currentTarget.style.background = 'rgba(236,148,36,0.06)'}
+                               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                             >
+                               {f.properties.street || f.properties.name}
+                             </div>
+                           ))}
+                         </div>
+                       )}
                      </div>
-                     <div style={{ marginTop: '12px' }}>
-                        <input style={{ width: '100%', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)', padding: '12px', borderRadius: '12px' }} placeholder="Complemento / Referência (opcional)" value={address.complement} onChange={e => setAddress({...address, complement: e.target.value})} />
+                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                       <input style={{ flex: 1, background: isDarkMode ? '#0f0f11' : 'white', border: `1.5px solid ${isDarkMode ? '#3f3f46' : '#e4e4e7'}`, padding: '12px 14px', borderRadius: '13px', color: 'var(--text)', fontSize: '14px', outline: 'none' }} placeholder="Nº" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} />
+                       <input style={{ flex: 2, background: isDarkMode ? '#0a0a0c' : '#f4f4f5', border: `1.5px solid ${isDarkMode ? '#27272a' : '#e4e4e7'}`, padding: '12px 14px', borderRadius: '13px', color: isDarkMode ? '#52525b' : '#9ca3af', fontSize: '14px', outline: 'none' }} placeholder="Bairro" value={address.neighborhood} readOnly />
+                     </div>
+                     <div style={{ marginTop: '10px' }}>
+                       <input style={{ width: '100%', background: isDarkMode ? '#0f0f11' : 'white', border: `1.5px solid ${isDarkMode ? '#3f3f46' : '#e4e4e7'}`, padding: '12px 14px', borderRadius: '13px', color: 'var(--text)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} placeholder="Complemento / Referência (opcional)" value={address.complement} onChange={e => setAddress({...address, complement: e.target.value})} />
                      </div>
                   </div>
-                  <button className="checkout-btn" onClick={() => { if(!address.customerName || !address.customerPhone || !address.street || !address.number) return alert("Preencha tudo!"); fetchFidelityPoints(); setCheckoutStep('payment'); }}>IR PARA PAGAMENTO</button>
-                  <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: '#71717A', fontSize: '13px' }}>Voltar ao carrinho</button>
+                  <button className="checkout-btn" onClick={() => { if(!address.customerName || !address.customerPhone || !address.street || !address.number) return alert("Preencha tudo!"); fetchFidelityPoints(); setCheckoutStep('payment'); }}>
+                    Ir para pagamento
+                    <ChevronRight size={18} style={{ marginLeft: 4 }} />
+                  </button>
+                  <button onClick={() => setCheckoutStep('cart')} style={{ background: 'none', border: 'none', color: isDarkMode ? '#52525b' : '#9ca3af', fontSize: '13px', cursor: 'pointer', padding: '4px' }}>
+                    Voltar ao carrinho
+                  </button>
                 </div>
               )}
 
               {checkoutStep === 'payment' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <FidelityCard fidelityPoints={fidelityPoints} address={address} isDarkMode={isDarkMode} />
-                  
-                  <div style={{ background: isDarkMode ? '#18181B' : '#FFFFFF', padding: '20px', borderRadius: '24px', border: '1px solid var(--border)' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}><ShoppingCart size={18} color="#EC9424" /><span style={{ fontSize: '14px', fontWeight: 700 }}>Pagamento</span></div>
-                     <div style={{ display: 'flex', gap: '10px' }}>
-                        {['PIX', 'Cartão', 'Dinheiro'].map(m => (
-                          <button key={m} onClick={() => setPaymentMethod(m)} style={{ flex: 1, padding: '16px 5px', borderRadius: '16px', border: `2px solid ${paymentMethod === m ? '#EC9424' : 'var(--border)'}`, background: 'var(--card-bg)', color: paymentMethod === m ? '#EC9424' : 'var(--text-light)', fontWeight: 800 }}>{m}</button>
-                        ))}
-                     </div>
-                  </div>
-                  
-                  {paymentMethod === 'PIX' && <div style={{ padding: '24px', background: isDarkMode ? 'rgba(34,197,94,0.1)' : '#f0fdf4', borderRadius: '20px', border: '2px dashed #22c55e', textAlign: 'center' }}>
-                     <div style={{ color: '#22c55e', fontWeight: 800, fontSize: '12px', marginBottom: '8px' }}>CHAVE PIX CNPJ</div>
-                     <div style={{ fontSize: '17px', fontWeight: 900, marginBottom: '16px' }}>64.745.137/0001-58</div>
-                     <button onClick={() => { navigator.clipboard.writeText("64745137000158"); alert("Copiado!"); }} style={{ width: '100%', padding: '14px', background: 'white', border: '1.5px solid #22c55e', borderRadius: '14px', color: '#22c55e', fontWeight: 900 }}>COPIAR CHAVE</button>
-                  </div>}
-                  
-                  {paymentMethod === 'Dinheiro' && <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)' }}>
-                     <label style={{ fontSize: '13px', fontWeight: 800, display: 'block', marginBottom: '10px' }}>Troco para quanto?</label>
-                     <input style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--text)' }} placeholder="Ex: 50,00" value={changeNeeded} onChange={e => setChangeNeeded(e.target.value)} />
-                  </div>}
 
-                  <div style={{ padding: '24px 4px', borderTop: '1px solid var(--border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#71717A' }}>Produtos</span><span style={{ fontWeight: 800 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</span></div>
-                    
+                  {/* Payment method selector */}
+                  <div style={{ background: isDarkMode ? '#18181b' : '#f9fafb', borderRadius: '20px', padding: '16px', border: `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}` }}>
+                    <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: isDarkMode ? '#71717a' : '#9ca3af', margin: '0 0 12px' }}>Forma de pagamento</p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {[
+                        { id: 'PIX', icon: <QrCode size={15} />, label: 'PIX' },
+                        { id: 'Cartão', icon: <CreditCard size={15} />, label: 'Cartão' },
+                        { id: 'Dinheiro', icon: <Banknote size={15} />, label: 'Dinheiro' },
+                      ].map(({ id, icon, label }) => {
+                        const active = paymentMethod === id;
+                        return (
+                          <button key={id} onClick={() => setPaymentMethod(id)} style={{
+                            flex: 1, padding: '12px 6px', borderRadius: '14px',
+                            border: `1.5px solid ${active ? '#EC9424' : (isDarkMode ? '#3f3f46' : '#e4e4e7')}`,
+                            background: active ? 'rgba(236,148,36,0.08)' : 'transparent',
+                            color: active ? '#EC9424' : (isDarkMode ? '#71717a' : '#9ca3af'),
+                            fontWeight: 700, fontSize: '12px', cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                            transition: 'all 0.2s ease'
+                          }}>
+                            {icon}
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* PIX details */}
+                  {paymentMethod === 'PIX' && (
+                    <div style={{
+                      borderRadius: '20px', overflow: 'hidden',
+                      border: `1px solid ${isDarkMode ? 'rgba(34,197,94,0.2)' : 'rgba(34,197,94,0.15)'}`
+                    }}>
+                      <div style={{
+                        background: isDarkMode ? '#0f1a0f' : '#f0fdf4',
+                        padding: '20px', textAlign: 'center'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
+                          <QrCode size={14} color="#22c55e" />
+                          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#22c55e' }}>Chave PIX — CNPJ</span>
+                        </div>
+                        <div style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '0.02em', color: isDarkMode ? '#f4f4f5' : '#111827' }}>
+                          64.745.137/0001-58
+                        </div>
+                      </div>
+                      <button onClick={() => { navigator.clipboard.writeText("64745137000158"); alert("Copiado!"); }} style={{
+                        width: '100%', padding: '14px',
+                        background: isDarkMode ? '#14261f' : 'white',
+                        border: 'none', borderTop: `1px solid ${isDarkMode ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.12)'}`,
+                        color: '#22c55e', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        transition: 'background 0.2s'
+                      }}>
+                        <Copy size={14} /> Copiar chave
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Dinheiro */}
+                  {paymentMethod === 'Dinheiro' && (
+                    <div style={{ background: isDarkMode ? '#18181b' : '#f9fafb', padding: '16px', borderRadius: '18px', border: `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}` }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '10px', color: isDarkMode ? '#a1a1aa' : '#6b7280' }}>Troco para quanto?</label>
+                      <input style={{
+                        width: '100%', padding: '13px 14px', borderRadius: '13px',
+                        border: `1.5px solid ${isDarkMode ? '#3f3f46' : '#e4e4e7'}`,
+                        background: isDarkMode ? '#0f0f11' : 'white', color: 'var(--text)',
+                        fontSize: '14px', fontWeight: 600, outline: 'none', boxSizing: 'border-box'
+                      }} placeholder="Ex: 50,00" value={changeNeeded} onChange={e => setChangeNeeded(e.target.value)} />
+                    </div>
+                  )}
+
+                  {/* Order summary */}
+                  <div style={{
+                    background: isDarkMode ? '#18181b' : '#f9fafb', borderRadius: '20px',
+                    padding: '16px', border: `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}`
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span style={{ fontSize: '13px', color: isDarkMode ? '#71717a' : '#9ca3af' }}>Produtos</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700 }}>R$ {cartSubtotal.toFixed(2).replace('.', ',')}</span>
+                    </div>
                     {hasFidelityDiscount && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#22c55e', fontWeight: 800 }}>
-                        <span>Desconto Fidelidade (30%)</span>
-                        <span>- R$ {fidelityDiscountAmount.toFixed(2).replace('.', ',')}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '13px', color: '#22c55e', fontWeight: 600 }}>Desconto fidelidade</span>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#22c55e' }}>− R$ {fidelityDiscountAmount.toFixed(2).replace('.', ',')}</span>
                       </div>
                     )}
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}><span style={{ color: '#71717A' }}>Entrega</span><span style={{ fontWeight: 800, color: '#22c55e' }}>{deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`}</span></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '24px', fontWeight: 950 }}><span>Total</span><span>R$ {cartTotal.toFixed(2).replace('.', ',')}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+                      <span style={{ fontSize: '13px', color: isDarkMode ? '#71717a' : '#9ca3af' }}>Entrega</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: deliveryFee === 0 ? '#22c55e' : 'inherit' }}>
+                        {deliveryFee === 0 ? 'Grátis' : `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`}
+                      </span>
+                    </div>
+                    <div style={{ borderTop: `1px solid ${isDarkMode ? '#27272a' : '#e4e4e7'}`, paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 800 }}>Total</span>
+                      <span style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '-0.03em', color: '#EC9424' }}>
+                        R$ {cartTotal.toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
                   </div>
-                  <button className="checkout-btn" onClick={handleCheckout} style={{ height: '70px', borderRadius: '24px' }}>FINALIZAR PEDIDO</button>
-                  <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: '#71717A', fontSize: '13px', marginTop: '10px' }}>Voltar ao endereço</button>
+
+                  <button className="checkout-btn" onClick={handleCheckout} style={{ height: '64px', borderRadius: '18px', fontSize: '15px' }}>
+                    Finalizar pedido
+                    <ChevronRight size={18} style={{ marginLeft: 4 }} />
+                  </button>
+                  <button onClick={() => setCheckoutStep('address')} style={{ background: 'none', border: 'none', color: isDarkMode ? '#52525b' : '#9ca3af', fontSize: '13px', cursor: 'pointer', padding: '4px' }}>
+                    Voltar ao endereço
+                  </button>
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Store Closed Warning Modal ── */}
+      <AnimatePresence>
+        {storeClosedWarning && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="cart-modal-overlay" style={{ zIndex: 3500 }}
+            onClick={() => setStoreClosedWarning(false)}
+          >
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              className="cart-modal-content" onClick={e => e.stopPropagation()}
+              style={{ maxHeight: '70vh', padding: '32px 24px 40px' }}
+            >
+              {/* Icon */}
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ width: 72, height: 72, borderRadius: '50%', background: isDarkMode ? 'rgba(239,68,68,0.1)' : '#fff1f1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Clock size={32} color="#ef4444" />
+                </div>
+                <h2 style={{ fontSize: '20px', fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>
+                  {getStoreStatus().reason === 'monday' ? 'Fechado às segundas' : 'Ainda não abrimos'}
+                </h2>
+                <p style={{ fontSize: '14px', color: isDarkMode ? '#a1a1aa' : '#6b7280', lineHeight: 1.6 }}>
+                  {getStoreStatus().reason === 'monday'
+                    ? 'Descansamos às segundas-feiras. Voltamos na terça com tudo! 🍔'
+                    : 'Abrimos todos os dias às 19h. Volte logo para fazer seu pedido! ⏰'}
+                </p>
+              </div>
+
+              {/* Hours info */}
+              <div style={{ background: isDarkMode ? '#18181b' : '#f9fafb', borderRadius: 16, padding: '16px 20px', marginBottom: 24, border: `1px solid ${isDarkMode ? '#27272a' : '#f4f4f5'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <span style={{ fontSize: 13, color: isDarkMode ? '#71717a' : '#9ca3af' }}>Funcionamento</span>
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>Ter – Dom</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, color: isDarkMode ? '#71717a' : '#9ca3af' }}>Horário</span>
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>19h00 às 00h00</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setStoreClosedWarning(false)}
+                style={{ width: '100%', height: 52, borderRadius: 14, background: isDarkMode ? '#27272a' : '#f4f4f5', border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer', color: 'var(--text)', transition: 'opacity 0.2s' }}
+              >
+                Entendi
+              </button>
             </motion.div>
           </motion.div>
         )}
