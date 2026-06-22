@@ -458,7 +458,7 @@ const App = () => {
   const getCalculatedFee = (distance, streetName = "") => {
     if (streetName.toLowerCase().includes("lebres")) return 7;
     let fee = 5;
-    if (distance > 2) fee += (distance - 2) * 1.20;
+    if (distance > 2) fee += (distance - 2) * 1.80;
     return fee;
   };
 
