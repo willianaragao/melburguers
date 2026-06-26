@@ -448,11 +448,25 @@ const App = () => {
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; 
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  };
+
+  // Distância real por rota via OSRM (gratuito, sem chave)
+  // Fallback para Haversine se a API falhar
+  const getRouteDistance = async (lat1, lon1, lat2, lon2) => {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.code === 'Ok' && data.routes && data.routes[0]) {
+        return data.routes[0].distance / 1000; // metros → km
+      }
+    } catch (_) { /* silencioso */ }
+    return calculateDistance(lat1, lon1, lat2, lon2); // fallback linha reta
   };
 
   const getCalculatedFee = (distance, streetName = "") => {
@@ -517,16 +531,17 @@ const App = () => {
     };
   }, [address.street]);
 
-  const handleSelectSuggestion = (feature) => {
+  const handleSelectSuggestion = async (feature) => {
     setIsSearchingAddress(true);
-    setAddressSuggestions([]); // Limpar imediatamente para fechar o dropdown
-    
+    setAddressSuggestions([]);
+
     const [lon, lat] = feature.geometry.coordinates;
     const p = feature.properties;
-    const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
     const streetName = p.street || p.name || "";
+
+    const distance = await getRouteDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
     const fee = getCalculatedFee(distance, streetName);
-    
+
     setDeliveryFee(fee);
     setAddress({
       ...address,
@@ -534,8 +549,7 @@ const App = () => {
       neighborhood: p.district || p.suburb || p.locality || '',
       zipCode: p.postcode || '',
     });
-    
-    // Manter o bloqueio de busca por um tempo para evitar disparos do useEffect
+
     setTimeout(() => setIsSearchingAddress(false), 800);
   };
 
@@ -550,7 +564,7 @@ const App = () => {
         
         if (data.features && data.features.length > 0) {
           const p = data.features[0].properties;
-          const distance = calculateDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
+          const distance = await getRouteDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, latitude, longitude);
           const streetName = p.street || p.name || "Rua não identificada";
           const fee = getCalculatedFee(distance, streetName);
           
