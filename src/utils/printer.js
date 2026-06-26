@@ -85,9 +85,10 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
     mainText += `*** VIA ${via.toUpperCase()} ***\n`;
   }
 
-  mainText += "\x1B\x21\x30"; // Double height and width
+  mainText += "\x1B\x21\x08"; // Double height only (bold header, less aggressive)
   mainText += "MEL BURGERS\n";
-  mainText += "\x1B\x21\x00"; // Normal size
+  mainText += "\x1B\x21\x00"; // Reset ESC !
+  mainText += "\x1D\x21\x00"; // Reset GS ! (character size) — garante tamanho normal
   mainText += "V2.2-BLUEFY-STABLE\n";
   const nowStr = new Date().toLocaleString('pt-BR');
   mainText += `${nowStr}\n`;
@@ -160,8 +161,8 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
   });
   
   mainText += "--------------------------------\n";
-  mainText += "\x1B\x61\x02"; // Right align
-  
+  mainText += "\x1B\x61\x00"; // Left align (formatRight já calcula o posicionamento manualmente)
+
   const safeSubtotal = subtotal || (total - (deliveryFee || 0));
   
   const formatRight = (label, value) => {
@@ -203,7 +204,7 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
   const centerAlign = new Uint8Array([0x1B, 0x61, 0x01]);
   const mainTextData = encoder.encode(mainText);
   
-  const totalLength = init.length + (logoData ? logoData.length + centerAlign.length : 0) + mainTextData.length;
+  const totalLength = init.length + (logoData ? logoData.length + centerAlign.length + 1 : 0) + mainTextData.length;
   const combined = new Uint8Array(totalLength);
   
   let pos = 0;
@@ -213,8 +214,11 @@ export const formatOrderForPrinter = async (cart, total, address, paymentMethod,
     // Centraliza antes de imprimir a logo
     combined.set(centerAlign, pos); pos += centerAlign.length;
     combined.set(logoData, pos); pos += logoData.length;
+    // Line feed após logo para garantir que o texto comece numa linha limpa
+    const lf = new Uint8Array([0x0A]);
+    combined.set(lf, pos); pos += lf.length;
   }
-  
+
   combined.set(mainTextData, pos);
   
   return combined;
