@@ -441,7 +441,7 @@ const App = () => {
   }, []);
 
   // === GEOLOCALIZAÇÃO E BUSCA DE ENDEREÇO ===
-  const SHOP_COORDS = { lat: -22.6225, lng: -42.0163 };
+  const SHOP_COORDS = { lat: -22.6211185, lng: -42.0249329 };
 
   const normalizeString = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
