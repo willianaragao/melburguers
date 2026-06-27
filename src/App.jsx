@@ -483,7 +483,7 @@ const App = () => {
     { properties: { name: 'Bouganvile 4', district: 'Tamoios', street: 'Condomínio Bouganvile 4' }, geometry: { coordinates: [-42.0020, -22.6310] } },
     { properties: { name: 'Gravatá 1', district: 'Tamoios', street: 'Condomínio Gravatá 1' }, geometry: { coordinates: [-41.9950, -22.6150] } },
     { properties: { name: 'Gravatá 2', district: 'Tamoios', street: 'Condomínio Gravatá 2' }, geometry: { coordinates: [-41.9930, -22.6130] } },
-    { properties: { name: 'Condomínio Residencial Nova Califórnia', district: 'Tamoios', street: 'Condomínio Nova Califórnia' }, geometry: { coordinates: [-41.9750, -22.6050] } },
+    { properties: { name: 'Condomínio Residencial Nova Califórnia', district: 'Tamoios', street: 'Condomínio Residencial Nova Califórnia', fixedFee: 5 }, geometry: { coordinates: [-42.0249329, -22.6211185] } },
   ];
 
   useEffect(() => {
@@ -507,7 +507,16 @@ const App = () => {
             const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery + " Tamoios Cabo Frio")}&limit=5&lat=${SHOP_COORDS.lat}&lon=${SHOP_COORDS.lng}`, { signal: controller.signal });
             const data = await response.json();
             if (data && data.features) {
-              const apiFeatures = data.features.filter(f => f.properties.countrycode === 'BR');
+              let apiFeatures = data.features.filter(f => f.properties.countrycode === 'BR');
+              // Se já temos um endereço interno conhecido para essa busca, ocultamos
+              // resultados da API que repetem o mesmo nome (evita opção duplicada com frete errado)
+              if (internalMatches.length > 0) {
+                apiFeatures = apiFeatures.filter(f => {
+                  const fName = normalizeString(f.properties.name || '');
+                  const fStreet = normalizeString(f.properties.street || '');
+                  return !fName.includes(cleanQuery) && !fStreet.includes(cleanQuery);
+                });
+              }
               combined = [...combined, ...apiFeatures];
             }
           }
@@ -539,8 +548,14 @@ const App = () => {
     const p = feature.properties;
     const streetName = p.street || p.name || "";
 
-    const distance = await getRouteDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
-    const fee = getCalculatedFee(distance, streetName);
+    // Endereços internos conhecidos podem ter frete fixo (ignora geolocalização)
+    let fee;
+    if (p.fixedFee != null) {
+      fee = p.fixedFee;
+    } else {
+      const distance = await getRouteDistance(SHOP_COORDS.lat, SHOP_COORDS.lng, lat, lon);
+      fee = getCalculatedFee(distance, streetName);
+    }
 
     setDeliveryFee(fee);
     setAddress({
