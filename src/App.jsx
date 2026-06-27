@@ -493,10 +493,13 @@ const App = () => {
       const normalizedQuery = normalizeString(query);
       
       if (query.length > 2 && !isSearchingAddress) {
-        const internalMatches = INTERNAL_ADDRESSES.filter(addr => 
-          normalizeString(addr.properties.name).includes(normalizedQuery) ||
-          normalizeString(addr.properties.street).includes(normalizedQuery)
-        );
+        // Comparação por palavras: cada palavra digitada precisa existir no nome/rua
+        // (assim "condominio nova cali" encontra "Condomínio Residencial Nova Califórnia")
+        const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
+        const internalMatches = INTERNAL_ADDRESSES.filter(addr => {
+          const haystack = normalizeString(addr.properties.name + ' ' + addr.properties.street);
+          return queryWords.every(w => haystack.includes(w));
+        });
 
         try {
           const cleanQuery = normalizedQuery.replace(/^(rua|r\.|\d+|avenida|av\.|alameda|travessa|estrada)\s+/i, '').replace(/\d+.*$/, '').trim();
